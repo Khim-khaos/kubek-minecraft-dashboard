@@ -37,17 +37,63 @@ exports.isObjectsValid = (...objects) => {
     return summCount === validCount;
 };
 
-// Получить данные по ссылке
-exports.getDataByURL = (url, cb) => {
-    axios
-        .get(url)
-        .then(function (response) {
-            cb(response.data);
-        })
-        .catch(function (error) {
+// Получить axios instance с настройками прокси
+function getAxiosInstance() {
+    const config = {
+        baseURL: '',
+        timeout: 30000,
+    };
+
+    // Если прокси включён, добавляем агент
+    if (mainConfig && mainConfig.proxy && mainConfig.proxy.enabled) {
+        const { host, port, username, password } = mainConfig.proxy;
+        if (host && port) {
+            let proxyUrl = `http://${host}:${port}`;
+            if (username && password) {
+                proxyUrl = `http://${username}:${password}@${host}:${port}`;
+            }
+            // Используем динамический require для совместимости
+            const { HttpProxyAgent } = require("http-proxy-agent");
+            const { HttpsProxyAgent } = require("https-proxy-agent");
+            config.httpsAgent = new HttpsProxyAgent(proxyUrl);
+            config.httpAgent = new HttpProxyAgent(proxyUrl);
+        }
+    }
+
+    return axios.create(config);
+}
+
+// Получить данные по ссылке (с поддержкой зеркал)
+exports.getDataByURL = (url, cb, mirrors = []) => {
+    const axiosInstance = getAxiosInstance();
+    
+    // Список URL для попытки (основной + зеркала)
+    const urlsToTry = [url, ...mirrors];
+    let currentUrlIndex = 0;
+
+    function tryNextUrl() {
+        if (currentUrlIndex >= urlsToTry.length) {
+            // Все URL перепробованы
             cb(false);
-            return console.error(error.data);
-        });
+            return;
+        }
+
+        const currentUrl = urlsToTry[currentUrlIndex];
+        console.log(`Попытка подключения к: ${currentUrl} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
+
+        axiosInstance
+            .get(currentUrl)
+            .then(function (response) {
+                cb(response.data);
+            })
+            .catch(function (error) {
+                console.error(`Ошибка при подключении к ${currentUrl}: ${error.message}`);
+                currentUrlIndex++;
+                tryNextUrl();
+            });
+    }
+
+    tryNextUrl();
 };
 
 // Функция для перемещения загруженного на сервер файла

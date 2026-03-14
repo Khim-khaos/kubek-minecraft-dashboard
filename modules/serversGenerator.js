@@ -55,7 +55,7 @@ async function prepareJavaForServer(javaVersion, cb) {
                     LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.javaDownloadFailed}}"));
                     cb(false);
                 }
-            });
+            }, javaVerInfo.mirrors || []);
         } else {
             cb(javaExecutablePath);
         }
@@ -114,8 +114,25 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             CORES_MANAGER.getCoreVersionURL(core, coreVersion, (url) => {
                 coreDownloadURL = url;
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.CHECKING_JAVA;
-                // Скачиваем ядро для сервера
+                // Скачиваем ядро для сервера (с поддержкой зеркал)
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.DOWNLOADING_CORE;
+                
+                // Получаем зеркала для этого типа ядра
+                let coreMirrors = [];
+                const coreKey = core.toLowerCase();
+                
+                // Проверяем наличие в SERVER_CORE_MIRRORS
+                if (PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
+                    coreMirrors = PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || [];
+                }
+                
+                // Добавляем MSLMC как универсальное зеркало
+                if (coreMirrors.length === 0) {
+                    coreMirrors = [
+                        `https://dl.mslmc.cn/${core}/${coreVersion}.jar`
+                    ];
+                }
+                
                 DOWNLOADS_MANAGER.addDownloadTask(coreDownloadURL, serverDirectoryPath + path.sep + coreFileName, (coreDlResult) => {
                     if (coreDlResult === true) {
                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
@@ -137,7 +154,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                         LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreDownloadFailed}}"));
                         cb(false);
                     }
-                });
+                }, coreMirrors);
             });
         }
     }

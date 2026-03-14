@@ -3,16 +3,16 @@
   "version": "3.0.8",
   "description": "",
   "main": "app.js",
-  "author": "Seeroy",
+  "author": "Khim-khaos",
   "scripts": {
     "start": "node app.js",
     "build": "pkg --config pkgconfig.json app.js",
-    "dockerBuild": "docker build -t seeroy/kubek-minecraft-dashboard .",
-    "dockerPush": "docker push seeroy/kubek-minecraft-dashboard"
+    "dockerBuild": "docker build -t Khim-khaos/kubek-minecraft-dashboard .",
+    "dockerPush": "docker push Khim-khaos/kubek-minecraft-dashboard"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Seeroy/kubek-minecraft-dashboard"
+    "url": "git+https://github.com/Khim-khaos/kubek-minecraft-dashboard"
   },
   "dependencies": {
     "axios": "^0.27.2",
@@ -22,7 +22,9 @@
     "decompress": "^4.2.1",
     "express": "^4.21.1",
     "express-fileupload": "^1.5.1",
-    "ftpd": "^0.2.16",
+    "ftp-srv-esm": "^5.0.1",
+    "http-proxy-agent": "^8.0.0",
+    "https-proxy-agent": "^8.0.0",
     "iconv-lite": "^0.6.3",
     "is-in-subnet": "^4.0.1",
     "jimp": "^0.22.12",

@@ -70,16 +70,64 @@ exports.MAX_SERVER_LOGS_LENGTH_MINUS = -800;
 exports.KUBEK_LOGO_ASCII = " /$$                 /$$                 /$$      \n| $$                | $$                | $$      \n| $$   /$$ /$$   /$$| $$$$$$$   /$$$$$$ | $$   /$$\n| $$  /$$/| $$  | $$| $$__  $$ /$$__  $$| $$  /$$/\n| $$$$$$/ | $$  | $$| $$   $$| $$$$$$$$| $$$$$$/ \n| $$_  $$ | $$  | $$| $$  | $$| $$_____/| $$_  $$ \n| $$   $$|  $$$$$$/| $$$$$$$/|  $$$$$$$| $$   $$\n|__/  __/ ______/ |_______/  _______/|__/  __/";
 
 // URL к API для проверки обновлений
-exports.UPDATES_URL_API = "https://api.github.com/repos/Seeroy/kubek-minecraft-dashboard/releases";
+exports.UPDATES_URL_API = "https://api.github.com/repos/Khim-khaos/kubek-minecraft-dashboard/releases";
 
 // URL к API для отправки статистики
 exports.STATS_SEND_URL = "https://statscol.seeeroy.ru/save_kubek?savedata=";
 
-// URL с файлом ядер Spigot
+// URL со списком ядер Spigot/Paper
 exports.SPIGOT_JSON_URL = "https://kubek.seeeroy.ru/spigots.json";
 
-// URL со списком доступных версий Java
+// URL со списком доступных версий Java (основной)
 exports.JAVA_LIST_URL = "https://api.adoptium.net/v3/info/available_releases";
+
+// Зеркала для загрузки Java (используются если основное недоступно)
+exports.JAVA_MIRRORS = {
+    // Официальный API Adoptium
+    adoptium: "https://api.adoptium.net",
+    adoptiumJDK: "https://api.adoptium.net/v3/binary/latest",
+    
+    // Китайские зеркала (работают без VPN в РФ)
+    tuna: "https://mirrors.tuna.tsinghua.edu.cn/Adoptium",
+    ustc: "https://mirrors.ustc.edu.cn/Adoptium",
+    
+    // GitHub Releases (альтернативный источник)
+    github: "https://github.com/adoptium/temurin21-binaries/releases"
+};
+
+// URL с файлом ядер Spigot/Paper (основной)
+exports.SPIGOT_JSON_URL = "https://kubek.seeeroy.ru/spigots.json";
+
+// Зеркала для загрузки ядер серверов
+exports.SERVER_CORE_MIRRORS = {
+    spigot: {
+        main: "https://hub.spigotmc.org/jenkins/job/spigot/",
+        mirrors: [
+            "https://kubek.seeeroy.ru/spigots.json"
+        ]
+    },
+    paper: {
+        main: "https://api.papermc.io/v2/projects/paper",
+        mirrors: []
+    },
+    purpur: {
+        main: "https://api.purpurmc.org/v2/purpur",
+        mirrors: []
+    },
+    forge: {
+        main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
+        mirrors: []
+    },
+    fabric: {
+        main: "https://meta.fabricmc.net/v2/versions/loader",
+        mirrors: []
+    },
+    // MSLMC китайское зеркало (работает быстрее в РФ)
+    mslmc: {
+        main: "https://dl.mslmc.cn/",
+        mirrors: []
+    }
+};
 
 // Маркеры для смены статуса сервера
 exports.SERVER_STATUS_CHANGE_MARKERS = {
@@ -117,7 +165,14 @@ exports.CONFIGURATIONS = {
             chatIds: []
         },
         webserverPort: 3000,
-        configVersion: 2
+        configVersion: 2,
+        proxy: {
+            enabled: false,
+            host: "",
+            port: "",
+            username: "",
+            password: ""
+        }
     },
     USERS: {
         "kubek": {

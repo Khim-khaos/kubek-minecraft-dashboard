@@ -45,12 +45,13 @@ router.get("/download/:version", function (req, res) {
     let localJavaVersions = JAVA_MANAGER.getLocalJavaVersions();
     if (!localJavaVersions.includes(q.version)) {
         let javaInfo = JAVA_MANAGER.getJavaInfoByVersion(q.version);
+        // Передаём зеркала в addDownloadTask (третий параметр - cb, четвёртый - mirrors)
         DOWNLOADS_MANAGER.addDownloadTask(javaInfo.url, javaInfo.downloadPath, (result) => {
             if (result === true) {
                 DOWNLOADS_MANAGER.unpackArchive(javaInfo.downloadPath, javaInfo.unpackPath, () => {
                 }, true);
             }
-        });
+        }, javaInfo.mirrors || []);
         return res.send(true);
     }
     res.sendStatus(400);

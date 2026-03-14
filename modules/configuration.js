@@ -21,6 +21,14 @@ exports.migrateOldMainConfig = () => {
         newConfig.authorization = oldConfig.auth;
         newConfig.language = oldConfig.lang;
         newConfig.webserverPort = oldConfig["webserver-port"];
+        // Миграция настроек прокси (если есть в старом конфиге)
+        if (oldConfig.proxy) {
+            newConfig.proxy.enabled = oldConfig.proxy.enabled || false;
+            newConfig.proxy.host = oldConfig.proxy.host || "";
+            newConfig.proxy.port = oldConfig.proxy.port || "";
+            newConfig.proxy.username = oldConfig.proxy.username || "";
+            newConfig.proxy.password = oldConfig.proxy.password || "";
+        }
         this.writeAnyConfig("./config.json", newConfig);
         this.reloadAllConfigurations();
         console.log(colors.yellow("config.json"), " migration success!");

@@ -30,6 +30,11 @@ exports.gameVersionToJava = (version) => {
 
 // Получить список доступных на сервере версий Java
 exports.getDownloadableJavaVersions = (cb) => {
+    // Зеркала для получения списка версий Java
+    const mirrors = [
+        "https://api.adoptium.net/v3/info/available_releases"
+    ];
+    
     COMMONS.getDataByURL(PREDEFINED.JAVA_LIST_URL, (data) => {
         if (data !== false) {
             let availReleases = data.available_releases;
@@ -40,7 +45,7 @@ exports.getDownloadableJavaVersions = (cb) => {
             return;
         }
         cb(false);
-    });
+    }, mirrors);
 };
 
 // Получить список доступных Kubek`у локальных версий Java
@@ -75,6 +80,7 @@ exports.getJavaInfoByVersion = (javaVersion) => {
         return false;
     }
 
+    // Основной URL (официальный API Adoptium)
     let resultURL =
         "https://api.adoptium.net/v3/binary/latest/" +
         javaVersion +
@@ -83,6 +89,19 @@ exports.getJavaInfoByVersion = (javaVersion) => {
         "/" +
         platformArch +
         "/jdk/hotspot/normal/eclipse?project=jdk";
+    
+    // Зеркала для загрузки Java (TUNA и USTC для РФ)
+    let mirrors = [
+        // Официальное зеркало
+        `https://api.adoptium.net/v3/binary/latest/${javaVersion}/ga/${platformName}/${platformArch}/jdk/hotspot/normal/eclipse?project=jdk`,
+        
+        // TUNA (Tsinghua University) - работает в РФ
+        `https://mirrors.tuna.tsinghua.edu.cn/Adoptium/${javaVersion}/jdk/${platformName}/${platformArch}/hotspot/normal/eclipse/jdk-${javaVersion}+latest.${fileExtension}`,
+        
+        // USTC (University of Science and Technology of China) - работает в РФ
+        `https://mirrors.ustc.edu.cn/Adoptium/${javaVersion}/jdk/${platformName}/${platformArch}/hotspot/normal/eclipse/jdk-${javaVersion}+latest.${fileExtension}`
+    ];
+    
     let filename = "Java-" + javaVersion + "-" + platformArch + fileExtension;
     return {
         url: resultURL,
@@ -91,7 +110,8 @@ exports.getJavaInfoByVersion = (javaVersion) => {
         platformArch: platformArch,
         platformName: platformName,
         downloadPath: "." + path.sep + "binaries" + path.sep + "java" + path.sep + filename,
-        unpackPath: "." + path.sep + "binaries" + path.sep + "java" + path.sep + javaVersion + path.sep
+        unpackPath: "." + path.sep + "binaries" + path.sep + "java" + path.sep + javaVersion + path.sep,
+        mirrors: mirrors
     }
 };
 

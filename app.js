@@ -29,7 +29,7 @@ LOGGER.kubekWelcomeMessage();
 WEBSERVER.loadAllDefinedRouters();
 WEBSERVER.startWebServer();
 
-// Запускаем FTP-сервер
+// Запускаем FTP-сервер (асинхронно)
 global.ftpDaemon = null;
 FTP_DAEMON.startFTP();
 
