@@ -116,15 +116,11 @@ exports.SERVER_CORE_MIRRORS = {
     },
     forge: {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
-        mirrors: [
-            "https://bmclapi2.bangbang93.com/forge/download/installer/"
-        ]
+        mirrors: []
     },
     fabric: {
         main: "https://meta.fabricmc.net/v2/versions/loader",
-        mirrors: [
-            "https://bmclapi2.bangbang93.com/fabric-loader/"
-        ]
+        mirrors: []
     },
     neoforge: {
         main: "https://maven.neoforged.net/releases/net/neoforged/forge/",

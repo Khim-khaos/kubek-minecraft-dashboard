@@ -159,10 +159,10 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
     // Пробуем получить данные с основного URL или зеркала
     let urlsToTry = [
         "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
-        "https://bmclapi2.bangbang93.com/forge/versions/promotions_slim.json"  // BMCLAPI зеркало
+        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion  // BMCLAPI для получения версии
     ];
     
-    function tryNext(index) {
+    function tryNext(index, mcVersion) {
         if (index >= urlsToTry.length) {
             LOGGER.warning("Oops! An error occurred while fetching Forge URL");
             cb(false);
@@ -170,25 +170,36 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
         }
         
         COMMONS.getDataByURL(urlsToTry[index], (data) => {
-            if (data === false) {
+            if (data === false || (index > 0 && !Array.isArray(data))) {
                 LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
-                tryNext(index + 1);
+                tryNext(index + 1, mcVersion);
                 return;
             }
             
-            // Ищем recommended версию, если нет - latest
-            let forgeVersion = data.promos[minecraftVersion + "-recommended"] || 
-                              data.promos[minecraftVersion + "-latest"];
+            let forgeVersion = null;
+            
+            if (index === 0) {
+                // Официальный API
+                if (data && data.promos) {
+                    forgeVersion = data.promos[mcVersion + "-recommended"] || 
+                                  data.promos[mcVersion + "-latest"];
+                }
+            } else {
+                // BMCLAPI - массив версий
+                if (Array.isArray(data) && data.length > 0) {
+                    forgeVersion = data[0].version;
+                }
+            }
             
             if (forgeVersion) {
                 // Формируем URL для installer (основной + зеркала)
                 let forgeUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + 
-                              minecraftVersion + "-" + forgeVersion + 
-                              "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+                              mcVersion + "-" + forgeVersion + 
+                              "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // BMCLAPI зеркало
-                let mirrorUrl = "https://bmclapi2.bangbang93.com/forge/download/installer/" + 
-                               minecraftVersion + "-" + forgeVersion;
+                // BMCLAPI зеркало (правильный формат)
+                let mirrorUrl = "https://bmclapi2.bangbang93.com/forge/" + 
+                               mcVersion + "/" + forgeVersion + "/installer";
                 
                 cb(forgeUrl, [mirrorUrl]);
             } else {
@@ -197,7 +208,7 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
         });
     }
     
-    tryNext(0);
+    tryNext(0, minecraftVersion);
 };
 
 /////////////////////////////////////////////////////
