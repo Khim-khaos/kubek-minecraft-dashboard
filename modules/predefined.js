@@ -118,7 +118,7 @@ exports.SERVER_CORE_MIRRORS = {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
         mirrors: [
             "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/",
-            "https://www.fastmirror.net/download/forge/"
+            "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/"
         ]
     },
     fabric: {

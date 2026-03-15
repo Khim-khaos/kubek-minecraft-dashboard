@@ -274,7 +274,8 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             responseStream.pipe(writeStream);
             return dlTaskID;
         } catch (error) {
-            LOGGER.error(`Ошибка загрузки с ${colors.cyan(currentUrl)}: ${error.message}`);
+            const errMsg = (error && (error.message || error.code || error.toString())) || "Unknown error";
+            LOGGER.error(`Ошибка загрузки с ${colors.cyan(currentUrl)}: ${errMsg}`);
             failAttempt(error);
             return null;
         }

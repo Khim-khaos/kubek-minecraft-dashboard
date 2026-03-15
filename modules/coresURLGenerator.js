@@ -198,16 +198,17 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
                               mcVersion + "-" + forgeVersion + 
                               "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // BMCLAPI зеркало (используем правильный формат с /forge/download)
-                // https://bmclapi2.bangbang93.com/forge/download?mcversion={mc}&version={ver}&category=installer&format=jar
-                let bmclapiUrl = "https://bmclapi2.bangbang93.com/forge/download?mcversion=" + 
-                                mcVersion + "&version=" + forgeVersion + "&category=installer&format=jar";
+                // BMCLAPI зеркало (прямой maven, без промежуточной verify-страницы)
+                let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + 
+                                mcVersion + "-" + forgeVersion + 
+                                "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // FastMirror зеркало
-                let fastMirrorUrl = "https://www.fastmirror.net/download/forge/" + 
-                                   mcVersion + "/" + forgeVersion + "/installer";
+                // NYIST mirror (прямой путь bmclapi)
+                let nyistUrl = "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/" +
+                               mcVersion + "-" + forgeVersion +
+                               "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                cb(forgeUrl, [bmclapiUrl, fastMirrorUrl]);
+                cb(forgeUrl, [bmclapiUrl, nyistUrl]);
             } else {
                 cb(false);
             }
