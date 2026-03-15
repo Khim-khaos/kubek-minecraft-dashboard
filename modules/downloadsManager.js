@@ -12,7 +12,7 @@ const colors = require("colors");
 // Получить axios instance с настройками прокси
 function getAxiosInstance() {
     const config = {
-        timeout: 30000,
+        timeout: 120000, // 2 минуты таймаут для медленных соединений
     };
 
     // Если прокси включён, добавляем агент
@@ -55,14 +55,24 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         LOGGER.log(`Попытка загрузки с: ${colors.cyan(currentUrl)} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
 
         try {
+            LOGGER.log(`[Download] Sending request to: ${currentUrl}`);
+            
             const {data, headers} = await axiosInstance({
                 url: currentUrl,
                 method: "GET",
                 responseType: "stream",
-                timeout: 60000, // 60 секунд таймаут
+                timeout: 180000, // 3 минуты таймаут на запрос
             });
-
+            
+            LOGGER.log(`[Download] Response headers: content-length=${headers['content-length'] || 'N/A'}, content-type=${headers['content-type'] || 'N/A'}`);
+            
             const totalSize = parseInt(headers['content-length']) || 0;
+            
+            if (totalSize === 0) {
+                LOGGER.warning(`[Download] Server returned content-length=0, this may cause issues`);
+            } else {
+                LOGGER.log(`[Download] File size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+            }
             
             // Создаём новую задачу и запоминаем её ID
             let dlTaskID = TASK_MANAGER.addNewTask({
@@ -82,14 +92,14 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             let receivedBytes = 0;
             let progressUpdateTimer = null;
 
-            // Таймаут на скачивание (если прогресс не обновляется 60 секунд)
+            // Таймаут на скачивание (если прогресс не обновляется 2 минуты)
             downloadTimeout = setTimeout(() => {
                 LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
                 if (progressUpdateTimer) clearInterval(progressUpdateTimer);
                 downloadTimeout = null;
                 currentUrlIndex++;
                 tryDownload();
-            }, 60000);
+            }, 120000);
 
             // Каждый чанк обновляем прогресс
             data.on('data', (chunk) => {
@@ -104,7 +114,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                         downloadTimeout = null;
                         currentUrlIndex++;
                         tryDownload();
-                    }, 60000);
+                    }, 120000);
                 }
                 
                 tasks[dlTaskID].size.current = receivedBytes;

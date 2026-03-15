@@ -159,7 +159,7 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
     // Пробуем получить данные с основного URL или зеркала
     let urlsToTry = [
         "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
-        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion  // BMCLAPI для получения версии
+        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion
     ];
     
     function tryNext(index, mcVersion) {
@@ -187,6 +187,7 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
             } else {
                 // BMCLAPI - массив версий
                 if (Array.isArray(data) && data.length > 0) {
+                    // Берём последнюю версию (первая в списке)
                     forgeVersion = data[0].version;
                 }
             }
@@ -197,11 +198,16 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
                               mcVersion + "-" + forgeVersion + 
                               "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // BMCLAPI зеркало (правильный формат)
-                let mirrorUrl = "https://bmclapi2.bangbang93.com/forge/" + 
-                               mcVersion + "/" + forgeVersion + "/installer";
+                // BMCLAPI зеркало (используем правильный формат с /forge/download)
+                // https://bmclapi2.bangbang93.com/forge/download?mcversion={mc}&version={ver}&category=installer&format=jar
+                let bmclapiUrl = "https://bmclapi2.bangbang93.com/forge/download?mcversion=" + 
+                                mcVersion + "&version=" + forgeVersion + "&category=installer&format=jar";
                 
-                cb(forgeUrl, [mirrorUrl]);
+                // FastMirror зеркало
+                let fastMirrorUrl = "https://www.fastmirror.net/download/forge/" + 
+                                   mcVersion + "/" + forgeVersion + "/installer";
+                
+                cb(forgeUrl, [bmclapiUrl, fastMirrorUrl]);
             } else {
                 cb(false);
             }
@@ -250,11 +256,11 @@ exports.getFabricCoreURL = (minecraftVersion, cb) => {
         let fabricUrl = "https://meta.fabricmc.net/v2/versions/loader/" + 
                        minecraftVersion + "/" + loaderVersion + "/server/jar";
         
-        // BMCLAPI зеркало
-        let mirrorUrl = "https://bmclapi2.bangbang93.com/fabric-loader/v2/versions/loader/" + 
-                       minecraftVersion + "/" + loaderVersion + "/server/jar";
+        // BMCLAPI зеркало (правильный формат из документации)
+        let bmclapiUrl = "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + 
+                        minecraftVersion + "/" + loaderVersion + "/server/jar";
         
-        cb(fabricUrl, [mirrorUrl]);
+        cb(fabricUrl, [bmclapiUrl]);
     });
 };
 
@@ -304,42 +310,26 @@ exports.getAllNeoForgeCores = (cb) => {
 
 // Получить ссылку на скачивание NeoForge installer
 exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
-    // Пробуем получить данные с основного URL или зеркала
-    let urlsToTry = [
-        "https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion,
-        "https://dl.mslmc.cn/neoforge/versions.json"
-    ];
-    
-    function tryNext(index) {
-        if (index >= urlsToTry.length) {
+    COMMONS.getDataByURL("https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion, (data) => {
+        if (data === false || !Array.isArray(data) || data.length === 0) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge URL");
             cb(false);
             return;
         }
         
-        COMMONS.getDataByURL(urlsToTry[index], (data) => {
-            if (data === false || !Array.isArray(data) || data.length === 0) {
-                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
-                tryNext(index + 1);
-                return;
-            }
-
-            // Берем последнюю версию NeoForge для этой версии Minecraft
-            let neoforgeVersion = data[0].version;
-
-            // Формируем URL для installer (основной + зеркала)
-            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" +
-                             minecraftVersion + "-" + neoforgeVersion +
-                             "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-
-            // Китайское зеркало MSLMC
-            let mirrorUrl = "https://dl.mslmc.cn/neoforge/" +
-                           minecraftVersion + "-" + neoforgeVersion +
-                           "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-
-            cb(neoforgeUrl, [mirrorUrl]);
-        });
-    }
-    
-    tryNext(0);
+        // Берем последнюю версию NeoForge для этой версии Minecraft
+        let neoforgeVersion = data[0].version;
+        
+        // Формируем URL для installer (основной + зеркала)
+        let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
+                         minecraftVersion + "-" + neoforgeVersion + 
+                         "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+        
+        // BMCLAPI зеркало (правильный формат из документации)
+        let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/forge/" + 
+                        minecraftVersion + "-" + neoforgeVersion + 
+                        "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+        
+        cb(neoforgeUrl, [bmclapiUrl]);
+    });
 };

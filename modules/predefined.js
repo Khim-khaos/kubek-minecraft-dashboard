@@ -116,15 +116,22 @@ exports.SERVER_CORE_MIRRORS = {
     },
     forge: {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
-        mirrors: []
+        mirrors: [
+            "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/",
+            "https://www.fastmirror.net/download/forge/"
+        ]
     },
     fabric: {
         main: "https://meta.fabricmc.net/v2/versions/loader",
-        mirrors: []
+        mirrors: [
+            "https://bmclapi2.bangbang93.com/fabric-meta/"
+        ]
     },
     neoforge: {
         main: "https://maven.neoforged.net/releases/net/neoforged/forge/",
-        mirrors: []
+        mirrors: [
+            "https://bmclapi2.bangbang93.com/maven/net/neoforged/forge/"
+        ]
     },
     // MSLMC китайское зеркало (работает быстрее в РФ)
     mslmc: {
