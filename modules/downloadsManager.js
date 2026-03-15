@@ -1,4 +1,4 @@
-const TASK_MANAGER = require("./taskManager");
+﻿const TASK_MANAGER = require("./taskManager");
 const PREDEFINED = require("./predefined");
 const LOGGER = require("./logger");
 const MULTILANG = require("./multiLanguage");
@@ -8,6 +8,7 @@ const axios = require("axios");
 const fs = require("fs");
 const decompress = require("decompress");
 const colors = require("colors");
+const { URL } = require("url");
 
 // Получить axios instance с настройками прокси и правильными заголовками
 function getAxiosInstance() {
@@ -50,6 +51,8 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
     let lastError = null;
     let downloadTimeout = null;
     let isComplete = false;
+    let activeAttemptId = 0;
+    let progressUpdateTimer = null;
 
     async function tryDownload() {
         if (isComplete) return;
@@ -62,19 +65,82 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         }
 
         const currentUrl = urlsToTry[currentUrlIndex];
+        const attemptId = ++activeAttemptId;
+        let dlTaskID = null;
+        let downloadComplete = false;
+        let receivedBytes = 0;
+        let responseStream = null;
+        let writeStream = null;
+        let abortController = new AbortController();
+
+        const cleanupAttempt = (removeTask = false, destroyStreams = false) => {
+            if (downloadTimeout) {
+                clearTimeout(downloadTimeout);
+                downloadTimeout = null;
+            }
+            if (progressUpdateTimer) {
+                clearInterval(progressUpdateTimer);
+                progressUpdateTimer = null;
+            }
+            if (destroyStreams) {
+                if (responseStream && !responseStream.destroyed) {
+                    responseStream.destroy();
+                }
+                if (writeStream && !writeStream.destroyed) {
+                    writeStream.destroy();
+                }
+            }
+            if (removeTask && dlTaskID && TASK_MANAGER.isTaskExists(dlTaskID)) {
+                TASK_MANAGER.removeTask(dlTaskID);
+            }
+        };
+
+        const failAttempt = (err) => {
+            if (downloadComplete || attemptId !== activeAttemptId) return;
+            downloadComplete = true;
+            lastError = err || lastError;
+            cleanupAttempt(true, true);
+            try {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            } catch (e) {
+                LOGGER.warning(`[Download] Could not delete partial file: ${e.message}`);
+            }
+            currentUrlIndex++;
+            tryDownload();
+        };
+
         LOGGER.log(`Попытка загрузки с: ${colors.cyan(currentUrl)} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
 
         try {
             LOGGER.log(`[Download] Sending request to: ${currentUrl}`);
+            let forceIpv4 = false;
+            try {
+                const host = new URL(currentUrl).hostname;
+                if (host === "maven.minecraftforge.net" || host === "files.minecraftforge.net") {
+                    forceIpv4 = true;
+                }
+            } catch (e) {
+                // ignore URL parse errors
+            }
             
             const {data, headers} = await axiosInstance({
                 url: currentUrl,
                 method: "GET",
                 responseType: "stream",
                 timeout: 180000, // 3 минуты таймаут на запрос
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                signal: abortController.signal,
+                family: forceIpv4 ? 4 : undefined
             });
             
             LOGGER.log(`[Download] Response headers: content-length=${headers['content-length'] || 'N/A'}, content-type=${headers['content-type'] || 'N/A'}`);
+            const contentType = String(headers['content-type'] || '').toLowerCase();
+            if (contentType.includes('text/html') || contentType.includes('text/plain')) {
+                throw new Error(`Unexpected content-type: ${contentType}`);
+            }
             
             const totalSize = parseInt(headers['content-length']) || 0;
             
@@ -85,7 +151,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             }
             
             // Создаём новую задачу и запоминаем её ID
-            let dlTaskID = TASK_MANAGER.addNewTask({
+            dlTaskID = TASK_MANAGER.addNewTask({
                 type: PREDEFINED.TASKS_TYPES.DOWNLOADING,
                 progress: 0,
                 size: {
@@ -99,23 +165,44 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.downloadTaskCreated}}", colors.cyan(dlTaskID), colors.cyan(path.basename(filePath))));
 
-            let receivedBytes = 0;
-            let progressUpdateTimer = null;
-            let downloadComplete = false;
+            responseStream = data;
+
+            responseStream.on('aborted', () => {
+                LOGGER.warning(`[Download] Response aborted by server: ${currentUrl}`);
+            });
+
+            responseStream.on('close', () => {
+                if (!downloadComplete && !isComplete) {
+                    LOGGER.warning(`[Download] Response stream closed early: ${currentUrl}`);
+                }
+            });
 
             // Таймаут на скачивание (если прогресс не обновляется 2 минуты)
             downloadTimeout = setTimeout(() => {
-                if (downloadComplete) return;
-                LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
-                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
-                downloadTimeout = null;
-                currentUrlIndex++;
-                tryDownload();
+                if (downloadComplete || attemptId !== activeAttemptId) return;
+                LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror... received=${receivedBytes} bytes`);
+                try {
+                    abortController.abort();
+                } catch (e) {
+                    // ignore
+                }
+                failAttempt(new Error("Download timeout"));
             }, 120000);
 
+            // Периодический лог прогресса (раз в 5 секунд)
+            progressUpdateTimer = setInterval(() => {
+                if (downloadComplete || attemptId !== activeAttemptId) return;
+                if (totalSize > 0) {
+                    const pct = Math.round((receivedBytes / totalSize) * 100);
+                    LOGGER.log(`[Download] Progress: ${pct}% (${receivedBytes}/${totalSize} bytes)`);
+                } else {
+                    LOGGER.log(`[Download] Progress: ${receivedBytes} bytes (total unknown)`);
+                }
+            }, 5000);
+
             // Каждый чанк обновляем прогресс
-            data.on('data', (chunk) => {
-                if (downloadComplete) return;
+            responseStream.on('data', (chunk) => {
+                if (downloadComplete || attemptId !== activeAttemptId) return;
                 
                 receivedBytes += chunk.length;
                 
@@ -123,12 +210,14 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 if (downloadTimeout) {
                     clearTimeout(downloadTimeout);
                     downloadTimeout = setTimeout(() => {
-                        if (downloadComplete) return;
-                        LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
-                        if (progressUpdateTimer) clearInterval(progressUpdateTimer);
-                        downloadTimeout = null;
-                        currentUrlIndex++;
-                        tryDownload();
+                        if (downloadComplete || attemptId !== activeAttemptId) return;
+                        LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror... received=${receivedBytes} bytes`);
+                        try {
+                            abortController.abort();
+                        } catch (e) {
+                            // ignore
+                        }
+                        failAttempt(new Error("Download timeout"));
                     }, 120000);
                 }
                 
@@ -145,12 +234,11 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 }
             });
 
-            data.on('end', () => {
-                if (downloadComplete) return;
+            responseStream.on('end', () => {
+                if (downloadComplete || attemptId !== activeAttemptId) return;
                 downloadComplete = true;
                 
-                if (downloadTimeout) clearTimeout(downloadTimeout);
-                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                cleanupAttempt(false, false);
                 
                 // Проверяем, что задача ещё существует перед удалением
                 if (tasks[dlTaskID]) {
@@ -162,37 +250,30 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 cb(true);
             });
 
-            data.on('error', (err) => {
-                if (downloadComplete) return;
-                if (downloadTimeout) clearTimeout(downloadTimeout);
-                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+            responseStream.on('error', (err) => {
+                if (downloadComplete || attemptId !== activeAttemptId) return;
                 LOGGER.error(`[Download] Stream error: ${err.message}`);
-                currentUrlIndex++;
-                tryDownload();
+                failAttempt(err);
             });
 
-            const writeStream = fs.createWriteStream(filePath);
+            writeStream = fs.createWriteStream(filePath);
             
             writeStream.on('error', (err) => {
-                if (downloadComplete) return;
+                if (downloadComplete || attemptId !== activeAttemptId) return;
                 LOGGER.error(`[Download] Write error: ${err.message}`);
-                if (downloadTimeout) clearTimeout(downloadTimeout);
-                currentUrlIndex++;
-                tryDownload();
+                failAttempt(err);
             });
             
             writeStream.on('finish', () => {
-                // Файл записан, но ждём события 'end' от потока данных
+                LOGGER.log(`[Download] File write finished: ${filePath}`);
             });
 
-            data.pipe(writeStream);
+            responseStream.pipe(writeStream);
             return dlTaskID;
         } catch (error) {
-            if (downloadTimeout) clearTimeout(downloadTimeout);
-            lastError = error;
             LOGGER.error(`Ошибка загрузки с ${colors.cyan(currentUrl)}: ${error.message}`);
-            currentUrlIndex++;
-            return tryDownload();
+            failAttempt(error);
+            return null;
         }
     }
 
