@@ -9,10 +9,15 @@ const fs = require("fs");
 const decompress = require("decompress");
 const colors = require("colors");
 
-// Получить axios instance с настройками прокси
+// Получить axios instance с настройками прокси и правильными заголовками
 function getAxiosInstance() {
     const config = {
         timeout: 120000, // 2 минуты таймаут для медленных соединений
+        headers: {
+            // Притворяемся обычным браузером
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': '*/*',
+        }
     };
 
     // Если прокси включён, добавляем агент
