@@ -34,14 +34,15 @@ function getAxiosInstance() {
     return axios.create(config);
 }
 
-// Создать задачу на скачивание (с поддержкой зеркал)
+// Создать задачу на скачивание (с поддержкой зеркал и таймаутом)
 async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = []) {
     const axiosInstance = getAxiosInstance();
-    
+
     // Список URL для попытки (основной + зеркала)
     const urlsToTry = [downloadURL, ...mirrors];
     let currentUrlIndex = 0;
     let lastError = null;
+    let downloadTimeout = null;
 
     async function tryDownload() {
         if (currentUrlIndex >= urlsToTry.length) {
@@ -58,14 +59,17 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 url: currentUrl,
                 method: "GET",
                 responseType: "stream",
+                timeout: 60000, // 60 секунд таймаут
             });
 
+            const totalSize = parseInt(headers['content-length']) || 0;
+            
             // Создаём новую задачу и запоминаем её ID
             let dlTaskID = TASK_MANAGER.addNewTask({
                 type: PREDEFINED.TASKS_TYPES.DOWNLOADING,
                 progress: 0,
                 size: {
-                    total: parseInt(headers['content-length']) || 0,
+                    total: totalSize,
                     current: 0
                 },
                 url: currentUrl,
@@ -75,20 +79,63 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.downloadTaskCreated}}", colors.cyan(dlTaskID), colors.cyan(path.basename(filePath))));
 
+            let receivedBytes = 0;
+            let progressUpdateTimer = null;
+
+            // Таймаут на скачивание (если прогресс не обновляется 60 секунд)
+            downloadTimeout = setTimeout(() => {
+                LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
+                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                downloadTimeout = null;
+                currentUrlIndex++;
+                tryDownload();
+            }, 60000);
+
             // Каждый чанк обновляем прогресс
             data.on('data', (chunk) => {
-                tasks[dlTaskID].size.current = tasks[dlTaskID].size.current + chunk.length;
-                tasks[dlTaskID].progress = Math.round((tasks[dlTaskID].size.current / tasks[dlTaskID].size.total) * 100);
-                if (tasks[dlTaskID].size.current === tasks[dlTaskID].size.total) {
+                receivedBytes += chunk.length;
+                
+                // Сбрасываем таймаут при получении данных
+                if (downloadTimeout) {
+                    clearTimeout(downloadTimeout);
+                    downloadTimeout = setTimeout(() => {
+                        LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
+                        if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                        downloadTimeout = null;
+                        currentUrlIndex++;
+                        tryDownload();
+                    }, 60000);
+                }
+                
+                tasks[dlTaskID].size.current = receivedBytes;
+                
+                // Если размер неизвестен, показываем прогресс по полученным байтам
+                if (totalSize === 0) {
+                    tasks[dlTaskID].progress = Math.min(99, Math.floor(receivedBytes / 1024 / 1024 * 10)); // Примерный прогресс
+                } else {
+                    tasks[dlTaskID].progress = Math.round((receivedBytes / totalSize) * 100);
+                }
+                
+                if (tasks[dlTaskID].progress >= 100 || (totalSize === 0 && receivedBytes > 0)) {
                     // Возвращаем коллбэк после окончания скачивания
+                    if (downloadTimeout) clearTimeout(downloadTimeout);
+                    if (progressUpdateTimer) clearInterval(progressUpdateTimer);
                     TASK_MANAGER.removeTask(dlTaskID);
                     cb(true);
                 }
             });
 
+            data.on('end', () => {
+                if (downloadTimeout) clearTimeout(downloadTimeout);
+                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                TASK_MANAGER.removeTask(dlTaskID);
+                cb(true);
+            });
+
             data.pipe(fs.createWriteStream(filePath));
             return dlTaskID;
         } catch (error) {
+            if (downloadTimeout) clearTimeout(downloadTimeout);
             lastError = error;
             LOGGER.error(`Ошибка загрузки с ${colors.cyan(currentUrl)}: ${error.message}`);
             currentUrlIndex++;
