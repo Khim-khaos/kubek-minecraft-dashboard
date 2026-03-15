@@ -116,14 +116,17 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         try {
             LOGGER.log(`[Download] Sending request to: ${currentUrl}`);
             let forceIpv4 = false;
+            let isForgeHost = false;
             try {
                 const host = new URL(currentUrl).hostname;
                 if (host === "maven.minecraftforge.net" || host === "files.minecraftforge.net") {
                     forceIpv4 = true;
+                    isForgeHost = true;
                 }
             } catch (e) {
                 // ignore URL parse errors
             }
+            const stallTimeoutMs = isForgeHost ? 15000 : 120000;
             
             const {data, headers} = await axiosInstance({
                 url: currentUrl,
@@ -187,7 +190,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                     // ignore
                 }
                 failAttempt(new Error("Download timeout"));
-            }, 120000);
+            }, stallTimeoutMs);
 
             // Периодический лог прогресса (раз в 5 секунд)
             progressUpdateTimer = setInterval(() => {
@@ -218,7 +221,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                             // ignore
                         }
                         failAttempt(new Error("Download timeout"));
-                    }, 120000);
+                    }, stallTimeoutMs);
                 }
                 
                 // Проверяем, что задача ещё существует
