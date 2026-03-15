@@ -141,9 +141,9 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                     coreMirrors = mirrors;
                 }
                 
-                // Затем добавляем зеркала из конфига
+                // Затем добавляем зеркала из конфига (только если нет зеркал из API)
                 const coreKey = core.toLowerCase();
-                if (PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
+                if (coreMirrors.length === 0 && PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
                     coreMirrors = coreMirrors.concat(PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || []);
                 }
 

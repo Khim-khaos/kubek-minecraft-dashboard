@@ -64,7 +64,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             return null;
         }
 
-        const currentUrl = urlsToTry[currentUrlIndex];
+        let currentUrl = urlsToTry[currentUrlIndex];
         const attemptId = ++activeAttemptId;
         let dlTaskID = null;
         let downloadComplete = false;
@@ -72,6 +72,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         let responseStream = null;
         let writeStream = null;
         let abortController = new AbortController();
+        let extraHeaders = null;
 
         const cleanupAttempt = (removeTask = false, destroyStreams = false) => {
             if (downloadTimeout) {
@@ -128,21 +129,69 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             }
             const stallTimeoutMs = isForgeHost ? 15000 : 120000;
             
-            const {data, headers} = await axiosInstance({
-                url: currentUrl,
-                method: "GET",
-                responseType: "stream",
-                timeout: 180000, // 3 минуты таймаут на запрос
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity,
-                signal: abortController.signal,
-                family: forceIpv4 ? 4 : undefined
-            });
+            const requestStream = async (url, headersOverride = null) => {
+                return axiosInstance({
+                    url,
+                    method: "GET",
+                    responseType: "stream",
+                    timeout: 180000, // 3 минуты таймаут на запрос
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity,
+                    signal: abortController.signal,
+                    family: forceIpv4 ? 4 : undefined,
+                    headers: headersOverride ? Object.assign({}, headersOverride) : undefined
+                });
+            };
+            
+            const resolveNyistAuth = async (url) => {
+                try {
+                    const parsed = new URL(url);
+                    if (parsed.hostname !== "mirror.nyist.edu.cn") return null;
+                    const originUrl = parsed.pathname + parsed.search;
+                    const authUrl = "https://mirror.nyist.edu.cn/getcookie?originurl=" + encodeURIComponent(originUrl);
+                    const authResp = await axiosInstance({
+                        url: authUrl,
+                        method: "GET",
+                        responseType: "json",
+                        timeout: 15000,
+                        maxContentLength: 1024 * 1024
+                    });
+                    if (!authResp || !authResp.data) return null;
+                    const cookie = authResp.data.cookie;
+                    const targetUrl = authResp.data.url;
+                    if (!cookie || !targetUrl) return null;
+                    const finalUrl = parsed.protocol + "//" + parsed.host + decodeURIComponent(targetUrl) + "?auth=" + cookie;
+                    return { url: finalUrl, cookie };
+                } catch (e) {
+                    return null;
+                }
+            };
+            
+            let response = await requestStream(currentUrl);
+            let { data, headers } = response;
             
             LOGGER.log(`[Download] Response headers: content-length=${headers['content-length'] || 'N/A'}, content-type=${headers['content-type'] || 'N/A'}`);
             const contentType = String(headers['content-type'] || '').toLowerCase();
             if (contentType.includes('text/html') || contentType.includes('text/plain')) {
-                throw new Error(`Unexpected content-type: ${contentType}`);
+                const nyistAuth = await resolveNyistAuth(currentUrl);
+                if (nyistAuth) {
+                    try {
+                        if (data && !data.destroyed) data.destroy();
+                    } catch (e) {
+                        // ignore
+                    }
+                    currentUrl = nyistAuth.url;
+                    extraHeaders = { 'Cookie': `auth=${nyistAuth.cookie}` };
+                    response = await requestStream(currentUrl, extraHeaders);
+                    data = response.data;
+                    headers = response.headers;
+                    LOGGER.log(`[Download] Response headers: content-length=${headers['content-length'] || 'N/A'}, content-type=${headers['content-type'] || 'N/A'}`);
+                }
+            }
+            
+            const contentTypeFinal = String(headers['content-type'] || '').toLowerCase();
+            if (contentTypeFinal.includes('text/html') || contentTypeFinal.includes('text/plain')) {
+                throw new Error(`Unexpected content-type: ${contentTypeFinal}`);
             }
             
             const totalSize = parseInt(headers['content-length']) || 0;
