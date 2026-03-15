@@ -242,6 +242,37 @@ function findServerJar(directory, core) {
         const files = fs.readdirSync(directory);
         LOGGER.log("[Installer] Files in server directory: " + files.join(", "));
         
+        // Проверяем лог установки Forge (новый способ для Forge 1.20.1+)
+        let installerLog = files.find(f => f.endsWith('-installer.jar.log'));
+        if (installerLog) {
+            LOGGER.log("[Installer] Found installer log: " + installerLog);
+            try {
+                let logContent = fs.readFileSync(directory + path.sep + installerLog, 'utf8');
+                LOGGER.log("[Installer] Log content (last 500 chars): " + logContent.slice(-500).replace(/\n/g, ' '));
+                
+                // Ищем фразу об успешной установке в любом месте лога
+                if (logContent.includes('The server installed successfully') || logContent.includes('installed successfully')) {
+                    LOGGER.log("[Installer] Forge installer log confirms successful installation");
+                } else {
+                    LOGGER.warning("[Installer] Installer log does not contain success message, but continuing...");
+                }
+            } catch (logErr) {
+                LOGGER.error("[Installer] Could not read installer log: " + logErr.message);
+            }
+        } else {
+            LOGGER.warning("[Installer] No installer log file found");
+        }
+        
+        // Для Forge 1.20.1+ проверяем наличие run.bat как признак успешной установки
+        if (files.includes('run.bat')) {
+            LOGGER.log("[Installer] run.bat exists, using as server entry point");
+            return 'run.bat';
+        }
+        if (files.includes('run.sh')) {
+            LOGGER.log("[Installer] run.sh exists, using as server entry point");
+            return 'run.sh';
+        }
+        
         // Приоритет 1: Ищем server.jar (универсальное имя)
         if (files.includes('server.jar')) {
             LOGGER.log("[Installer] Found server.jar");
@@ -294,41 +325,88 @@ exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaEx
     let hasRunBat = fs.existsSync(serverDir + "/run.bat");
     let hasRunSh = fs.existsSync(serverDir + "/run.sh");
     
-    if (process.platform === "win32") {
-        if (hasRunBat) {
-            // Если есть родной run.bat от Forge/NeoForge - используем его
-            // Но модифицируем для установки правильной Java
-            let runBatContent = fs.readFileSync(serverDir + "/run.bat", "utf8");
-            // Заменяем java.exe на наш Java
-            let modifiedRunBat = runBatContent.replace(
-                /"?[^"\s]*\\bin\\java\.exe"?/i,
-                '"' + fullJavaExecutablePath + '"'
-            );
-            // Если не нашли java.exe, добавляем в начало
-            if (modifiedRunBat === runBatContent) {
-                modifiedRunBat = '@echo off\nchcp 65001>nul\nset JAVA_EXE="' + fullJavaExecutablePath + '"\n' + runBatContent;
-            }
-            fs.writeFileSync(serverDir + "/start.bat", modifiedRunBat);
-        } else {
-            // Стандартный start.bat
-            fs.writeFileSync(serverDir + "/start.bat", "@echo off\nchcp 65001>nul\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+    // Если coreFileName это run.bat/run.sh - используем родной файл (без nogui, передадим через args)
+    if (coreFileName === 'run.bat' || coreFileName === 'run.sh') {
+        // Сначала настраиваем user_jvm_args.txt с нужным объемом памяти
+        let memValue = startParameters.match(/-Xmx(\d+)/i);
+        if (memValue) {
+            let memGB = Math.floor(parseInt(memValue[1]) / 1024);
+            if (memGB < 1) memGB = 1;
+            let userJvmArgs = `# Xmx and Xms set the maximum and minimum RAM usage, respectively.\n` +
+                             `# They can take any number, followed by an M or a G.\n` +
+                             `# M means Megabyte, G means Gigabyte.\n` +
+                             `# For example, to set the maximum to 3GB: -Xmx3G\n` +
+                             `# To set the minimum to 2.5GB: -Xms2500M\n\n` +
+                             `# A good default for a modded server is 4GB.\n` +
+                             `# Uncomment the next line to set it.\n` +
+                             `-Xmx${memGB}G\n`;
+            fs.writeFileSync(serverDir + "/user_jvm_args.txt", userJvmArgs);
+            LOGGER.log("[Installer] Updated user_jvm_args.txt with -Xmx" + memGB + "G");
         }
-    } else if (process.platform === "linux") {
-        if (hasRunSh) {
-            // Если есть родной run.sh от Forge/NeoForge - используем его
-            let runShContent = fs.readFileSync(serverDir + "/run.sh", "utf8");
-            // Заменяем java на наш Java
-            let modifiedRunSh = runShContent.replace(
-                /(?:^|\s)(?:\/usr\/bin\/)?java(?:\s|$)/i,
-                '"' + fullJavaExecutablePath + '" '
-            );
-            // Если не нашли java, добавляем в начало
-            if (modifiedRunSh === runShContent) {
-                modifiedRunSh = 'export JAVA_EXE="' + fullJavaExecutablePath + '"\n' + runShContent;
+        
+        if (process.platform === "win32" && hasRunBat) {
+            // Ищем win_args.txt в папке libraries
+            let winArgsPath = null;
+            try {
+                let forgeDir = serverDir + '/libraries/net/minecraftforge/forge/';
+                let versions = fs.readdirSync(forgeDir);
+                for (let ver of versions) {
+                    if (fs.existsSync(forgeDir + ver + '/win_args.txt')) {
+                        winArgsPath = 'libraries/net/minecraftforge/forge/' + ver + '/win_args.txt';
+                        break;
+                    }
+                }
+            } catch (e) {
+                LOGGER.warning("[Installer] Could not find win_args.txt, using default");
             }
-            fs.writeFileSync(serverDir + "/start.sh", modifiedRunSh);
-        } else {
-            // Стандартный start.sh
+            
+            // Создаём start.bat который запускает Java напрямую с nogui
+            let startBat = '@echo off\n' +
+                          'chcp 65001>nul\n' +
+                          'cd /d %~dp0\n';
+            
+            if (winArgsPath) {
+                startBat += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt @"' + winArgsPath + '" nogui\n';
+            } else {
+                startBat += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar forge.jar nogui\n';
+            }
+            
+            fs.writeFileSync(serverDir + "/start.bat", startBat);
+            LOGGER.log("[Installer] Created start.bat with nogui argument");
+        } else if (process.platform === "linux" && hasRunSh) {
+            // Ищем unix_args.txt в папке libraries
+            let unixArgsPath = null;
+            try {
+                let forgeDir = serverDir + '/libraries/net/minecraftforge/forge/';
+                let versions = fs.readdirSync(forgeDir);
+                for (let ver of versions) {
+                    if (fs.existsSync(forgeDir + ver + '/unix_args.txt')) {
+                        unixArgsPath = 'libraries/net/minecraftforge/forge/' + ver + '/unix_args.txt';
+                        break;
+                    }
+                }
+            } catch (e) {
+                LOGGER.warning("[Installer] Could not find unix_args.txt, using default");
+            }
+            
+            // Создаём start.sh который запускает Java напрямую с nogui
+            let startSh = '#!/bin/bash\n' +
+                         'cd "$(dirname "$0")"\n';
+            
+            if (unixArgsPath) {
+                startSh += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt @"' + unixArgsPath + '" nogui\n';
+            } else {
+                startSh += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar forge.jar nogui\n';
+            }
+            
+            fs.writeFileSync(serverDir + "/start.sh", startSh);
+            LOGGER.log("[Installer] Created start.sh with nogui argument");
+        }
+    } else {
+        // Стандартный start.bat/start.sh для обычных JAR
+        if (process.platform === "win32") {
+            fs.writeFileSync(serverDir + "/start.bat", "@echo off\nchcp 65001>nul\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+        } else if (process.platform === "linux") {
             fs.writeFileSync(serverDir + "/start.sh", "cd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
         }
     }

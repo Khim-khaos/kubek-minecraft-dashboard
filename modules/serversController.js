@@ -90,10 +90,11 @@ exports.startServer = (serverName) => {
         let startProps = this.prepareServerToStart(serverName);
         if (startProps !== false) {
             // Создаём spawn и добавляем хэндлеры
+            let serverDir = "./servers/" + serverName;
             if (startProps.spawnArgs.length === 1) {
-                serversInstances[serverName] = spawn(`"${startProps.spawnArgs[0]}"`, {shell: true});
+                serversInstances[serverName] = spawn(`"${startProps.spawnArgs[0]}"`, {shell: true, cwd: serverDir});
             } else if (startProps.spawnArgs.length === 2) {
-                serversInstances[serverName] = spawn(`"${startProps.spawnArgs[0]}"`, startProps.spawnArgs[1], {shell: true});
+                serversInstances[serverName] = spawn(`"${startProps.spawnArgs[0]}"`, startProps.spawnArgs[1], {shell: true, cwd: serverDir});
             } else {
                 return false;
             }
