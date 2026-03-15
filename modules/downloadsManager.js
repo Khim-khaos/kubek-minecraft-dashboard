@@ -122,29 +122,43 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                     }, 120000);
                 }
                 
-                tasks[dlTaskID].size.current = receivedBytes;
-                
-                // Если размер неизвестен, показываем прогресс по полученным байтам
-                if (totalSize === 0) {
-                    tasks[dlTaskID].progress = Math.min(99, Math.floor(receivedBytes / 1024 / 1024 * 10)); // Примерный прогресс
-                } else {
-                    tasks[dlTaskID].progress = Math.round((receivedBytes / totalSize) * 100);
-                }
-                
-                if (tasks[dlTaskID].progress >= 100 || (totalSize === 0 && receivedBytes > 0)) {
-                    // Возвращаем коллбэк после окончания скачивания
-                    if (downloadTimeout) clearTimeout(downloadTimeout);
-                    if (progressUpdateTimer) clearInterval(progressUpdateTimer);
-                    TASK_MANAGER.removeTask(dlTaskID);
-                    cb(true);
+                // Проверяем, что задача ещё существует
+                if (tasks[dlTaskID]) {
+                    tasks[dlTaskID].size.current = receivedBytes;
+                    
+                    // Если размер неизвестен, показываем прогресс по полученным байтам
+                    if (totalSize === 0) {
+                        tasks[dlTaskID].progress = Math.min(99, Math.floor(receivedBytes / 1024 / 1024 * 10)); // Примерный прогресс
+                    } else {
+                        tasks[dlTaskID].progress = Math.round((receivedBytes / totalSize) * 100);
+                    }
+                    
+                    if (tasks[dlTaskID].progress >= 100) {
+                        // Возвращаем коллбэк после окончания скачивания
+                        if (downloadTimeout) clearTimeout(downloadTimeout);
+                        if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                        TASK_MANAGER.removeTask(dlTaskID);
+                        cb(true);
+                    }
                 }
             });
 
             data.on('end', () => {
                 if (downloadTimeout) clearTimeout(downloadTimeout);
                 if (progressUpdateTimer) clearInterval(progressUpdateTimer);
-                TASK_MANAGER.removeTask(dlTaskID);
+                // Проверяем, что задача ещё существует перед удалением
+                if (tasks[dlTaskID]) {
+                    TASK_MANAGER.removeTask(dlTaskID);
+                }
                 cb(true);
+            });
+
+            data.on('error', (err) => {
+                if (downloadTimeout) clearTimeout(downloadTimeout);
+                if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                LOGGER.error(`[Download] Stream error: ${err.message}`);
+                currentUrlIndex++;
+                tryDownload();
             });
 
             data.pipe(fs.createWriteStream(filePath));

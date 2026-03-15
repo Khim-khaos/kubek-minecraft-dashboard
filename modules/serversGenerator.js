@@ -71,6 +71,16 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
     
     // Определяем, является ли ядро установщиком (Forge, Fabric, NeoForge)
     let isInstaller = ["forge", "fabric", "neoforge"].includes(core.toLowerCase());
+    let callbackCalled = false;
+    
+    // Обёртка для callback, чтобы избежать двойного вызова
+    const safeCb = (...args) => {
+        if (!callbackCalled) {
+            callbackCalled = true;
+            cb(...args);
+        }
+    };
+    
     if (isInstaller) {
         coreFileName = core + "-" + coreVersion + "-installer.jar";
     }
@@ -88,7 +98,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
 
     // Если сервер с таким названием уже существует - не продолжаем
     if (SERVERS_MANAGER.isServerExists(serverName)) {
-        cb(false);
+        safeCb(false);
         return false;
     }
 
@@ -113,7 +123,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             CONFIGURATION.writeServersConfig(serversConfig);
             this.writeJavaStartFiles(serverName, core, startParameters, javaExecutablePath, serverPort, core);
             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-            cb(true);
+            safeCb(true);
         } else {
             // ЕСЛИ ЯДРО НУЖНО СКАЧИВАТЬ
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.SEARCHING_CORE;
@@ -190,23 +200,23 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                                         CONFIGURATION.writeServersConfig(serversConfig);
                                         this.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort, core);
                                         LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-                                        cb(true);
+                                        safeCb(true);
                                     } else {
                                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                                         LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
-                                        cb(false);
+                                        safeCb(false);
                                     }
                                 } else {
                                     tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                                     LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}") + " (exit code: " + code + ")");
-                                    cb(false);
+                                    safeCb(false);
                                 }
                             });
-                            
+
                             installProcess.on('error', (err) => {
                                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                                 LOGGER.warning("Installer error: " + err.message);
-                                cb(false);
+                                safeCb(false);
                             });
                         } else {
                             // Обычное ядро (не installer)
@@ -223,12 +233,12 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                             CONFIGURATION.writeServersConfig(serversConfig);
                             this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort, core);
                             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-                            cb(true);
+                            safeCb(true);
                         }
                     } else {
                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                         LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreDownloadFailed}}"));
-                        cb(false);
+                        safeCb(false);
                     }
                 }, coreMirrors);
             });
