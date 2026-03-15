@@ -159,7 +159,7 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
     // Пробуем получить данные с основного URL или зеркала
     let urlsToTry = [
         "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
-        "https://dl.mslmc.cn/forge/promotions_slim.json"
+        "https://bmclapi2.bangbang93.com/forge/versions/promotions_slim.json"  // BMCLAPI зеркало
     ];
     
     function tryNext(index) {
@@ -186,10 +186,9 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
                               minecraftVersion + "-" + forgeVersion + 
                               "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // Китайское зеркало MSLMC
-                let mirrorUrl = "https://dl.mslmc.cn/forge/" + 
-                               minecraftVersion + "-" + forgeVersion + 
-                               "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+                // BMCLAPI зеркало
+                let mirrorUrl = "https://bmclapi2.bangbang93.com/forge/download/installer/" + 
+                               minecraftVersion + "-" + forgeVersion;
                 
                 cb(forgeUrl, [mirrorUrl]);
             } else {
@@ -240,9 +239,9 @@ exports.getFabricCoreURL = (minecraftVersion, cb) => {
         let fabricUrl = "https://meta.fabricmc.net/v2/versions/loader/" + 
                        minecraftVersion + "/" + loaderVersion + "/server/jar";
         
-        // Китайское зеркало MSLMC
-        let mirrorUrl = "https://dl.mslmc.cn/fabric-loader/" + 
-                       loaderVersion + "/server/jar";
+        // BMCLAPI зеркало
+        let mirrorUrl = "https://bmclapi2.bangbang93.com/fabric-loader/v2/versions/loader/" + 
+                       minecraftVersion + "/" + loaderVersion + "/server/jar";
         
         cb(fabricUrl, [mirrorUrl]);
     });
