@@ -1,4 +1,7 @@
-CORE_GRID_ITEM_PLACEHOLDER = "<div class='card centered' data-id='$1'> <img alt='$0 logo' class='icon' src='/assets/icons/cores/$1.png'> <span class='title'>$0</span> </div>";
+// Массив ядер, для которых есть SVG иконки
+const SVG_CORES = ["forge", "fabric", "neoforge", "velocity", "waterfall"];
+
+CORE_GRID_ITEM_PLACEHOLDER = "<div class='card centered' data-id='$1'> <img alt='$0 logo' class='icon' src='/assets/icons/cores/$1$2'> <span class='title'>$0</span> </div>";
 JAVA_ITEM_PLACEHOLDER = "<div class='item' data-type='$0' data-data='$1'> <span class='text'>$2</span> <span class='check material-symbols-rounded'>check</span> </div>";
 SERVER_NAME_REGEXP = /^[a-zA-Z0-9\-\_]{1,20}$/;
 AIKAR_FLAGS = "--add-modules=jdk.incubator.vector -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20";
@@ -112,7 +115,9 @@ function refreshServerCoresList(cb = () => {
 
         // Загружаем новый список
         for (const [, core] of Object.entries(cores)) {
-            $(".new-server-container #cores-grid").append(CORE_GRID_ITEM_PLACEHOLDER.replaceAll("$0", core.displayName).replaceAll("$1", core.name));
+            // Определяем расширение иконки (SVG или PNG)
+            let iconExt = SVG_CORES.includes(core.name) ? ".svg" : ".png";
+            $(".new-server-container #cores-grid").append(CORE_GRID_ITEM_PLACEHOLDER.replaceAll("$0", core.displayName).replaceAll("$1", core.name).replaceAll("$2", iconExt));
         }
         // Делаем первый элемент активным и загружаем ID ядра в переменную
         $(".new-server-container #cores-grid .card:first-child").addClass("active");

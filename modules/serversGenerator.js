@@ -157,8 +157,18 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                             installProcess.on('exit', (code) => {
                                 if (code === 0 || code === null) {
                                     // Установка успешна, определяем имя целевого JAR файла
-                                    let targetCoreJar = findServerJar(serverDirectoryPath);
+                                    let targetCoreJar = findServerJar(serverDirectoryPath, core);
                                     
+                                    // Удаляем installer после успешной установки
+                                    try {
+                                        if (fs.existsSync(serverDirectoryPath + path.sep + coreFileName)) {
+                                            fs.unlinkSync(serverDirectoryPath + path.sep + coreFileName);
+                                            LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
+                                        }
+                                    } catch (e) {
+                                        LOGGER.warning("[Installer] Could not delete installer file: " + e.message);
+                                    }
+
                                     if (targetCoreJar) {
                                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
                                         // Добавляем новый сервер в конфиг
@@ -181,7 +191,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                                     }
                                 } else {
                                     tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
-                                    LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
+                                    LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}") + " (exit code: " + code + ")");
                                     cb(false);
                                 }
                             });
@@ -220,23 +230,42 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
 }
 
 // Функция для поиска основного JAR файла сервера после установки
-function findServerJar(directory) {
+function findServerJar(directory, core) {
     try {
         const files = fs.readdirSync(directory);
-        // Ищем JAR файлы, содержащие в названии 'server' или 'forge'/'fabric'/'neoforge'
+        
+        // Приоритет 1: Ищем server.jar (универсальное имя)
+        if (files.includes('server.jar')) {
+            return 'server.jar';
+        }
+        
+        // Приоритет 2: Для Forge ищем universal.jar
+        if (core.toLowerCase() === 'forge') {
+            for (let file of files) {
+                if (file.endsWith('-universal.jar')) {
+                    return file;
+                }
+            }
+        }
+        
+        // Приоритет 3: Ищем JAR файлы, исключая installer и client
         for (let file of files) {
-            if (file.endsWith('.jar') && !file.includes('-installer') && !file.includes('-client')) {
+            if (file.endsWith('.jar') && 
+                !file.includes('-installer') && 
+                !file.includes('-client') &&
+                !file.includes('-dev')) {
                 return file;
             }
         }
-        // Если не нашли, возвращаем первый попавшийся JAR
+        
+        // Если не нашли, возвращаем первый попавшийся JAR (кроме installer)
         for (let file of files) {
-            if (file.endsWith('.jar')) {
+            if (file.endsWith('.jar') && !file.includes('-installer')) {
                 return file;
             }
         }
     } catch (e) {
-        return null;
+        LOGGER.error("Error finding server jar: " + e.message);
     }
     return null;
 }
