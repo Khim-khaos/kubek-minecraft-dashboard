@@ -48,10 +48,14 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
     let currentUrlIndex = 0;
     let lastError = null;
     let downloadTimeout = null;
+    let isComplete = false;
 
     async function tryDownload() {
+        if (isComplete) return;
+        
         if (currentUrlIndex >= urlsToTry.length) {
             // Все URL перепробованы
+            isComplete = true;
             cb(lastError || new Error("Все зеркала недоступны"));
             return null;
         }
@@ -96,9 +100,11 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
             let receivedBytes = 0;
             let progressUpdateTimer = null;
+            let downloadComplete = false;
 
             // Таймаут на скачивание (если прогресс не обновляется 2 минуты)
             downloadTimeout = setTimeout(() => {
+                if (downloadComplete) return;
                 LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
                 if (progressUpdateTimer) clearInterval(progressUpdateTimer);
                 downloadTimeout = null;
@@ -108,12 +114,15 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
             // Каждый чанк обновляем прогресс
             data.on('data', (chunk) => {
+                if (downloadComplete) return;
+                
                 receivedBytes += chunk.length;
                 
                 // Сбрасываем таймаут при получении данных
                 if (downloadTimeout) {
                     clearTimeout(downloadTimeout);
                     downloadTimeout = setTimeout(() => {
+                        if (downloadComplete) return;
                         LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror...`);
                         if (progressUpdateTimer) clearInterval(progressUpdateTimer);
                         downloadTimeout = null;
@@ -132,28 +141,28 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                     } else {
                         tasks[dlTaskID].progress = Math.round((receivedBytes / totalSize) * 100);
                     }
-                    
-                    if (tasks[dlTaskID].progress >= 100) {
-                        // Возвращаем коллбэк после окончания скачивания
-                        if (downloadTimeout) clearTimeout(downloadTimeout);
-                        if (progressUpdateTimer) clearInterval(progressUpdateTimer);
-                        TASK_MANAGER.removeTask(dlTaskID);
-                        cb(true);
-                    }
                 }
             });
 
             data.on('end', () => {
+                if (downloadComplete) return;
+                downloadComplete = true;
+                
                 if (downloadTimeout) clearTimeout(downloadTimeout);
                 if (progressUpdateTimer) clearInterval(progressUpdateTimer);
+                
                 // Проверяем, что задача ещё существует перед удалением
                 if (tasks[dlTaskID]) {
                     TASK_MANAGER.removeTask(dlTaskID);
                 }
+                
+                LOGGER.log(`[Download] Download completed: ${filePath}`);
+                isComplete = true;
                 cb(true);
             });
 
             data.on('error', (err) => {
+                if (downloadComplete) return;
                 if (downloadTimeout) clearTimeout(downloadTimeout);
                 if (progressUpdateTimer) clearInterval(progressUpdateTimer);
                 LOGGER.error(`[Download] Stream error: ${err.message}`);
@@ -161,7 +170,21 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 tryDownload();
             });
 
-            data.pipe(fs.createWriteStream(filePath));
+            const writeStream = fs.createWriteStream(filePath);
+            
+            writeStream.on('error', (err) => {
+                if (downloadComplete) return;
+                LOGGER.error(`[Download] Write error: ${err.message}`);
+                if (downloadTimeout) clearTimeout(downloadTimeout);
+                currentUrlIndex++;
+                tryDownload();
+            });
+            
+            writeStream.on('finish', () => {
+                // Файл записан, но ждём события 'end' от потока данных
+            });
+
+            data.pipe(writeStream);
             return dlTaskID;
         } catch (error) {
             if (downloadTimeout) clearTimeout(downloadTimeout);
