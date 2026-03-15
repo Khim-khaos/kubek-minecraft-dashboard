@@ -111,13 +111,13 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             };
             // DEVELOPED by seeeroy
             CONFIGURATION.writeServersConfig(serversConfig);
-            this.writeJavaStartFiles(serverName, core, startParameters, javaExecutablePath, serverPort);
+            this.writeJavaStartFiles(serverName, core, startParameters, javaExecutablePath, serverPort, core);
             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
             cb(true);
         } else {
             // ЕСЛИ ЯДРО НУЖНО СКАЧИВАТЬ
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.SEARCHING_CORE;
-            CORES_MANAGER.getCoreVersionURL(core, coreVersion, (url) => {
+            CORES_MANAGER.getCoreVersionURL(core, coreVersion, (url, mirrors = []) => {
                 coreDownloadURL = url;
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.CHECKING_JAVA;
                 // Скачиваем ядро для сервера (с поддержкой зеркал)
@@ -125,18 +125,16 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
 
                 // Получаем зеркала для этого типа ядра
                 let coreMirrors = [];
-                const coreKey = core.toLowerCase();
-
-                // Проверяем наличие в SERVER_CORE_MIRRORS
-                if (PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
-                    coreMirrors = PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || [];
+                
+                // Сначала добавляем зеркала из API (если есть)
+                if (Array.isArray(mirrors) && mirrors.length > 0) {
+                    coreMirrors = mirrors;
                 }
-
-                // Добавляем MSLMC как универсальное зеркало
-                if (coreMirrors.length === 0) {
-                    coreMirrors = [
-                        `https://dl.mslmc.cn/${core}/${coreVersion}.jar`
-                    ];
+                
+                // Затем добавляем зеркала из конфига
+                const coreKey = core.toLowerCase();
+                if (PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
+                    coreMirrors = coreMirrors.concat(PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || []);
                 }
 
                 DOWNLOADS_MANAGER.addDownloadTask(coreDownloadURL, serverDirectoryPath + path.sep + coreFileName, (coreDlResult) => {
@@ -159,15 +157,19 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                                     // Установка успешна, определяем имя целевого JAR файла
                                     let targetCoreJar = findServerJar(serverDirectoryPath, core);
                                     
-                                    // Удаляем installer после успешной установки
-                                    try {
-                                        if (fs.existsSync(serverDirectoryPath + path.sep + coreFileName)) {
-                                            fs.unlinkSync(serverDirectoryPath + path.sep + coreFileName);
-                                            LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
+                                    // Удаляем installer после успешной установки (с задержкой)
+                                    setTimeout(() => {
+                                        try {
+                                            let installerPath = serverDirectoryPath + path.sep + coreFileName;
+                                            if (fs.existsSync(installerPath)) {
+                                                fs.unlinkSync(installerPath);
+                                                LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
+                                            }
+                                        } catch (e) {
+                                            // Файл может быть ещё заблокирован, не критично
+                                            LOGGER.warning("[Installer] Could not delete installer file (may be locked): " + e.message);
                                         }
-                                    } catch (e) {
-                                        LOGGER.warning("[Installer] Could not delete installer file: " + e.message);
-                                    }
+                                    }, 2000); // Ждём 2 секунды перед удалением
 
                                     if (targetCoreJar) {
                                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
@@ -181,7 +183,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                                             stopCommand: "stop"
                                         };
                                         CONFIGURATION.writeServersConfig(serversConfig);
-                                        this.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort);
+                                        this.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort, core);
                                         LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
                                         cb(true);
                                     } else {
@@ -214,7 +216,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                                 stopCommand: "stop"
                             };
                             CONFIGURATION.writeServersConfig(serversConfig);
-                            this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort);
+                            this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort, core);
                             LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
                             cb(true);
                         }
@@ -271,17 +273,58 @@ function findServerJar(directory, core) {
 }
 
 // Записать файлы запуска и eula для сервера Java
-exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaExecutablePath, serverPort) => {
+exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaExecutablePath, serverPort, core = "") => {
     let fullStartParameters = "-Dfile.encoding=UTF-8 " + startParameters + " -jar " + coreFileName + " nogui";
     let fullJavaExecutablePath = path.resolve(javaExecutablePath);
-    fs.writeFileSync("./servers/" + serverName + "/eula.txt", "eula=true");
+    let serverDir = "./servers/" + serverName;
+    
+    fs.writeFileSync(serverDir + "/eula.txt", "eula=true");
+    
+    // Проверяем, есть ли run.bat/run.sh от установщика (Forge/NeoForge)
+    let hasRunBat = fs.existsSync(serverDir + "/run.bat");
+    let hasRunSh = fs.existsSync(serverDir + "/run.sh");
+    
     if (process.platform === "win32") {
-        fs.writeFileSync("./servers/" + serverName + "/start.bat", "@echo off\nchcp 65001>nul\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+        if (hasRunBat) {
+            // Если есть родной run.bat от Forge/NeoForge - используем его
+            // Но модифицируем для установки правильной Java
+            let runBatContent = fs.readFileSync(serverDir + "/run.bat", "utf8");
+            // Заменяем java.exe на наш Java
+            let modifiedRunBat = runBatContent.replace(
+                /"?[^"\s]*\\bin\\java\.exe"?/i,
+                '"' + fullJavaExecutablePath + '"'
+            );
+            // Если не нашли java.exe, добавляем в начало
+            if (modifiedRunBat === runBatContent) {
+                modifiedRunBat = '@echo off\nchcp 65001>nul\nset JAVA_EXE="' + fullJavaExecutablePath + '"\n' + runBatContent;
+            }
+            fs.writeFileSync(serverDir + "/start.bat", modifiedRunBat);
+        } else {
+            // Стандартный start.bat
+            fs.writeFileSync(serverDir + "/start.bat", "@echo off\nchcp 65001>nul\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+        }
     } else if (process.platform === "linux") {
-        fs.writeFileSync("./servers/" + serverName + "/start.sh", "cd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+        if (hasRunSh) {
+            // Если есть родной run.sh от Forge/NeoForge - используем его
+            let runShContent = fs.readFileSync(serverDir + "/run.sh", "utf8");
+            // Заменяем java на наш Java
+            let modifiedRunSh = runShContent.replace(
+                /(?:^|\s)(?:\/usr\/bin\/)?java(?:\s|$)/i,
+                '"' + fullJavaExecutablePath + '" '
+            );
+            // Если не нашли java, добавляем в начало
+            if (modifiedRunSh === runShContent) {
+                modifiedRunSh = 'export JAVA_EXE="' + fullJavaExecutablePath + '"\n' + runShContent;
+            }
+            fs.writeFileSync(serverDir + "/start.sh", modifiedRunSh);
+        } else {
+            // Стандартный start.sh
+            fs.writeFileSync(serverDir + "/start.sh", "cd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+        }
     }
+    
     fs.writeFileSync(
-        "./servers/" + serverName + "/server.properties",
+        serverDir + "/server.properties",
         "server-port=" +
         serverPort +
         "\nquery.port=" +

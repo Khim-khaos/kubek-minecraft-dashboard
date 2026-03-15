@@ -152,11 +152,17 @@ exports.getForgeCoreURL = (minecraftVersion, cb) => {
                           data.promos[minecraftVersion + "-latest"];
         
         if (forgeVersion) {
-            // Формируем URL для installer
+            // Формируем URL для installer (основной + зеркала)
             let forgeUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + 
                           minecraftVersion + "-" + forgeVersion + 
                           "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
-            cb(forgeUrl);
+            
+            // Китайское зеркало MSLMC
+            let mirrorUrl = "https://dl.mslmc.cn/forge/" + 
+                           minecraftVersion + "-" + forgeVersion + 
+                           "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+            
+            cb(forgeUrl, [mirrorUrl]);
         } else {
             cb(false);
         }
@@ -198,10 +204,15 @@ exports.getFabricCoreURL = (minecraftVersion, cb) => {
         // Берем первую (последнюю) версию loader
         let loaderVersion = data[0].loader.version;
         
-        // Формируем URL для скачивания server jar
+        // Формируем URL для скачивания server jar (основной + зеркала)
         let fabricUrl = "https://meta.fabricmc.net/v2/versions/loader/" + 
                        minecraftVersion + "/" + loaderVersion + "/server/jar";
-        cb(fabricUrl);
+        
+        // Китайское зеркало MSLMC
+        let mirrorUrl = "https://dl.mslmc.cn/fabric-loader/" + 
+                       loaderVersion + "/server/jar";
+        
+        cb(fabricUrl, [mirrorUrl]);
     });
 };
 
@@ -245,10 +256,16 @@ exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
         // Берем последнюю версию NeoForge для этой версии Minecraft
         let neoforgeVersion = data[0].version;
         
-        // Формируем URL для installer
+        // Формируем URL для installer (основной + зеркала)
         let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
                          minecraftVersion + "-" + neoforgeVersion + 
                          "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-        cb(neoforgeUrl);
+        
+        // Китайское зеркало MSLMC
+        let mirrorUrl = "https://dl.mslmc.cn/neoforge/" + 
+                       minecraftVersion + "-" + neoforgeVersion + 
+                       "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+        
+        cb(neoforgeUrl, [mirrorUrl]);
     });
 };
