@@ -68,6 +68,12 @@ async function prepareJavaForServer(javaVersion, cb) {
 async function startJavaServerGeneration(serverName, core, coreVersion, startParameters, javaExecutablePath, serverPort, cb) {
     let coreDownloadURL = "";
     let coreFileName = core + "-" + coreVersion + ".jar";
+    
+    // Определяем, является ли ядро установщиком (Forge, Fabric, NeoForge)
+    let isInstaller = ["forge", "fabric", "neoforge"].includes(core.toLowerCase());
+    if (isInstaller) {
+        coreFileName = core + "-" + coreVersion + "-installer.jar";
+    }
 
     // Создаём задачу на создание сервера
     let creationTaskID = TASK_MANAGER.addNewTask({
@@ -116,39 +122,92 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.CHECKING_JAVA;
                 // Скачиваем ядро для сервера (с поддержкой зеркал)
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.DOWNLOADING_CORE;
-                
+
                 // Получаем зеркала для этого типа ядра
                 let coreMirrors = [];
                 const coreKey = core.toLowerCase();
-                
+
                 // Проверяем наличие в SERVER_CORE_MIRRORS
                 if (PREDEFINED.SERVER_CORE_MIRRORS[coreKey]) {
                     coreMirrors = PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || [];
                 }
-                
+
                 // Добавляем MSLMC как универсальное зеркало
                 if (coreMirrors.length === 0) {
                     coreMirrors = [
                         `https://dl.mslmc.cn/${core}/${coreVersion}.jar`
                     ];
                 }
-                
+
                 DOWNLOADS_MANAGER.addDownloadTask(coreDownloadURL, serverDirectoryPath + path.sep + coreFileName, (coreDlResult) => {
                     if (coreDlResult === true) {
-                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
-                        // Добавляем новый сервер в конфиг
-                        serversConfig[serverName] = {
-                            status: PREDEFINED.SERVER_STATUSES.STOPPED,
-                            restartOnError: true,
-                            maxRestartAttempts: 3,
-                            game: "minecraft",
-                            minecraftType: "java",
-                            stopCommand: "stop"
-                        };
-                        CONFIGURATION.writeServersConfig(serversConfig);
-                        this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort);
-                        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-                        cb(true);
+                        // Если это installer (Forge/Fabric/NeoForge), запускаем установку
+                        if (isInstaller) {
+                            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.INSTALLING;
+                            
+                            let installerArgs = "--installServer";
+                            let fullJavaPath = path.resolve(javaExecutablePath);
+                            
+                            // Запускаем installer
+                            const { exec } = require('child_process');
+                            let installProcess = exec('"' + fullJavaPath + '" -jar "' + coreFileName + '" ' + installerArgs, {
+                                cwd: serverDirectoryPath
+                            });
+                            
+                            installProcess.on('exit', (code) => {
+                                if (code === 0 || code === null) {
+                                    // Установка успешна, определяем имя целевого JAR файла
+                                    let targetCoreJar = findServerJar(serverDirectoryPath);
+                                    
+                                    if (targetCoreJar) {
+                                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
+                                        // Добавляем новый сервер в конфиг
+                                        serversConfig[serverName] = {
+                                            status: PREDEFINED.SERVER_STATUSES.STOPPED,
+                                            restartOnError: true,
+                                            maxRestartAttempts: 3,
+                                            game: "minecraft",
+                                            minecraftType: "java",
+                                            stopCommand: "stop"
+                                        };
+                                        CONFIGURATION.writeServersConfig(serversConfig);
+                                        this.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort);
+                                        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
+                                        cb(true);
+                                    } else {
+                                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                                        LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
+                                        cb(false);
+                                    }
+                                } else {
+                                    tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                                    LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
+                                    cb(false);
+                                }
+                            });
+                            
+                            installProcess.on('error', (err) => {
+                                tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                                LOGGER.warning("Installer error: " + err.message);
+                                cb(false);
+                            });
+                        } else {
+                            // Обычное ядро (не installer)
+                            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
+                            // Добавляем новый сервер в конфиг
+                            serversConfig[serverName] = {
+                                status: PREDEFINED.SERVER_STATUSES.STOPPED,
+                                restartOnError: true,
+                                maxRestartAttempts: 3,
+                                game: "minecraft",
+                                minecraftType: "java",
+                                stopCommand: "stop"
+                            };
+                            CONFIGURATION.writeServersConfig(serversConfig);
+                            this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort);
+                            LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
+                            cb(true);
+                        }
                     } else {
                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                         LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreDownloadFailed}}"));
@@ -158,6 +217,28 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             });
         }
     }
+}
+
+// Функция для поиска основного JAR файла сервера после установки
+function findServerJar(directory) {
+    try {
+        const files = fs.readdirSync(directory);
+        // Ищем JAR файлы, содержащие в названии 'server' или 'forge'/'fabric'/'neoforge'
+        for (let file of files) {
+            if (file.endsWith('.jar') && !file.includes('-installer') && !file.includes('-client')) {
+                return file;
+            }
+        }
+        // Если не нашли, возвращаем первый попавшийся JAR
+        for (let file of files) {
+            if (file.endsWith('.jar')) {
+                return file;
+            }
+        }
+    } catch (e) {
+        return null;
+    }
+    return null;
 }
 
 // Записать файлы запуска и eula для сервера Java

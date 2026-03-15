@@ -18,6 +18,15 @@ exports.getCoreVersions = (core, cb) => {
             case "magma":
                 CORES_URL_GEN.getAllMagmaCores(cb);
                 break;
+            case "forge":
+                CORES_URL_GEN.getAllForgeCores(cb);
+                break;
+            case "fabric":
+                CORES_URL_GEN.getAllFabricCores(cb);
+                break;
+            case "neoforge":
+                CORES_URL_GEN.getAllNeoForgeCores(cb);
+                break;
             default:
                 cb(false);
                 break;
@@ -42,6 +51,15 @@ exports.getCoreVersionURL = (core, version, cb) => {
                 break;
             case "magma":
                 CORES_URL_GEN.getMagmaCoreURL(version, cb);
+                break;
+            case "forge":
+                CORES_URL_GEN.getForgeCoreURL(version, cb);
+                break;
+            case "fabric":
+                CORES_URL_GEN.getFabricCoreURL(version, cb);
+                break;
+            case "neoforge":
+                CORES_URL_GEN.getNeoForgeCoreURL(version, cb);
                 break;
             default:
                 cb(false);

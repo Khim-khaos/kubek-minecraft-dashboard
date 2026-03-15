@@ -116,11 +116,21 @@ exports.SERVER_CORE_MIRRORS = {
     },
     forge: {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
-        mirrors: []
+        mirrors: [
+            "https://dl.mslmc.cn/forge/"
+        ]
     },
     fabric: {
         main: "https://meta.fabricmc.net/v2/versions/loader",
-        mirrors: []
+        mirrors: [
+            "https://dl.mslmc.cn/fabric/"
+        ]
+    },
+    neoforge: {
+        main: "https://maven.neoforged.net/releases/net/neoforged/forge/",
+        mirrors: [
+            "https://dl.mslmc.cn/neoforge/"
+        ]
     },
     // MSLMC китайское зеркало (работает быстрее в РФ)
     mslmc: {
@@ -202,6 +212,24 @@ exports.SERVER_CORES = {
         versionsUrl: "https://cdn.seeeroy.ru/Kubek/vanilla.json",
         urlGetMethod: "externalURL"
     },
+    forge: {
+        name: "forge",
+        displayName: "Forge",
+        versionsMethod: "forge",
+        urlGetMethod: "forge"
+    },
+    neoforge: {
+        name: "neoforge",
+        displayName: "NeoForge",
+        versionsMethod: "neoforge",
+        urlGetMethod: "neoforge"
+    },
+    fabric: {
+        name: "fabric",
+        displayName: "Fabric",
+        versionsMethod: "fabric",
+        urlGetMethod: "fabric"
+    },
     paper: {
         name: "paper",
         displayName: "PaperMC",
@@ -242,6 +270,7 @@ exports.SERVER_CREATION_STEPS = {
     DOWNLOADING_JAVA: "downloadingJava",
     UNPACKING_JAVA: "unpackingJava",
     DOWNLOADING_CORE: "downloadingCore",
+    INSTALLING: "installing",
     CREATING_BAT: "creatingBat",
     COMPLETION: "completion",
     COMPLETED: "completed",
