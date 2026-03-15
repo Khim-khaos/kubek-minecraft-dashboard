@@ -153,25 +153,30 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                             });
                             
                             installProcess.on('exit', (code) => {
+                                LOGGER.log("[Installer] Installer exited with code: " + code);
+                                
                                 if (code === 0 || code === null) {
                                     // Установка успешна, определяем имя целевого JAR файла
+                                    LOGGER.log("[Installer] Installation completed, searching for server jar...");
                                     let targetCoreJar = findServerJar(serverDirectoryPath, core);
                                     
-                                    // Удаляем installer после успешной установки (с задержкой)
-                                    setTimeout(() => {
-                                        try {
-                                            let installerPath = serverDirectoryPath + path.sep + coreFileName;
-                                            if (fs.existsSync(installerPath)) {
-                                                fs.unlinkSync(installerPath);
-                                                LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
-                                            }
-                                        } catch (e) {
-                                            // Файл может быть ещё заблокирован, не критично
-                                            LOGGER.warning("[Installer] Could not delete installer file (may be locked): " + e.message);
-                                        }
-                                    }, 2000); // Ждём 2 секунды перед удалением
-
                                     if (targetCoreJar) {
+                                        LOGGER.log("[Installer] Found server jar: " + targetCoreJar);
+                                        
+                                        // Удаляем installer после успешной установки (с задержкой)
+                                        setTimeout(() => {
+                                            try {
+                                                let installerPath = serverDirectoryPath + path.sep + coreFileName;
+                                                if (fs.existsSync(installerPath)) {
+                                                    fs.unlinkSync(installerPath);
+                                                    LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
+                                                }
+                                            } catch (e) {
+                                                // Файл может быть ещё заблокирован, не критично
+                                                LOGGER.warning("[Installer] Could not delete installer file (may be locked): " + e.message);
+                                            }
+                                        }, 2000); // Ждём 2 секунды перед удалением
+                                        
                                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
                                         // Добавляем новый сервер в конфиг
                                         serversConfig[serverName] = {
@@ -235,9 +240,11 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
 function findServerJar(directory, core) {
     try {
         const files = fs.readdirSync(directory);
+        LOGGER.log("[Installer] Files in server directory: " + files.join(", "));
         
         // Приоритет 1: Ищем server.jar (универсальное имя)
         if (files.includes('server.jar')) {
+            LOGGER.log("[Installer] Found server.jar");
             return 'server.jar';
         }
         
@@ -245,6 +252,7 @@ function findServerJar(directory, core) {
         if (core.toLowerCase() === 'forge') {
             for (let file of files) {
                 if (file.endsWith('-universal.jar')) {
+                    LOGGER.log("[Installer] Found forge universal jar: " + file);
                     return file;
                 }
             }
@@ -256,10 +264,12 @@ function findServerJar(directory, core) {
                 !file.includes('-installer') && 
                 !file.includes('-client') &&
                 !file.includes('-dev')) {
+                LOGGER.log("[Installer] Found server jar: " + file);
                 return file;
             }
         }
         
+        LOGGER.warning("[Installer] No valid server jar found!");
         // Если не нашли, возвращаем первый попавшийся JAR (кроме installer)
         for (let file of files) {
             if (file.endsWith('.jar') && !file.includes('-installer')) {

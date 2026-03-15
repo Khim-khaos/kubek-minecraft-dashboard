@@ -1,5 +1,5 @@
-// Массив ядер, для которых есть SVG иконки
-const SVG_CORES = ["forge", "fabric", "neoforge", "velocity", "waterfall"];
+// Массив ядер, для которых есть SVG иконки (остальные - PNG)
+const SVG_CORES = ["velocity", "waterfall"];
 
 CORE_GRID_ITEM_PLACEHOLDER = "<div class='card centered' data-id='$1'> <img alt='$0 logo' class='icon' src='/assets/icons/cores/$1$2'> <span class='title'>$0</span> </div>";
 JAVA_ITEM_PLACEHOLDER = "<div class='item' data-type='$0' data-data='$1'> <span class='text'>$2</span> <span class='check material-symbols-rounded'>check</span> </div>";
