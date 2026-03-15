@@ -117,56 +117,88 @@ exports.getAllCoresByExternalURL = (url, cb) => {
 
 // Получить список версий Minecraft для Forge
 exports.getAllForgeCores = (cb) => {
-    COMMONS.getDataByURL("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json", (data) => {
-        if (data === false) {
+    // Пробуем основной URL и зеркала
+    let urlsToTry = [
+        "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
+        "https://dl.mslmc.cn/forge/promotions_slim.json"
+    ];
+    
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             LOGGER.warning("Oops! An error occurred while fetching Forge versions");
             cb(false);
             return;
         }
-        // Получаем все версии Minecraft из promos
-        let forgeVersions = [];
-        if (data && data.promos) {
-            // Получаем уникальные версии Minecraft (без суффиксов -recommended, -latest)
-            let mcVersions = new Set();
-            for (let key of Object.keys(data.promos)) {
-                let mcVersion = key.replace(/-(recommended|latest)$/, '');
-                mcVersions.add(mcVersion);
+        
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false) {
+                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
+                tryNext(index + 1);
+                return;
             }
-            forgeVersions = Array.from(mcVersions).reverse();
-        }
-        cb(forgeVersions);
-    });
+            // Получаем все версии Minecraft из promos
+            let forgeVersions = [];
+            if (data && data.promos) {
+                // Получаем уникальные версии Minecraft (без суффиксов -recommended, -latest)
+                let mcVersions = new Set();
+                for (let key of Object.keys(data.promos)) {
+                    let mcVersion = key.replace(/-(recommended|latest)$/, '');
+                    mcVersions.add(mcVersion);
+                }
+                forgeVersions = Array.from(mcVersions).reverse();
+            }
+            cb(forgeVersions);
+        });
+    }
+    
+    tryNext(0);
 };
 
 // Получить ссылку на скачивание Forge для конкретной версии
 exports.getForgeCoreURL = (minecraftVersion, cb) => {
-    COMMONS.getDataByURL("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json", (data) => {
-        if (data === false) {
+    // Пробуем получить данные с основного URL или зеркала
+    let urlsToTry = [
+        "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json",
+        "https://dl.mslmc.cn/forge/promotions_slim.json"
+    ];
+    
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             LOGGER.warning("Oops! An error occurred while fetching Forge URL");
             cb(false);
             return;
         }
         
-        // Ищем recommended версию, если нет - latest
-        let forgeVersion = data.promos[minecraftVersion + "-recommended"] || 
-                          data.promos[minecraftVersion + "-latest"];
-        
-        if (forgeVersion) {
-            // Формируем URL для installer (основной + зеркала)
-            let forgeUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + 
-                          minecraftVersion + "-" + forgeVersion + 
-                          "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false) {
+                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
+                tryNext(index + 1);
+                return;
+            }
             
-            // Китайское зеркало MSLMC
-            let mirrorUrl = "https://dl.mslmc.cn/forge/" + 
-                           minecraftVersion + "-" + forgeVersion + 
-                           "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+            // Ищем recommended версию, если нет - latest
+            let forgeVersion = data.promos[minecraftVersion + "-recommended"] || 
+                              data.promos[minecraftVersion + "-latest"];
             
-            cb(forgeUrl, [mirrorUrl]);
-        } else {
-            cb(false);
-        }
-    });
+            if (forgeVersion) {
+                // Формируем URL для installer (основной + зеркала)
+                let forgeUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + 
+                              minecraftVersion + "-" + forgeVersion + 
+                              "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+                
+                // Китайское зеркало MSLMC
+                let mirrorUrl = "https://dl.mslmc.cn/forge/" + 
+                               minecraftVersion + "-" + forgeVersion + 
+                               "/forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar";
+                
+                cb(forgeUrl, [mirrorUrl]);
+            } else {
+                cb(false);
+            }
+        });
+    }
+    
+    tryNext(0);
 };
 
 /////////////////////////////////////////////////////
@@ -222,50 +254,82 @@ exports.getFabricCoreURL = (minecraftVersion, cb) => {
 
 // Получить список версий Minecraft для NeoForge
 exports.getAllNeoForgeCores = (cb) => {
-    COMMONS.getDataByURL("https://meta.neoforged.org/api/v2/versions", (data) => {
-        if (data === false) {
+    // Пробуем основной URL и зеркала
+    let urlsToTry = [
+        "https://meta.neoforged.org/api/v2/versions",
+        "https://dl.mslmc.cn/neoforge/versions.json"
+    ];
+    
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
             cb(false);
             return;
         }
-        if (Array.isArray(data)) {
-            // Получаем уникальные версии Minecraft
-            let mcVersions = new Set();
-            for (let item of data) {
-                if (item.minecraftVersion) {
-                    mcVersions.add(item.minecraftVersion);
-                }
+        
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false) {
+                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
+                tryNext(index + 1);
+                return;
             }
-            let neoforgeVersions = Array.from(mcVersions).reverse();
-            cb(neoforgeVersions);
-        } else {
-            cb(false);
-        }
-    });
+            if (Array.isArray(data)) {
+                // Получаем уникальные версии Minecraft
+                let mcVersions = new Set();
+                for (let item of data) {
+                    if (item.minecraftVersion) {
+                        mcVersions.add(item.minecraftVersion);
+                    }
+                }
+                let neoforgeVersions = Array.from(mcVersions).reverse();
+                cb(neoforgeVersions);
+            } else {
+                tryNext(index + 1);
+            }
+        });
+    }
+    
+    tryNext(0);
 };
 
 // Получить ссылку на скачивание NeoForge installer
 exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
-    COMMONS.getDataByURL("https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion, (data) => {
-        if (data === false || !Array.isArray(data) || data.length === 0) {
+    // Пробуем получить данные с основного URL или зеркала
+    let urlsToTry = [
+        "https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion,
+        "https://dl.mslmc.cn/neoforge/versions.json"
+    ];
+    
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge URL");
             cb(false);
             return;
         }
         
-        // Берем последнюю версию NeoForge для этой версии Minecraft
-        let neoforgeVersion = data[0].version;
-        
-        // Формируем URL для installer (основной + зеркала)
-        let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
-                         minecraftVersion + "-" + neoforgeVersion + 
-                         "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-        
-        // Китайское зеркало MSLMC
-        let mirrorUrl = "https://dl.mslmc.cn/neoforge/" + 
-                       minecraftVersion + "-" + neoforgeVersion + 
-                       "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-        
-        cb(neoforgeUrl, [mirrorUrl]);
-    });
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false || !Array.isArray(data) || data.length === 0) {
+                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
+                tryNext(index + 1);
+                return;
+            }
+
+            // Берем последнюю версию NeoForge для этой версии Minecraft
+            let neoforgeVersion = data[0].version;
+
+            // Формируем URL для installer (основной + зеркала)
+            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" +
+                             minecraftVersion + "-" + neoforgeVersion +
+                             "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+
+            // Китайское зеркало MSLMC
+            let mirrorUrl = "https://dl.mslmc.cn/neoforge/" +
+                           minecraftVersion + "-" + neoforgeVersion +
+                           "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+
+            cb(neoforgeUrl, [mirrorUrl]);
+        });
+    }
+    
+    tryNext(0);
 };
