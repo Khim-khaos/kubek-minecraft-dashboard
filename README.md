@@ -13,6 +13,8 @@ Kubek is a Minecraft web server control panel that supports Linux and Windows. T
 - **FTP Server:** Integrated FTP server for convenient file transfer
 - **File Manager:** File manager with syntax highlighting for managing server files
 - **Users and Roles System:** Manage users and roles with access restrictions to servers
+- **Automatic Core Installation:** Support for automatic download and installation of Forge, Fabric, NeoForge
+- **Download Mirrors:** Automatic failover to mirrors when main source is unavailable
 
 **Natively supported cores:**
 - Official Vanilla Server
@@ -22,6 +24,9 @@ Kubek is a Minecraft web server control panel that supports Linux and Windows. T
 - Velocity
 - Purpur
 - Magma
+- **Forge** (automatic installer)
+- **Fabric** (automatic server files installation)
+- **NeoForge** (automatic installer)
 
 # Installation
 
