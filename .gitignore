@@ -10,3 +10,5 @@ backups/
 dist/
 binaries/
 .idea/
+.serena/
+.windsurf/

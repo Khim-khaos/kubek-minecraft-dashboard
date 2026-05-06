@@ -274,6 +274,7 @@ exports.getAllNeoForgeCores = (cb) => {
     // Пробуем основной URL и зеркала
     let urlsToTry = [
         "https://meta.neoforged.org/api/v2/versions",
+        "https://bmclapi2.bangbang93.com/neoforge/versions",
         "https://dl.mslmc.cn/neoforge/versions.json"
     ];
     
@@ -311,7 +312,44 @@ exports.getAllNeoForgeCores = (cb) => {
 
 // Получить ссылку на скачивание NeoForge installer
 exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
-    COMMONS.getDataByURL("https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion, (data) => {
+    // Пробуем основной URL и зеркала для получения версии
+    let urlsToTry = [
+        "https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion,
+        "https://bmclapi2.bangbang93.com/neoforge/versions?minecraftVersion=" + minecraftVersion
+    ];
+    
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
+            LOGGER.warning("Oops! An error occurred while fetching NeoForge URL");
+            cb(false);
+            return;
+        }
+        
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false || !Array.isArray(data) || data.length === 0) {
+                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
+                tryNext(index + 1);
+                return;
+            }
+            
+            // Берем последнюю версию NeoForge для этой версии Minecraft
+            let neoforgeVersion = data[0].version;
+            
+            // Формируем URL для installer (основной + зеркала)
+            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
+                             minecraftVersion + "-" + neoforgeVersion + 
+                             "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+            
+            // BMCLAPI зеркало (правильный формат из документации)
+            let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/forge/" + 
+                            minecraftVersion + "-" + neoforgeVersion + 
+                            "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+            
+            cb(neoforgeUrl, [bmclapiUrl]);
+        });
+    }
+    
+    tryNext(0); (data) => {
         if (data === false || !Array.isArray(data) || data.length === 0) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge URL");
             cb(false);
