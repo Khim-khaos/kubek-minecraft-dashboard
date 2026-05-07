@@ -43,23 +43,30 @@ class KubekUI {
 
     // Загрузить данные выбранного сервера
     static loadSelectedServer = () => {
-        if (typeof window.localStorage.selectedServer !== "undefined") {
+        if (typeof window.localStorage.selectedServer !== "undefined" && window.localStorage.selectedServer && window.localStorage.selectedServer !== "undefined") {
             selectedServer = window.localStorage.selectedServer;
             // Пробуем загрузить сервер в хидер
             KubekServerHeaderUI.loadServerByName(selectedServer, (result) => {
                 if (result === false) {
-                    // При ошибке загрузки выбираем первый сервер из списка, и пробуем ещё раз
+                    // При ошибке загрузки выбираем первый сервер из списка
                     KubekServers.getServersList((list) => {
-                        window.localStorage.selectedServer = list[0];
-                        window.location.reload();
+                        if (list && list.length > 0) {
+                            window.localStorage.selectedServer = list[0];
+                            selectedServer = list[0];
+                            // Загружаем новый выбранный сервер без перезагрузки
+                            KubekServerHeaderUI.loadServerByName(selectedServer, () => {});
+                        }
                     });
                 }
             });
         } else {
-            // Если это первый запуск
+            // Если нет выбранного сервера, пробуем взять первый из списка
             KubekServers.getServersList((list) => {
-                window.localStorage.selectedServer = list[0];
-                window.location.reload();
+                if (list && list.length > 0) {
+                    window.localStorage.selectedServer = list[0];
+                    selectedServer = list[0];
+                    KubekServerHeaderUI.loadServerByName(selectedServer, () => {});
+                }
             });
         }
     }

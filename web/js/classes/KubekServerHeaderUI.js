@@ -9,6 +9,11 @@ class KubekServerHeaderUI {
     // Загрузить сервер в хидер по названию
     static loadServerByName = (server, cb = () => {
     }) => {
+        // Проверяем, что server не undefined, null или пустая строка
+        if (!server || server === "undefined" || server === "null") {
+            cb(false);
+            return;
+        }
         KubekServers.getServerInfo(server, (data) => {
             if (data.status !== false) {
                 $(".content-header > .caption").text(server);

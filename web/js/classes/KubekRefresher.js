@@ -17,8 +17,11 @@ class KubekRefresher {
     // Добавить интервал обновления server header (каждые 2 секунды)
     static addRefreshServerHeaderInterval = () => {
         this.addRefreshInterval(1500, () => {
-            KubekServerHeaderUI.refreshServerHeader(() => {
-            });
+            // Проверяем, что selectedServer существует и валиден
+            if (typeof selectedServer !== "undefined" && selectedServer && selectedServer !== "undefined") {
+                KubekServerHeaderUI.refreshServerHeader(() => {
+                });
+            }
         }, "serverHeader");
     };
 
