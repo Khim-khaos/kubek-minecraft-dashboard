@@ -1,4 +1,5 @@
 const SHA256 = require("crypto-js/sha256");
+const crypto = require("crypto");
 
 // Проверить имеет ли пользователь определённое право
 exports.isUserHasPermission = (username, permission) => {
@@ -67,13 +68,7 @@ exports.isUserExists = (username) => {
 
 // Сгенерировать рандомный ID безопасности
 exports.generateSecureID = (length = 18) => {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    let counter = 0;
-    while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-    }
-    return result;
+    return crypto.randomBytes(Math.ceil(length / 2))
+        .toString('hex') // Превращаем в hex строку
+        .slice(0, length); // Обрезаем до нужной длины
 }

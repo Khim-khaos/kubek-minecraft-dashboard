@@ -4,15 +4,20 @@ const fs = require('fs');
 const path = require('path');
 // Список кодов для доступных языков
 global.avaliableLanguages = {};
+// Кеш переводов
+const translationsCache = {};
 
 // Загрузить список доступных языков
 exports.loadAvailableLanguages = () => {
     if (fs.existsSync(path.join(__dirname, "./../languages"))) {
         fs.readdirSync(path.join(__dirname, "./../languages")).forEach(file => {
             if (path.extname(file) === ".json") {
-                let langFile = JSON.parse(fs.readFileSync(path.join(__dirname, "./../languages", file)).toString());
-                if (typeof langFile.info.code !== "undefined" && typeof langFile.info.id !== "undefined" && typeof langFile.info.displayNameEnglish !== "undefined") {
+                const langPath = path.join(__dirname, "./../languages", file);
+                const langFile = JSON.parse(fs.readFileSync(langPath).toString());
+                if (langFile.info?.code && langFile.info?.id && langFile.info?.displayNameEnglish) {
                     avaliableLanguages[langFile.info.code] = langFile.info;
+                    // Кешируем переводы сразу
+                    translationsCache[langFile.info.code] = langFile;
                 }
             }
         })
@@ -23,54 +28,53 @@ exports.loadAvailableLanguages = () => {
 
 // Получить информацию о языке по названию
 exports.getLanguageInfo = (language) => {
-    if (Object.keys(avaliableLanguages).includes(language)) {
-        return avaliableLanguages[language];
-    }
-    return false;
+    return avaliableLanguages[language] || false;
 };
 
 // Перевести все вхождения меток переводов в текст
 exports.translateText = (language, text, ...placers) => {
     text = text.toString();
-    if (Object.keys(avaliableLanguages).includes(language)) {
-        let translationFile = JSON.parse(fs.readFileSync(path.join(__dirname, "./../languages", language + ".json")).toString());
+    const langData = translationsCache[language];
+    
+    if (langData) {
         // Ищем плейсхолдеры перевода по regex
-        let searchMatches = text.toString().match(/\{{[0-9a-zA-Z\-_.]+\}}/gm);
+        const searchMatches = text.match(/\{{[0-9a-zA-Z\-_.]+\}}/gm);
         if (searchMatches != null) {
             searchMatches.forEach(match => {
                 // Чистим match-и от скобок и делим на категорию и ключ
-                let matchClear = match.replaceAll("{", "").replaceAll("}", "");
-                if (matchClear.split(".").length >= 2) {
-                    let category = matchClear.split(".")[0];
-                    let key = matchClear.split(".")[1];
-                    let modificator = matchClear.split(".")[2];
+                const matchClear = match.replace(/[{}]/g, "");
+                const parts = matchClear.split(".");
+                
+                if (parts.length >= 2) {
+                    const category = parts[0];
+                    const key = parts[1];
+                    const modificator = parts[2];
+                    
                     // Заменяем в тексте найденные в списке переводы
-                    if (typeof translationFile.translations[category][key] !== "undefined") {
-                        let matchedTranslation = translationFile.translations[category][key];
-                        if(modificator === "upperCase"){
+                    if (langData.translations?.[category]?.[key] !== undefined) {
+                        let matchedTranslation = langData.translations[category][key];
+                        if (modificator === "upperCase") {
                             matchedTranslation = matchedTranslation.toUpperCase();
-                        } else if(modificator === "lowerCase"){
+                        } else if (modificator === "lowerCase") {
                             matchedTranslation = matchedTranslation.toLowerCase();
                         }
                         text = text.replaceAll(match, matchedTranslation);
                     }
                 }
             });
-            // Заменяем плейсхолдеры текста (%0%, %1%...) на предоставленные объекты
-            placers.forEach(function (replacement, i) {
-                text = text.replaceAll("%" + i + "%", replacement);
-            });
         }
+        
+        // Заменяем плейсхолдеры текста (%0%, %1%...) на предоставленные объекты
+        placers.forEach((replacement, i) => {
+            text = text.replaceAll("%" + i + "%", replacement);
+        });
+        
         return text;
     }
-    return false;
+    return text; // Возвращаем оригинальный текст, если язык не найден
 };
 
 // Получить EULA для опр. языка
 exports.getEULA = (language) => {
-    if(this.getLanguageInfo(language) !== false){
-        let translationFile = JSON.parse(fs.readFileSync("./languages/" + language + ".json").toString());
-        return translationFile.eula;
-    }
-    return false;
+    return translationsCache[language]?.eula || false;
 };

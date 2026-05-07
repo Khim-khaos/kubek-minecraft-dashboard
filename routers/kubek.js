@@ -3,11 +3,17 @@ const CONFIGURATION = require("./../modules/configuration");
 const COMMONS = require("./../modules/commons");
 const FTP_DAEMON = require("./../modules/ftpDaemon");
 const MULTILANG = require("./../modules/multiLanguage");
+const HEALTH = require("./../modules/health");
 
 const express = require("express");
 const router = express.Router();
 const {Base64} = require("js-base64");
 const packageJSON = require("../package.json");
+
+// Endpoint для получения состояния здоровья панели
+router.get("/health", function (req, res) {
+    res.send(HEALTH.getHealthStatus());
+});
 
 // Endpoint для получения использования ресурсов
 router.get("/hardware/usage", function (req, res) {

@@ -5,27 +5,22 @@ const packageJSON = require("./../package.json");
 global.cachedUpdate = null;
 
 // Функция для получения объекта релизов с GitHub
-exports.getGitHubReleases = (cb) => {
-    COMMONS.getDataByURL(PREDEFINED.UPDATES_URL_API, cb);
+exports.getGitHubReleases = async (cb) => {
+    await COMMONS.getDataByURL(PREDEFINED.UPDATES_URL_API, cb);
 };
 
 // Получить последнюю версию из релизов на GitHub
 exports.getLatestVersionOnGitHub = (cb) => {
     this.getGitHubReleases((ghReleases) => {
-        if (ghReleases !== false) {
-            if (typeof ghReleases !== "undefined" && typeof ghReleases[0] !== "undefined" && typeof ghReleases[0].tag_name !== "undefined") {
-                cb({
-                    version: ghReleases[0].tag_name.replace("v", ""),
-                    url: ghReleases[0].html_url,
-                    body: ghReleases[0].body
-                });
-            } else {
-                cb(false);
-            }
+        if (ghReleases && Array.isArray(ghReleases) && ghReleases[0]?.tag_name) {
+            cb({
+                version: ghReleases[0].tag_name.replace("v", ""),
+                url: ghReleases[0].html_url,
+                body: ghReleases[0].body
+            });
         } else {
             cb(false);
         }
-
     });
 };
 

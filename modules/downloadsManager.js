@@ -1,4 +1,4 @@
-﻿const TASK_MANAGER = require("./taskManager");
+const TASK_MANAGER = require("./taskManager");
 const PREDEFINED = require("./predefined");
 const LOGGER = require("./logger");
 const MULTILANG = require("./multiLanguage");
@@ -14,6 +14,8 @@ const { URL } = require("url");
 function getAxiosInstance() {
     const config = {
         timeout: 120000, // 2 минуты таймаут для медленных соединений
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
         headers: {
             // Притворяемся обычным браузером
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

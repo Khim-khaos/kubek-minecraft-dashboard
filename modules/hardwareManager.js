@@ -18,31 +18,36 @@ exports.getResourcesUsage = (cb) => {
 };
 
 // Получить суммарную информацию о системе и железе
-exports.getHardwareInfo = (cb) => {
-    nodeDiskInfo
-        .getDiskInfo()
-        .then((disks) => {
-            let cpuItem = os.cpus()[0];
-            cb({
-                uptime: Math.round(process.uptime()),
-                platform: {
-                    name: os.type(),
-                    release: os.release(),
-                    arch: process.arch,
-                    version: os.version(),
-                },
-                totalmem: Math.round(os.totalmem() / 1024 / 1024),
-                cpu: {
-                    model: cpuItem.model,
-                    speed: cpuItem.speed,
-                    cores: os.cpus().length,
-                },
-                enviroment: process.env,
-                disks: disks,
-                networkInterfaces: os.networkInterfaces(),
-            })
-        })
-        .catch((reason) => {
-            console.error(reason);
+exports.getHardwareInfo = async (cb) => {
+    try {
+        const disks = await nodeDiskInfo.getDiskInfo();
+        const cpuItem = os.cpus()[0];
+        cb({
+            uptime: Math.round(process.uptime()),
+            platform: {
+                name: os.type(),
+                release: os.release(),
+                arch: process.arch,
+                version: os.version(),
+                nodeVersion: process.version
+            },
+            totalmem: Math.round(os.totalmem() / 1024 / 1024),
+            cpu: {
+                model: cpuItem.model,
+                speed: cpuItem.speed,
+                cores: os.cpus().length,
+            },
+            memory: {
+                total: os.totalmem(),
+                free: os.freemem(),
+                used: os.totalmem() - os.freemem()
+            },
+            enviroment: process.env,
+            disks: disks,
+            networkInterfaces: os.networkInterfaces(),
         });
+    } catch (reason) {
+        console.error("Error getting hardware info:", reason);
+        cb(false);
+    }
 }

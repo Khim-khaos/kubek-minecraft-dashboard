@@ -35,3 +35,15 @@ FTP_DAEMON.startFTP();
 
 // Автоматически запустить сервера, которые были запущены при закрытии Kubek
 CONFIGURATION.autoStartServers();
+
+// Периодическая очистка логов серверов в памяти (каждые 10 минут)
+setInterval(() => {
+    const SERVERS_CONTROLLER = require("./modules/serversController");
+    SERVERS_CONTROLLER.doServersLogsCleanup();
+}, 10 * 60 * 1000);
+
+// Периодическая проверка обновлений (каждые 6 часов)
+setInterval(() => {
+    const UPDATER = require("./modules/updater");
+    UPDATER.checkForUpdates(() => {});
+}, 6 * 60 * 60 * 1000);

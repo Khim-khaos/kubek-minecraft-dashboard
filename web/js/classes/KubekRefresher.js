@@ -109,4 +109,17 @@ class KubekRefresher {
             KubekTasksUI.refreshTasksList();
         }, "tasksList");
     }
+
+    // Проверка здоровья панели
+    static addHealthCheckInterval = () => {
+        setInterval(() => {
+            KubekRequests.get("/kubek/health", (health) => {
+                if (health === false) {
+                    console.error("[Health] Failed to get health status");
+                } else {
+                    console.log("[Health] Panel status: " + health.status);
+                }
+            });
+        }, 60000); // Раз в минуту
+    }
 }

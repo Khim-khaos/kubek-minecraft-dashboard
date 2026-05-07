@@ -350,20 +350,34 @@ exports.getFabricCoreURL = (version, cb) => {
 
 // Получить список версий Minecraft для NeoForge
 exports.getAllNeoForgeCores = (cb) => {
-    // Используем API maven.neoforged.net для получения всех версий
-    COMMONS.getDataByURL("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false", (data) => {
+    // Используем API maven.neoforged.net для получения всех версий или зеркала
+    const mainApi = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApi;
+    const mirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors;
+    
+    COMMONS.getDataByURL(mainApi, (data) => {
         if (data === false) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
             cb(false);
             return;
         }
         
-        if (data && data.versions && Array.isArray(data.versions) && data.versions.length > 0) {
+        // Обработка данных (может быть разный формат у официального API и зеркал)
+        let versionsList = [];
+        
+        if (data && data.versions && Array.isArray(data.versions)) {
+            // Официальный формат API
+            versionsList = data.versions;
+        } else if (Array.isArray(data)) {
+            // Формат BMCLAPI list (обычно массив объектов с полем version или просто строки)
+            versionsList = data.map(v => typeof v === 'object' ? v.version : v);
+        }
+        
+        if (versionsList.length > 0) {
             // Извлекаем версии Minecraft из версий ядра NeoForge
             // С 26+ (новый формат): 26.1.2 = Minecraft 1.26.1
             // До 26 (старый формат): 21.11.41 = Minecraft 1.21.4 (первая цифра minor = patch)
             let mcVersions = new Set();
-            for (let version of data.versions) {
+            for (let version of versionsList) {
                 // Принимаем версии с 3+ частями (26.1.2, 26.1.2.42-beta, 21.11.41)
                 let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
                 if (match) {
@@ -399,20 +413,30 @@ exports.getAllNeoForgeCores = (cb) => {
             });
             cb(sortedVersions);
         } else {
-            LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
             cb(false);
         }
-    });
+    }, mirrors);
 };
 
 // Получить список версий ядра NeoForge для конкретной версии Minecraft
 exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
-    // Используем API maven.neoforged.net для получения всех версий
-    COMMONS.getDataByURL("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false", (data) => {
-        if (data === false || !data.versions || !Array.isArray(data.versions)) {
+    // Используем API maven.neoforged.net для получения всех версий или зеркала
+    const mainApi = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApi;
+    const mirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors;
+
+    COMMONS.getDataByURL(mainApi, (data) => {
+        if (data === false) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge versions for MC " + minecraftVersion);
             cb(false);
             return;
+        }
+
+        // Обработка данных
+        let versionsList = [];
+        if (data && data.versions && Array.isArray(data.versions)) {
+            versionsList = data.versions;
+        } else if (Array.isArray(data)) {
+            versionsList = data.map(v => typeof v === 'object' ? v.version : v);
         }
         
         // Парсим версию Minecraft (например "1.26.1" или "1.21.4")
@@ -426,12 +450,10 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
         let mcMinor = mcMatch[2];  // 1 или 4
         
         // Фильтруем версии ядра под эту версию Minecraft
-        // С 26+ (новый формат): Minecraft 1.26.1 = ядро 26.1.x
-        // До 26 (старый формат): Minecraft 1.21.4 = ядро 21.4x.x (minor начинается с 4)
         let matchingVersions = [];
         
-        for (let version of data.versions) {
-            // Принимаем версии с 3+ частями (26.1.2, 26.1.2.42-beta, 21.11.41)
+        for (let version of versionsList) {
+            // Принимаем версии с 3+ частями
             let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
             if (match) {
                 let major = parseInt(match[1]);  // 26 или 21
@@ -440,10 +462,8 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
                 
                 let matches = false;
                 if (major >= 26) {
-                    // Новый формат: Minecraft 1.26.1 = ядро 26.1.x
                     matches = (major === mcMajor && minor === mcMinor);
                 } else {
-                    // Старый формат: Minecraft 1.21.4 = ядро 21.4x.x (minor первая цифра = patch MC)
                     matches = (major === mcMajor && minor.charAt(0) === mcMinor.charAt(0));
                 }
                 
@@ -468,7 +488,7 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
         });
         
         cb(matchingVersions);
-    });
+    }, mirrors);
 };
 
 // Получить ссылку на скачивание NeoForge installer
@@ -505,15 +525,21 @@ exports.getNeoForgeCoreURL = (version, cb) => {
             // Берем версию из ввода или первую (последнюю) доступную
             let neoforgeVersion = neoforgeVersionFromInput || data[0].version;
             
-            // Формируем URL для installer (основной + зеркала)
-            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
-                             minecraftVersion + "-" + neoforgeVersion + 
-                             "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+            // Определяем путь в maven в зависимости от версии
+            // С 20.2+ путь net/neoforged/neoforge, до этого net/neoforged/forge
+            let major = parseInt(neoforgeVersion.split('.')[0]);
+            let mavenPath = (major >= 20) ? "neoforge" : "forge";
+            let fileNamePrefix = (major >= 20) ? "neoforge" : "forge";
             
-            // BMCLAPI зеркало (правильный формат из документации)
-            let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/forge/" + 
+            // Формируем URL для installer (основной + зеркала)
+            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
+                             minecraftVersion + "-" + neoforgeVersion + 
+                             "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+            
+            // BMCLAPI зеркало
+            let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
                             minecraftVersion + "-" + neoforgeVersion + 
-                            "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+                            "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
             
             cb(neoforgeUrl, [bmclapiUrl]);
         });

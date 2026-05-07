@@ -42,6 +42,8 @@ function getAxiosInstance() {
     const config = {
         baseURL: '',
         timeout: 30000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
     };
 
     // Если прокси включён, добавляем агент
@@ -64,53 +66,44 @@ function getAxiosInstance() {
 }
 
 // Получить данные по ссылке (с поддержкой зеркал)
-exports.getDataByURL = (url, cb, mirrors = []) => {
+exports.getDataByURL = async (url, cb, mirrors = []) => {
     const axiosInstance = getAxiosInstance();
     
     // Список URL для попытки (основной + зеркала)
     const urlsToTry = [url, ...mirrors];
-    let currentUrlIndex = 0;
 
-    function tryNextUrl() {
-        if (currentUrlIndex >= urlsToTry.length) {
-            // Все URL перепробованы
-            cb(false);
-            return;
+    for (let i = 0; i < urlsToTry.length; i++) {
+        const currentUrl = urlsToTry[i];
+        console.log(`Попытка подключения к: ${currentUrl} (попытка ${i + 1}/${urlsToTry.length})`);
+
+        try {
+            const response = await axiosInstance.get(currentUrl);
+            return cb(response.data);
+        } catch (error) {
+            console.error(`Ошибка при подключении к ${currentUrl}: ${error.message}`);
         }
-
-        const currentUrl = urlsToTry[currentUrlIndex];
-        console.log(`Попытка подключения к: ${currentUrl} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
-
-        axiosInstance
-            .get(currentUrl)
-            .then(function (response) {
-                cb(response.data);
-            })
-            .catch(function (error) {
-                console.error(`Ошибка при подключении к ${currentUrl}: ${error.message}`);
-                currentUrlIndex++;
-                tryNextUrl();
-            });
     }
 
-    tryNextUrl();
+    // Все URL перепробованы
+    return cb(false);
 };
 
 // Функция для перемещения загруженного на сервер файла
 exports.moveUploadedFile = (server, sourceFile, filePath, cb) => {
-    if (this.isObjectsValid(server, sourceFile.name)) {
-        let uploadPath;
-        uploadPath = "./servers/" + server + filePath;
-        fs.mkdirSync(path.dirname(uploadPath), {recursive: true});
-        sourceFile.mv(uploadPath, function (err) {
-            if (err) {
-                return cb(err);
-            }
+    if (!this.isObjectsValid(server, sourceFile?.name)) {
+        return cb(400);
+    }
 
+    const uploadPath = path.join("./servers", server, filePath);
+    
+    try {
+        fs.mkdirSync(path.dirname(uploadPath), {recursive: true});
+        sourceFile.mv(uploadPath, (err) => {
+            if (err) return cb(err);
             cb(true);
         });
-    } else {
-        cb(400);
+    } catch (err) {
+        cb(err);
     }
 }
 
