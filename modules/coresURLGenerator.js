@@ -1,5 +1,6 @@
 const COMMONS = require("./commons");
 const LOGGER = require("./logger");
+const PREDEFINED = require("./predefined");
 
 /////////////////////////////////////////////////////
 /* ФУНКЦИИ ДЛЯ ПОЛУЧЕНИЯ ССЫЛОК НА СКАЧИВАНИЕ ЯДЕР */
@@ -235,7 +236,7 @@ exports.getForgeCoreURL = (version, cb) => {
         });
     }
     
-    tryNext(0, minecraftVersion);
+    tryNext(0, mcVersion);
 };
 
 // Получить список версий ядра Forge для конкретной версии Minecraft
@@ -617,28 +618,39 @@ exports.getSupportedMCVersionsForCore = (core, cb) => {
             });
             break;
         case 'neoforge':
-            COMMONS.getDataByURL("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false", (data) => {
-                if (data === false || !data.versions) {
+            const nfApi = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApi;
+            const nfMirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors;
+            
+            COMMONS.getDataByURL(nfApi, (data) => {
+                if (data === false) {
                     cb(false);
                     return;
                 }
+                
+                let versionsList = [];
+                if (data && data.versions && Array.isArray(data.versions)) {
+                    versionsList = data.versions;
+                } else if (Array.isArray(data)) {
+                    versionsList = data.map(v => typeof v === 'object' ? v.version : v);
+                }
+
+                if (versionsList.length === 0) {
+                    cb(false);
+                    return;
+                }
+
                 // Извлекаем версии Minecraft из версий ядра NeoForge
-                // С 26+ (новый формат): 26.1.2 = Minecraft 1.26.1
-                // До 26 (старый формат): 21.11.41 = Minecraft 1.21.4 (первая цифра minor = patch)
                 let mcVersions = new Set();
-                for (let version of data.versions) {
-                    // Принимаем версии с 3+ частями (26.1.2, 26.1.2.42-beta, 21.11.41)
+                for (let version of versionsList) {
                     let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
                     if (match) {
-                        let major = parseInt(match[1]);  // 26 или 21
-                        let minor = match[2];  // 1 или 11
+                        let major = parseInt(match[1]);
+                        let minor = match[2];
                         let mcVersion;
                         
                         if (major >= 26) {
-                            // Новый формат: 26.1.2 = Minecraft 1.26.1
                             mcVersion = `1.${major}.${minor}`;
                         } else {
-                            // Старый формат: 21.11.41 = Minecraft 1.21.4 (первая цифра minor)
                             let patch = minor.charAt(0);
                             mcVersion = `1.${major}.${patch}`;
                         }
@@ -654,7 +666,7 @@ exports.getSupportedMCVersionsForCore = (core, cb) => {
                     return parseVersion(b) - parseVersion(a);
                 });
                 cb(sortedVersions);
-            });
+            }, nfMirrors);
             break;
         case 'vanilla':
             // Vanilla поддерживает все версии из Mojang API
