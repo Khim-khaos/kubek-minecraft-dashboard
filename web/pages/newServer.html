@@ -40,27 +40,11 @@
         
         <!-- Новые выпадающие списки с поиском -->
         <div id="core-selectors-container">
-            <!-- Выпадающий список для версий Minecraft -->
-            <div class="searchable-dropdown" id="mc-version-dropdown">
-                <label>{{newServerWizard.minecraftVersion}}</label>
-                <div class="dropdown-trigger">
-                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectVersion}}" readonly>
-                    <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
-                </div>
-                <div class="dropdown-menu">
-                    <div class="dropdown-search-box">
-                        <span class="material-symbols-rounded">search</span>
-                        <input type="text" class="dropdown-filter" placeholder="{{newServerWizard.searchVersion}}">
-                    </div>
-                    <div class="dropdown-options"></div>
-                </div>
-            </div>
-
             <!-- Выпадающий список для типа ядра -->
             <div class="searchable-dropdown" id="mc-core-type-dropdown">
                 <label>{{newServerWizard.coreType}}</label>
                 <div class="dropdown-trigger">
-                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreFirst}}" readonly disabled>
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreType}}" readonly>
                     <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
                 </div>
                 <div class="dropdown-menu">
@@ -72,11 +56,27 @@
                 </div>
             </div>
 
-            <!-- Выпадающий список для версии ядра -->
+            <!-- Выпадающий список для версий Minecraft -->
+            <div class="searchable-dropdown" id="mc-version-dropdown">
+                <label>{{newServerWizard.minecraftVersion}}</label>
+                <div class="dropdown-trigger">
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreFirst}}" readonly disabled>
+                    <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-search-box">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" class="dropdown-filter" placeholder="{{newServerWizard.searchVersion}}">
+                    </div>
+                    <div class="dropdown-options"></div>
+                </div>
+            </div>
+
+            <!-- Выпадающий список для версии ядра (сборки) -->
             <div class="searchable-dropdown" id="mc-core-version-dropdown">
                 <label>{{newServerWizard.coreVersion}}</label>
                 <div class="dropdown-trigger">
-                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreVersionFirst}}" readonly disabled>
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectVersionFirst}}" readonly disabled>
                     <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
                 </div>
                 <div class="dropdown-menu">

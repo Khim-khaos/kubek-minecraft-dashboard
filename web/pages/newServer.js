@@ -202,13 +202,9 @@ $(function () {
     // Инициализируем кастомные дропдауны
     initSearchableDropdowns();
 
-    // Загружаем список ядер через существующий API
-    refreshServerCoresList(() => {
-        // Загружаем список версий Minecraft и типы ядер
-        populateVersionDropdown();
-        populateCoreTypeDropdown();
-        refreshJavaList(() => {});
-    });
+    // Загружаем список ядер сразу (версии Minecraft будут загружены после выбора ядра)
+    populateCoreTypeDropdown();
+    refreshJavaList(() => {});
     
     // Показываем новые дропдауны, скрываем старые элементы
     $("#core-selectors-container").show();
@@ -298,17 +294,15 @@ function initSearchableDropdowns() {
     // Дропдаун для версий Minecraft
     mcVersionDropdown = new SearchableDropdown('mc-version-dropdown', {
         placeholder: '{{newServerWizard.selectVersion}}',
-        disabledPlaceholder: '{{newServerWizard.selectVersion}}',
+        disabledPlaceholder: '{{newServerWizard.selectCoreFirst}}',
         onSelect: (item) => {
             currentSelectedVersion = item.value;
-            // При выборе версии Minecraft, включаем выбор типа ядра
-            coreTypeDropdown.setEnabled(true);
-            coreTypeDropdown.clear();
-            coreVersionDropdown.setEnabled(false);
-            coreVersionDropdown.clear();
+            // При выборе версии Minecraft загружаем сборки ядра
+            populateCoreVersionDropdown(currentSelectedCore, item.value);
             validateNewServerInputs();
         }
     });
+    mcVersionDropdown.setEnabled(false);
     
     // Дропдаун для типа ядра
     coreTypeDropdown = new SearchableDropdown('mc-core-type-dropdown', {
@@ -316,12 +310,16 @@ function initSearchableDropdowns() {
         disabledPlaceholder: '{{newServerWizard.selectCoreFirst}}',
         onSelect: (item) => {
             currentSelectedCore = item.value;
-            // При выборе типа ядра, загружаем его версии
-            populateCoreVersionDropdown(item.value);
+            // При выборе ядра загружаем поддерживаемые версии Minecraft
+            mcVersionDropdown.setEnabled(true);
+            mcVersionDropdown.clear();
+            coreVersionDropdown.setEnabled(false);
+            coreVersionDropdown.clear();
+            populateVersionDropdownForCore(item.value);
             validateNewServerInputs();
         }
     });
-    coreTypeDropdown.setEnabled(false);
+    coreTypeDropdown.setEnabled(true);
     
     // Дропдаун для версии ядра
     coreVersionDropdown = new SearchableDropdown('mc-core-version-dropdown', {
@@ -337,74 +335,132 @@ function initSearchableDropdowns() {
     coreVersionDropdown.setEnabled(false);
 }
 
-// Заполняем дропдаун версий Minecraft
-function populateVersionDropdown() {
+// Заполняем дропдаун типов ядер (все доступные ядра)
+function populateCoreTypeDropdown() {
     KubekUI.showPreloader();
-    KubekCoresManager.getMinecraftVersions((versions) => {
-        if (versions && Array.isArray(versions)) {
-            const versionItems = versions.map(v => ({
+    KubekCoresManager.getList((cores) => {
+        console.log("[Cores] Loaded cores:", cores);
+        if (!cores || typeof cores !== 'object') {
+            console.error("[Cores Error] Invalid cores data:", cores);
+            KubekUI.hidePreloader();
+            return;
+        }
+        availableCores = cores;
+        const coreItems = Object.entries(cores).map(([id, core]) => ({
+            value: id,
+            text: core.displayName || id
+        }));
+        coreTypeDropdown.setItems(coreItems);
+        KubekUI.hidePreloader();
+    });
+}
+
+// Заполняем дропдаун версий Minecraft для выбранного ядра
+function populateVersionDropdownForCore(coreId) {
+    KubekUI.showPreloader();
+    console.log("[Versions] Loading versions for core:", coreId);
+    KubekCoresManager.getCoreVersions(coreId, (versions) => {
+        console.log("[Versions] Got response for", coreId, ":", versions);
+        
+        // Проверяем что versions - это массив
+        if (!versions || !Array.isArray(versions)) {
+            console.error("[Core Error] Invalid response for core", coreId, ":", versions);
+            mcVersionDropdown.setItems([{
+                value: "error",
+                text: "Ошибка загрузки версий"
+            }]);
+            mcVersionDropdown.setEnabled(false);
+            KubekUI.hidePreloader();
+            return;
+        }
+        
+        // Фильтруем только валидные версии (строки)
+        const validVersions = versions.filter(v => {
+            if (typeof v !== 'string') {
+                console.warn("[Core Warning] Non-string version for", coreId, ":", v);
+                return false;
+            }
+            // Принимаем любые непустые строки как версии (включая 26.1.2.42-beta, alpha, и т.д.)
+            if (!v.trim()) {
+                console.warn("[Core Warning] Empty version for", coreId);
+                return false;
+            }
+            return true;
+        });
+        
+        console.log("[Versions] Valid versions for", coreId, ":", validVersions);
+        
+        if (validVersions.length > 0) {
+            const versionItems = validVersions.map(v => ({
                 value: v,
                 text: v
             }));
             mcVersionDropdown.setItems(versionItems);
             
             // Выбираем первую версию по умолчанию
-            if (versionItems.length > 0) {
-                mcVersionDropdown.setValue(versionItems[0].value);
-                currentSelectedVersion = versionItems[0].value;
-                // Включаем выбор типа ядра
-                coreTypeDropdown.setEnabled(true);
-            }
+            mcVersionDropdown.setValue(versionItems[0].value);
+            currentSelectedVersion = versionItems[0].value;
+            
+            // Загружаем сборки для этой версии
+            populateCoreVersionDropdown(coreId, versionItems[0].value);
+        } else {
+            mcVersionDropdown.setItems([]);
+            mcVersionDropdown.setEnabled(false);
         }
         KubekUI.hidePreloader();
     });
 }
 
-// Заполняем дропдаун типов ядер
-function populateCoreTypeDropdown() {
-    KubekCoresManager.getList((cores) => {
-        availableCores = cores;
-        const coreItems = Object.entries(cores).map(([id, core]) => ({
-            value: id,
-            text: core.displayName
-        }));
-        coreTypeDropdown.setItems(coreItems);
-    });
-}
-
-// Заполняем дропдаун версий выбранного ядра
-function populateCoreVersionDropdown(coreId) {
+// Заполняем дропдаун версий/сборок выбранного ядра для конкретной версии Minecraft
+function populateCoreVersionDropdown(coreId, mcVersion = null) {
     KubekUI.showPreloader();
-    KubekCoresManager.getCoreVersions(coreId, (versions) => {
-        if (versions && Array.isArray(versions)) {
-            const versionItems = versions.map(v => ({
-                value: v,
-                text: v
-            }));
-            coreVersionDropdown.setItems(versionItems);
-            coreVersionDropdown.setEnabled(versionItems.length > 0);
-            
-            // Выбираем первую версию по умолчанию
-            if (versionItems.length > 0) {
-                // Пытаемся найти версию, соответствующую выбранной версии Minecraft
-                const mcVersion = mcVersionDropdown.getValue();
-                const matchingVersion = versionItems.find(v => v.value === mcVersion || v.value.includes(mcVersion));
+    
+    const selectedMCVersion = mcVersion || mcVersionDropdown.getValue();
+    console.log("[CoreVersion] Loading for core:", coreId, "MC version:", selectedMCVersion);
+    
+    // Для ядер с поддержкой получения версий через API
+    if (['paper', 'waterfall', 'velocity', 'purpur', 'neoforge', 'forge', 'fabric'].includes(coreId)) {
+        KubekCoresManager.getCoreVersionsForMCVersion(coreId, selectedMCVersion, (versions) => {
+            console.log("[CoreVersion] Got response:", versions);
+            if (versions && Array.isArray(versions) && versions.length > 0) {
+                const versionItems = versions.map(v => ({
+                    value: v.version,
+                    text: v.display || v.version,
+                    build: v.build
+                }));
+                coreVersionDropdown.setItems(versionItems);
+                coreVersionDropdown.setEnabled(true);
                 
-                if (matchingVersion) {
-                    coreVersionDropdown.setValue(matchingVersion.value);
-                    currentSelectedVersion = matchingVersion.value;
-                } else {
-                    coreVersionDropdown.setValue(versionItems[0].value);
-                    currentSelectedVersion = versionItems[0].value;
-                }
+                // Выбираем первую (самую новую) версию по умолчанию
+                coreVersionDropdown.setValue(versionItems[0].value);
+                currentSelectedVersion = versionItems[0].value;
+                syncCoreSelection(coreId);
+            } else {
+                // Fallback: создаем одну запись с версией MC
+                coreVersionDropdown.setItems([{
+                    value: selectedMCVersion,
+                    text: selectedMCVersion
+                }]);
+                coreVersionDropdown.setEnabled(true);
+                coreVersionDropdown.setValue(selectedMCVersion);
+                currentSelectedVersion = selectedMCVersion;
                 syncCoreSelection(coreId);
             }
-        } else {
-            coreVersionDropdown.setItems([]);
-            coreVersionDropdown.setEnabled(false);
-        }
+            KubekUI.hidePreloader();
+        });
+    } else {
+        // Для остальных ядер (vanilla, forge, fabric, spigot) 
+        // просто используем версию Minecraft как версию ядра
+        coreVersionDropdown.setItems([{
+            value: selectedMCVersion,
+            text: selectedMCVersion
+        }]);
+        coreVersionDropdown.setEnabled(true);
+        coreVersionDropdown.setValue(selectedMCVersion);
+        currentSelectedVersion = selectedMCVersion;
+        syncCoreSelection(coreId);
         KubekUI.hidePreloader();
-    });
+    }
 }
 
 // Синхронизация выбора ядра со старым grid (для совместимости)

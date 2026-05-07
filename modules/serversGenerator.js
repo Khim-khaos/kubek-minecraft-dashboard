@@ -67,22 +67,15 @@ async function prepareJavaForServer(javaVersion, cb) {
 // Функция для запуска создания сервера Java
 async function startJavaServerGeneration(serverName, core, coreVersion, startParameters, javaExecutablePath, serverPort, cb) {
     let coreDownloadURL = "";
-    let coreFileName = core + "-" + coreVersion + ".jar";
-    
+    // Очищаем версию от build номера для имени файла (формат: "1.20.1#123" -> "1.20.1")
+    let cleanVersion = coreVersion.split('#')[0];
     // Определяем, является ли ядро установщиком (Forge, Fabric, NeoForge)
     let isInstaller = ["forge", "fabric", "neoforge"].includes(core.toLowerCase());
+    let coreFileName = core + "-" + cleanVersion + ".jar";
     let callbackCalled = false;
     
-    // Обёртка для callback, чтобы избежать двойного вызова
-    const safeCb = (...args) => {
-        if (!callbackCalled) {
-            callbackCalled = true;
-            cb(...args);
-        }
-    };
-    
     if (isInstaller) {
-        coreFileName = core + "-" + coreVersion + "-installer.jar";
+        coreFileName = core + "-" + cleanVersion + "-installer.jar";
     }
 
     // Создаём задачу на создание сервера

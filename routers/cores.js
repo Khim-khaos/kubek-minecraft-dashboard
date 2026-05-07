@@ -25,6 +25,63 @@ router.get("/minecraft-versions", function (req, res) {
     });
 });
 
+// Endpoint получения ядер, поддерживающих конкретную версию Minecraft
+router.get("/for-mc-version/:version", function (req, res) {
+    let mcVersion = req.params.version;
+    if (!COMMONS.isObjectsValid(mcVersion)) {
+        res.sendStatus(400);
+        return;
+    }
+    
+    res.set("Content-Type", "application/json");
+    let allCores = PREDEFINED.SERVER_CORES;
+    let supportedCores = [];
+    let pendingChecks = Object.keys(allCores).length;
+    
+    if (pendingChecks === 0) {
+        res.send([]);
+        return;
+    }
+    
+    Object.entries(allCores).forEach(([coreId, coreInfo]) => {
+        CORES_MANAGER.getSupportedMCVersionsForCore(coreId, (versions) => {
+            pendingChecks--;
+            
+            if (versions !== false && Array.isArray(versions) && versions.includes(mcVersion)) {
+                supportedCores.push({
+                    id: coreId,
+                    ...coreInfo
+                });
+            }
+            
+            // Когда все проверки завершены
+            if (pendingChecks === 0) {
+                res.send(supportedCores);
+            }
+        });
+    });
+});
+
+// Endpoint получения версий/сборок ядра для конкретной версии Minecraft
+router.get("/:core/for-mc-version/:mcversion", function (req, res) {
+    let core = req.params.core;
+    let mcVersion = req.params.mcversion;
+    
+    if (!COMMONS.isObjectsValid(core, mcVersion) || !Object.keys(PREDEFINED.SERVER_CORES).includes(core)) {
+        res.sendStatus(400);
+        return;
+    }
+    
+    res.set("Content-Type", "application/json");
+    CORES_MANAGER.getCoreVersionsForMCVersion(core, mcVersion, (result) => {
+        if (result === false) {
+            res.sendStatus(500);
+            return;
+        }
+        res.send(result);
+    });
+});
+
 // Endpoint списка версий конкретного ядра
 router.get("/:core", function (req, res) {
     let q = req.params;

@@ -18,4 +18,14 @@ class KubekCoresManager {
     static getMinecraftVersions(cb) {
         KubekRequests.get("/cores/minecraft-versions", cb);
     }
+
+    // Получить список ядер, поддерживающих конкретную версию Minecraft
+    static getCoresForMCVersion(mcVersion, cb) {
+        KubekRequests.get("/cores/for-mc-version/" + mcVersion, cb);
+    }
+
+    // Получить список версий/сборок ядра для конкретной версии Minecraft
+    static getCoreVersionsForMCVersion(core, mcVersion, cb) {
+        KubekRequests.get("/cores/" + core + "/for-mc-version/" + mcVersion, cb);
+    }
 }
