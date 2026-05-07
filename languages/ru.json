@@ -162,7 +162,17 @@
       "serverAlreadyExists": "Такой сервер уже существует",
       "noMemory": "Неверное значение памяти",
       "noPort": "Неверное значение порта",
-      "noCoreSelected": "Не выбрано ядро/версия ядра"
+      "noCoreSelected": "Не выбрано ядро/версия ядра",
+      "minecraftVersion": "Версия Minecraft",
+      "coreType": "Ядро / Загрузчик модов",
+      "selectVersion": "Выберите версию",
+      "searchVersion": "Поиск версии...",
+      "searchCore": "Поиск ядра...",
+      "selectCoreFirst": "Сначала выберите версию Minecraft",
+      "selectCoreType": "Выберите тип ядра",
+      "selectCoreVersionFirst": "Сначала выберите тип ядра",
+      "searchCoreType": "Поиск типа ядра...",
+      "searchCoreVersion": "Поиск версии ядра..."
     },
     "tasksTypes": {
       "downloading": "Скачивание",

@@ -352,3 +352,21 @@ exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
     
     tryNext(0);
 };
+
+// Получить список версий Minecraft из API Mojang
+exports.getAllMinecraftVersions = (cb) => {
+    const url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+    COMMONS.getDataByURL(url, (data) => {
+        if (data === false || !data.versions) {
+            LOGGER.warning("Failed to fetch Minecraft versions from Mojang API");
+            cb(false);
+            return;
+        }
+        // Фильтруем только релизы (не snapshot и не beta/alpha)
+        const releases = data.versions
+            .filter(v => v.type === "release")
+            .map(v => v.id)
+            .sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }));
+        cb(releases);
+    });
+};

@@ -37,10 +37,62 @@
             <div class="item active" data-item="list">{{newServerWizard.fromList}}</div>
             <div class="item" data-item="upload">{{newServerWizard.uploadOwn}}</div>
         </div>
-        <!-- Список ядер -->
-        <div class="cardsGrid" id="cores-grid"></div>
-        <!-- Список версии ядра -->
-        <div id="cores-versions-parent">
+        
+        <!-- Новые выпадающие списки с поиском -->
+        <div id="core-selectors-container">
+            <!-- Выпадающий список для версий Minecraft -->
+            <div class="searchable-dropdown" id="mc-version-dropdown">
+                <label>{{newServerWizard.minecraftVersion}}</label>
+                <div class="dropdown-trigger">
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectVersion}}" readonly>
+                    <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-search-box">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" class="dropdown-filter" placeholder="{{newServerWizard.searchVersion}}">
+                    </div>
+                    <div class="dropdown-options"></div>
+                </div>
+            </div>
+
+            <!-- Выпадающий список для типа ядра -->
+            <div class="searchable-dropdown" id="mc-core-type-dropdown">
+                <label>{{newServerWizard.coreType}}</label>
+                <div class="dropdown-trigger">
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreFirst}}" readonly disabled>
+                    <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-search-box">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" class="dropdown-filter" placeholder="{{newServerWizard.searchCoreType}}">
+                    </div>
+                    <div class="dropdown-options"></div>
+                </div>
+            </div>
+
+            <!-- Выпадающий список для версии ядра -->
+            <div class="searchable-dropdown" id="mc-core-version-dropdown">
+                <label>{{newServerWizard.coreVersion}}</label>
+                <div class="dropdown-trigger">
+                    <input type="text" class="dropdown-search" placeholder="{{newServerWizard.selectCoreVersionFirst}}" readonly disabled>
+                    <span class="material-symbols-rounded dropdown-arrow">expand_more</span>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-search-box">
+                        <span class="material-symbols-rounded">search</span>
+                        <input type="text" class="dropdown-filter" placeholder="{{newServerWizard.searchCoreVersion}}">
+                    </div>
+                    <div class="dropdown-options"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Старый список ядер (скрыт, используется для совместимости) -->
+        <div class="cardsGrid" id="cores-grid" style="display: none;"></div>
+        <!-- Старый список версии ядра (скрыт, используется для совместимости) -->
+        <div id="cores-versions-parent" style="display: none;">
             <h3>{{newServerWizard.coreVersion}}</h3>
             <div id="cores-versions"></div>
         </div>

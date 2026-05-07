@@ -10,6 +10,187 @@ currentSelectedCore = "";
 currentSelectedVersion = "";
 allServersList = [];
 
+// Класс для кастомного выпадающего списка с поиском
+class SearchableDropdown {
+    constructor(elementId, options = {}) {
+        this.container = document.getElementById(elementId);
+        if (!this.container) return;
+        
+        this.trigger = this.container.querySelector('.dropdown-trigger');
+        this.menu = this.container.querySelector('.dropdown-menu');
+        this.searchInput = this.container.querySelector('.dropdown-search');
+        this.filterInput = this.container.querySelector('.dropdown-filter');
+        this.optionsContainer = this.container.querySelector('.dropdown-options');
+        
+        this.items = [];
+        this.selectedValue = null;
+        this.selectedText = '';
+        this.onSelect = options.onSelect || (() => {});
+        this.placeholder = options.placeholder || '';
+        this.disabledPlaceholder = options.disabledPlaceholder || '';
+        
+        this.init();
+    }
+    
+    init() {
+        // Открытие/закрытие по клику на trigger
+        this.trigger.addEventListener('click', (e) => {
+            if (this.searchInput.disabled) return;
+            e.stopPropagation();
+            this.toggle();
+        });
+        
+        // Закрытие при клике вне
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target)) {
+                this.close();
+            }
+        });
+        
+        // Фильтрация при вводе
+        this.filterInput.addEventListener('input', () => {
+            this.filter(this.filterInput.value);
+        });
+        
+        // Предотвращаем закрытие при клике в меню
+        this.menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+    
+    toggle() {
+        if (this.container.classList.contains('active')) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+    
+    open() {
+        // Закрываем другие открытые дропдауны
+        document.querySelectorAll('.searchable-dropdown.active').forEach(d => {
+            if (d !== this.container) d.classList.remove('active');
+        });
+        
+        this.container.classList.add('active');
+        this.filterInput.value = '';
+        this.filter('');
+        setTimeout(() => this.filterInput.focus(), 10);
+    }
+    
+    close() {
+        this.container.classList.remove('active');
+    }
+    
+    setItems(items) {
+        this.items = items;
+        this.render();
+    }
+    
+    render() {
+        this.optionsContainer.innerHTML = '';
+        
+        if (this.items.length === 0) {
+            this.optionsContainer.innerHTML = '<div class="dropdown-empty">Нет доступных вариантов</div>';
+            return;
+        }
+        
+        this.items.forEach(item => {
+            const option = document.createElement('div');
+            option.className = 'dropdown-option';
+            option.dataset.value = item.value;
+            option.innerHTML = `<span>${item.text}</span><span class="material-symbols-rounded">check</span>`;
+            
+            if (item.value === this.selectedValue) {
+                option.classList.add('selected');
+            }
+            
+            option.addEventListener('click', () => {
+                this.select(item);
+            });
+            
+            this.optionsContainer.appendChild(option);
+        });
+    }
+    
+    filter(query) {
+        const normalizedQuery = query.toLowerCase().trim();
+        const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+        let visibleCount = 0;
+        
+        options.forEach(option => {
+            const text = option.querySelector('span').textContent.toLowerCase();
+            if (text.includes(normalizedQuery)) {
+                option.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                option.classList.add('hidden');
+            }
+        });
+        
+        // Показываем/скрываем сообщение "Ничего не найдено"
+        let emptyMsg = this.optionsContainer.querySelector('.dropdown-empty');
+        
+        if (visibleCount === 0) {
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('div');
+                emptyMsg.className = 'dropdown-empty';
+                emptyMsg.textContent = 'Ничего не найдено';
+                this.optionsContainer.appendChild(emptyMsg);
+            }
+        } else if (emptyMsg) {
+            emptyMsg.remove();
+        }
+    }
+    
+    select(item) {
+        this.selectedValue = item.value;
+        this.selectedText = item.text;
+        this.searchInput.value = item.text;
+        this.render();
+        this.close();
+        this.onSelect(item);
+    }
+    
+    setValue(value) {
+        const item = this.items.find(i => i.value === value);
+        if (item) {
+            this.select(item);
+        }
+    }
+    
+    clear() {
+        this.selectedValue = null;
+        this.selectedText = '';
+        this.searchInput.value = '';
+        this.render();
+    }
+    
+    setEnabled(enabled) {
+        this.searchInput.disabled = !enabled;
+        if (!enabled) {
+            this.close();
+            this.searchInput.placeholder = this.disabledPlaceholder;
+        } else {
+            this.searchInput.placeholder = this.placeholder;
+        }
+    }
+    
+    getValue() {
+        return this.selectedValue;
+    }
+}
+
+// Глобальные переменные для дропдаунов
+let mcVersionDropdown = null;
+let coreTypeDropdown = null;
+let coreVersionDropdown = null;
+
+// Храним данные
+let availableCores = {};  // Список доступных ядер
+currentSelectedCore = "";
+currentSelectedVersion = "";
+
 $(function () {
     KubekUI.setTitle("Kubek | {{commons.create}} {{commons.server.lowerCase}}");
 
@@ -18,11 +199,21 @@ $(function () {
         allServersList.push($(el).text());
     });
 
+    // Инициализируем кастомные дропдауны
+    initSearchableDropdowns();
+
+    // Загружаем список ядер через существующий API
     refreshServerCoresList(() => {
-        refreshCoreVersionsList(() => {
-            refreshJavaList(() => {});
-        });
+        // Загружаем список версий Minecraft и типы ядер
+        populateVersionDropdown();
+        populateCoreTypeDropdown();
+        refreshJavaList(() => {});
     });
+    
+    // Показываем новые дропдауны, скрываем старые элементы
+    $("#core-selectors-container").show();
+    $(".new-server-container #cores-grid").hide();
+    $(".new-server-container #cores-versions-parent").hide();
     $(".new-server-container #server-port").val(25565);
 
     // Получаем кол-во ОЗУ, настраиваем поле ввода ОЗУ
@@ -88,9 +279,9 @@ function validateNewServerInputs(){
         $(".new-server-container #server-port").removeClass("error");
     }
 
-    // Проверка выбора версии и ядра
+    // Проверка выбора версии и ядра (через дропдауны)
     if($(".new-server-container #core-upload").css("display") === "none"){
-        if($(".new-server-container #cores-grid .item.active").length === 1 && $(".new-server-container #cores-versions .item.active").length === 1){
+        if(!currentSelectedCore || !currentSelectedVersion){
             $(".new-server-container #create-server-btn").prop("disabled", true);
             $(".new-server-container #create-server-btn .text").text("{{newServerWizard.noCoreSelected}}");
             return;
@@ -102,40 +293,158 @@ function validateNewServerInputs(){
     $(".new-server-container #create-server-btn .text").text("Создать " + sName);
 }
 
-// Функция для обновления списка ядер
-function refreshServerCoresList(cb = () => {
-}) {
+// Инициализация кастомных дропдаунов
+function initSearchableDropdowns() {
+    // Дропдаун для версий Minecraft
+    mcVersionDropdown = new SearchableDropdown('mc-version-dropdown', {
+        placeholder: '{{newServerWizard.selectVersion}}',
+        disabledPlaceholder: '{{newServerWizard.selectVersion}}',
+        onSelect: (item) => {
+            currentSelectedVersion = item.value;
+            // При выборе версии Minecraft, включаем выбор типа ядра
+            coreTypeDropdown.setEnabled(true);
+            coreTypeDropdown.clear();
+            coreVersionDropdown.setEnabled(false);
+            coreVersionDropdown.clear();
+            validateNewServerInputs();
+        }
+    });
+    
+    // Дропдаун для типа ядра
+    coreTypeDropdown = new SearchableDropdown('mc-core-type-dropdown', {
+        placeholder: '{{newServerWizard.selectCoreType}}',
+        disabledPlaceholder: '{{newServerWizard.selectCoreFirst}}',
+        onSelect: (item) => {
+            currentSelectedCore = item.value;
+            // При выборе типа ядра, загружаем его версии
+            populateCoreVersionDropdown(item.value);
+            validateNewServerInputs();
+        }
+    });
+    coreTypeDropdown.setEnabled(false);
+    
+    // Дропдаун для версии ядра
+    coreVersionDropdown = new SearchableDropdown('mc-core-version-dropdown', {
+        placeholder: '{{newServerWizard.selectCoreType}}',
+        disabledPlaceholder: '{{newServerWizard.selectCoreVersionFirst}}',
+        onSelect: (item) => {
+            currentSelectedVersion = item.value;
+            // Синхронизируем со старым grid для совместимости
+            syncCoreSelection(currentSelectedCore);
+            validateNewServerInputs();
+        }
+    });
+    coreVersionDropdown.setEnabled(false);
+}
+
+// Заполняем дропдаун версий Minecraft
+function populateVersionDropdown() {
+    KubekUI.showPreloader();
+    KubekCoresManager.getMinecraftVersions((versions) => {
+        if (versions && Array.isArray(versions)) {
+            const versionItems = versions.map(v => ({
+                value: v,
+                text: v
+            }));
+            mcVersionDropdown.setItems(versionItems);
+            
+            // Выбираем первую версию по умолчанию
+            if (versionItems.length > 0) {
+                mcVersionDropdown.setValue(versionItems[0].value);
+                currentSelectedVersion = versionItems[0].value;
+                // Включаем выбор типа ядра
+                coreTypeDropdown.setEnabled(true);
+            }
+        }
+        KubekUI.hidePreloader();
+    });
+}
+
+// Заполняем дропдаун типов ядер
+function populateCoreTypeDropdown() {
+    KubekCoresManager.getList((cores) => {
+        availableCores = cores;
+        const coreItems = Object.entries(cores).map(([id, core]) => ({
+            value: id,
+            text: core.displayName
+        }));
+        coreTypeDropdown.setItems(coreItems);
+    });
+}
+
+// Заполняем дропдаун версий выбранного ядра
+function populateCoreVersionDropdown(coreId) {
+    KubekUI.showPreloader();
+    KubekCoresManager.getCoreVersions(coreId, (versions) => {
+        if (versions && Array.isArray(versions)) {
+            const versionItems = versions.map(v => ({
+                value: v,
+                text: v
+            }));
+            coreVersionDropdown.setItems(versionItems);
+            coreVersionDropdown.setEnabled(versionItems.length > 0);
+            
+            // Выбираем первую версию по умолчанию
+            if (versionItems.length > 0) {
+                // Пытаемся найти версию, соответствующую выбранной версии Minecraft
+                const mcVersion = mcVersionDropdown.getValue();
+                const matchingVersion = versionItems.find(v => v.value === mcVersion || v.value.includes(mcVersion));
+                
+                if (matchingVersion) {
+                    coreVersionDropdown.setValue(matchingVersion.value);
+                    currentSelectedVersion = matchingVersion.value;
+                } else {
+                    coreVersionDropdown.setValue(versionItems[0].value);
+                    currentSelectedVersion = versionItems[0].value;
+                }
+                syncCoreSelection(coreId);
+            }
+        } else {
+            coreVersionDropdown.setItems([]);
+            coreVersionDropdown.setEnabled(false);
+        }
+        KubekUI.hidePreloader();
+    });
+}
+
+// Синхронизация выбора ядра со старым grid (для совместимости)
+function syncCoreSelection(coreId) {
+    // Обновляем старый grid
+    $(".new-server-container #cores-grid .card").removeClass("active");
+    $(`.new-server-container #cores-grid .card[data-id="${coreId}"]`).addClass("active");
+}
+
+// Функция для обновления списка ядер (обновлённая для работы с дропдаунами)
+function refreshServerCoresList(cb = () => {}) {
     currentSelectedCore = "";
     currentSelectedVersion = "";
+    
     KubekCoresManager.getList((cores) => {
+        // Заполняем старый grid для совместимости
         $(".new-server-container #cores-grid .card").off("click");
-
-        // Очищаем список
         $(".new-server-container #cores-grid").html("");
-
-        // Загружаем новый список
+        
         for (const [, core] of Object.entries(cores)) {
-            // Определяем расширение иконки (SVG или PNG)
             let iconExt = SVG_CORES.includes(core.name) ? ".svg" : ".png";
             $(".new-server-container #cores-grid").append(CORE_GRID_ITEM_PLACEHOLDER.replaceAll("$0", core.displayName).replaceAll("$1", core.name).replaceAll("$2", iconExt));
         }
-        // Делаем первый элемент активным и загружаем ID ядра в переменную
+        
         $(".new-server-container #cores-grid .card:first-child").addClass("active");
-        currentSelectedCore = $(".new-server-container #cores-grid .card:first-child").data("id");
-
-        // Биндим нажатия на карточки
+        
+        // Биндим нажатия на карточки для обратной совместимости
         $(".new-server-container #cores-grid .card").on("click", function () {
             if (!$(this).hasClass("active")) {
                 $(".new-server-container #cores-grid .card.active").removeClass("active");
                 $(this).addClass("active");
                 currentSelectedCore = $(this).data("id");
-                KubekUI.showPreloader();
-                refreshCoreVersionsList(() => {
-                    validateNewServerInputs();
-                    KubekUI.hidePreloader();
-                });
+                // Синхронизируем с дропдауном
+                if (coreDropdown) {
+                    coreDropdown.setValue(currentSelectedCore);
+                }
+                validateNewServerInputs();
             }
-        })
+        });
+        
         cb(true);
     });
 }
@@ -145,35 +454,10 @@ $(".new-server-container input").on("input", function(){
    validateNewServerInputs();
 });
 
-// Функция для обновления списка версий ядра
-function refreshCoreVersionsList(cb = () => {
-}) {
-    currentSelectedVersion = "";
-    KubekCoresManager.getCoreVersions(currentSelectedCore, (versions) => {
-        $(".new-server-container #cores-versions .item").off("click");
-
-        // Очищаем список
-        $(".new-server-container #cores-versions").html("");
-
-        // Загружаем новый список
-        versions.forEach((ver) => {
-            $(".new-server-container #cores-versions").append("<div class='item'>" + ver + "</div>");
-        });
-        // Делаем первый элемент активным и загружаем версию в переменную
-        $(".new-server-container #cores-versions .item:first-child").addClass("active");
-        currentSelectedVersion = $(".new-server-container #cores-versions .item:first-child").text();
-
-        // Биндим нажатия на версии
-        $(".new-server-container #cores-versions .item").on("click", function () {
-            if (!$(this).hasClass("active")) {
-                $(".new-server-container #cores-versions .item.active").removeClass("active");
-                $(this).addClass("active");
-                currentSelectedVersion = $(this).text();
-                validateNewServerInputs();
-            }
-        })
-        cb(true);
-    });
+// Функция для обновления списка версий ядра (устаревшая, оставлена для совместимости)
+function refreshCoreVersionsList(cb = () => {}) {
+    // Новая реализация использует дропдауны, эта функция оставлена для обратной совместимости
+    cb(true);
 }
 
 // Вызвать диалог для выбора файла ядра
@@ -232,10 +516,12 @@ $(".new-server-container #core-category .item").on("click", function () {
         $(".new-server-container #core-category .item.active").removeClass("active");
         $(this).addClass("active");
         if ($(this).data("item") === "list") {
-            $(".new-server-container #cores-grid").show();
-            $(".new-server-container #cores-versions-parent").show();
+            $("#core-selectors-container").show();
+            $(".new-server-container #cores-grid").hide();
+            $(".new-server-container #cores-versions-parent").hide();
             $(".new-server-container #core-upload").hide();
         } else {
+            $("#core-selectors-container").hide();
             $(".new-server-container #cores-grid").hide();
             $(".new-server-container #cores-versions-parent").hide();
             $(".new-server-container #core-upload").show();

@@ -1,5 +1,6 @@
 const PREDEFINED = require("./../modules/predefined");
 const CORES_MANAGER = require("./../modules/coresManager");
+const CORES_URL_GEN = require("./../modules/coresURLGenerator");
 const COMMONS = require("./../modules/commons");
 const WEBSERVER = require("../modules/webserver");
 
@@ -10,6 +11,18 @@ const router = express.Router();
 router.get("/", function (req, res) {
     res.set("Content-Type", "application/json");
     res.send(PREDEFINED.SERVER_CORES);
+});
+
+// Endpoint списка версий Minecraft
+router.get("/minecraft-versions", function (req, res) {
+    res.set("Content-Type", "application/json");
+    CORES_URL_GEN.getAllMinecraftVersions((versions) => {
+        if (versions === false) {
+            res.sendStatus(500);
+            return;
+        }
+        res.send(versions);
+    });
 });
 
 // Endpoint списка версий конкретного ядра

@@ -126,6 +126,174 @@
     margin: 6px 0;
 }
 
+/* Кастомные выпадающие списки с поиском */
+#core-selectors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.searchable-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.searchable-dropdown label {
+    display: block;
+    font-size: 12pt;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--bg-dark-accent-lighter);
+}
+
+.searchable-dropdown .dropdown-trigger {
+    display: flex;
+    align-items: center;
+    background: var(--bg-dark-accent);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.searchable-dropdown .dropdown-trigger:hover {
+    background: var(--bg-dark-accent-light);
+}
+
+.searchable-dropdown .dropdown-trigger input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    font-size: 12pt;
+    cursor: pointer;
+    color: white;
+}
+
+.searchable-dropdown .dropdown-trigger input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.searchable-dropdown .dropdown-trigger input::placeholder {
+    color: #888;
+}
+
+.searchable-dropdown .dropdown-arrow {
+    padding: 0 12px;
+    color: var(--bg-dark-accent-lighter);
+    transition: transform 0.2s;
+}
+
+.searchable-dropdown.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.searchable-dropdown .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-dark-accent);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    max-height: 320px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.searchable-dropdown.active .dropdown-menu {
+    display: flex;
+}
+
+.searchable-dropdown .dropdown-search-box {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--bg-dark-accent-light);
+    gap: 8px;
+}
+
+.searchable-dropdown .dropdown-search-box .material-symbols-rounded {
+    color: var(--bg-dark-accent-lighter);
+    font-size: 20px;
+}
+
+.searchable-dropdown .dropdown-search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    font-size: 12pt;
+    color: white;
+    outline: none;
+}
+
+.searchable-dropdown .dropdown-search-box input::placeholder {
+    color: #888;
+}
+
+.searchable-dropdown .dropdown-options {
+    overflow-y: auto;
+    max-height: 240px;
+    padding: 4px;
+}
+
+.searchable-dropdown .dropdown-options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.searchable-dropdown .dropdown-options::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.searchable-dropdown .dropdown-options::-webkit-scrollbar-thumb {
+    background: var(--bg-dark-accent-light);
+    border-radius: 3px;
+}
+
+.searchable-dropdown .dropdown-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12pt;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: 0.15s;
+}
+
+.searchable-dropdown .dropdown-option:hover {
+    background: var(--bg-dark-accent-light);
+}
+
+.searchable-dropdown .dropdown-option.selected {
+    background: var(--bg-dark-accent-light);
+    font-weight: 600;
+}
+
+.searchable-dropdown .dropdown-option .material-symbols-rounded {
+    font-size: 18px;
+    opacity: 0;
+}
+
+.searchable-dropdown .dropdown-option.selected .material-symbols-rounded {
+    opacity: 1;
+}
+
+.searchable-dropdown .dropdown-option.hidden {
+    display: none;
+}
+
+.searchable-dropdown .dropdown-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: #888;
+    font-size: 11pt;
+}
+
 /* Кнопка создания */
 .new-server-container #create-server-btn {
     width: 100%;

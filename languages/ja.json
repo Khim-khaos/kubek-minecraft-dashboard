@@ -161,7 +161,17 @@
         "serverAlreadyExists": "サーバーはすでに存在します",
         "noMemory": "無効なメモリ値です",
         "noPort": "無効なポート値",
-        "noCoreSelected": "コアのタイプ/バージョンが選択されていません"
+        "noCoreSelected": "コアのタイプ/バージョンが選択されていません",
+        "minecraftVersion": "Minecraftバージョン",
+        "coreType": "コア / Modローダー",
+        "selectVersion": "バージョンを選択",
+        "searchVersion": "バージョンを検索...",
+        "searchCore": "コアを検索...",
+        "selectCoreFirst": "先にMinecraftバージョンを選択してください",
+        "selectCoreType": "コアタイプを選択",
+        "selectCoreVersionFirst": "先にコアタイプを選択してください",
+        "searchCoreType": "コアタイプを検索...",
+        "searchCoreVersion": "コアバージョンを検索..."
       },
       "tasksTypes": {
         "downloading": "ダウンロード中",

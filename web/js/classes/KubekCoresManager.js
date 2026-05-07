@@ -13,4 +13,9 @@ class KubekCoresManager {
     static getCoreURL(core, version, cb) {
         KubekRequests.get("/cores/" + core + "/" + version, cb);
     }
+
+    // Получить список версий Minecraft
+    static getMinecraftVersions(cb) {
+        KubekRequests.get("/cores/minecraft-versions", cb);
+    }
 }

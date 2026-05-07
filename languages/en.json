@@ -162,7 +162,17 @@
       "serverAlreadyExists": "Server already exists",
       "noMemory": "Invalid memory value",
       "noPort": "Invalid port value",
-      "noCoreSelected": "No core type/version selected"
+      "noCoreSelected": "No core type/version selected",
+      "minecraftVersion": "Minecraft Version",
+      "coreType": "Core / Mod Loader",
+      "selectVersion": "Select version",
+      "searchVersion": "Search version...",
+      "searchCore": "Search core...",
+      "selectCoreFirst": "Select Minecraft version first",
+      "selectCoreType": "Select core type",
+      "selectCoreVersionFirst": "Select core type first",
+      "searchCoreType": "Search core type...",
+      "searchCoreVersion": "Search core version..."
     },
     "tasksTypes": {
       "downloading": "Downloading",
