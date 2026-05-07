@@ -271,43 +271,44 @@ exports.getFabricCoreURL = (minecraftVersion, cb) => {
 
 // Получить список версий Minecraft для NeoForge
 exports.getAllNeoForgeCores = (cb) => {
-    // Пробуем основной URL и зеркала
-    let urlsToTry = [
-        "https://meta.neoforged.org/api/v2/versions",
-        "https://bmclapi2.bangbang93.com/neoforge/versions",
-        "https://dl.mslmc.cn/neoforge/versions.json"
-    ];
-    
-    function tryNext(index) {
-        if (index >= urlsToTry.length) {
+    // Используем API maven.neoforged.net для получения всех версий
+    COMMONS.getDataByURL("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false", (data) => {
+        if (data === false) {
             LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
             cb(false);
             return;
         }
         
-        COMMONS.getDataByURL(urlsToTry[index], (data) => {
-            if (data === false) {
-                LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
-                tryNext(index + 1);
-                return;
-            }
-            if (Array.isArray(data)) {
-                // Получаем уникальные версии Minecraft
-                let mcVersions = new Set();
-                for (let item of data) {
-                    if (item.minecraftVersion) {
-                        mcVersions.add(item.minecraftVersion);
+        if (data && data.versions && Array.isArray(data.versions) && data.versions.length > 0) {
+            // Извлекаем версии Minecraft из названий версий (формат: minecraftVersion-neoforgeVersion)
+            let mcVersions = new Set();
+            for (let version of data.versions) {
+                // Формат версии: 1.20.1-47.1.106 или 21.1.55 (для новых версий)
+                let match = version.match(/^(\d+\.\d+(?:\.\d+)?)-/);
+                if (match) {
+                    mcVersions.add(match[1]);
+                } else {
+                    // Для новых версий формата 21.1.55 (NeoForge 21.x = Minecraft 1.21.x)
+                    let newFormatMatch = version.match(/^(\d+)\./);
+                    if (newFormatMatch) {
+                        mcVersions.add("1." + newFormatMatch[1]);
                     }
                 }
-                let neoforgeVersions = Array.from(mcVersions).reverse();
-                cb(neoforgeVersions);
-            } else {
-                tryNext(index + 1);
             }
-        });
-    }
-    
-    tryNext(0);
+            
+            if (mcVersions.size === 0) {
+                LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
+                cb(false);
+                return;
+            }
+            
+            let neoforgeVersions = Array.from(mcVersions).reverse();
+            cb(neoforgeVersions);
+        } else {
+            LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
+            cb(false);
+        }
+    });
 };
 
 // Получить ссылку на скачивание NeoForge installer
@@ -349,26 +350,5 @@ exports.getNeoForgeCoreURL = (minecraftVersion, cb) => {
         });
     }
     
-    tryNext(0); (data) => {
-        if (data === false || !Array.isArray(data) || data.length === 0) {
-            LOGGER.warning("Oops! An error occurred while fetching NeoForge URL");
-            cb(false);
-            return;
-        }
-        
-        // Берем последнюю версию NeoForge для этой версии Minecraft
-        let neoforgeVersion = data[0].version;
-        
-        // Формируем URL для installer (основной + зеркала)
-        let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/forge/" + 
-                         minecraftVersion + "-" + neoforgeVersion + 
-                         "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-        
-        // BMCLAPI зеркало (правильный формат из документации)
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/forge/" + 
-                        minecraftVersion + "-" + neoforgeVersion + 
-                        "/forge-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
-        
-        cb(neoforgeUrl, [bmclapiUrl]);
-    });
+    tryNext(0);
 };
