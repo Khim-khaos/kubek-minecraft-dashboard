@@ -532,17 +532,19 @@ exports.getNeoForgeCoreURL = (version, cb) => {
     if (neoforgeVersionFromInput) {
         // Определяем путь в maven в зависимости от версии Minecraft
         // Для 1.20.1 используется путь forge, для 1.20.2+ используется neoforge
+        // ВНИМАНИЕ: Для NeoForge версия Minecraft НЕ указывается в имени файла!
+        // Правильный формат: neoforge-21.1.228-installer.jar
         let isOldNeo = minecraftVersion === "1.20.1";
         let mavenPath = isOldNeo ? "forge" : "neoforge";
         let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
         
         let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
-                         minecraftVersion + "-" + neoforgeVersionFromInput + 
-                         "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersionFromInput + "-installer.jar";
+                         neoforgeVersionFromInput + 
+                         "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
         
         let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
-                        minecraftVersion + "-" + neoforgeVersionFromInput + 
-                        "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersionFromInput + "-installer.jar";
+                        neoforgeVersionFromInput + 
+                        "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
         
         return cb(neoforgeUrl, [bmclapiUrl]);
     }
@@ -572,19 +574,20 @@ exports.getNeoForgeCoreURL = (version, cb) => {
             
             // Определяем путь в maven в зависимости от версии Minecraft
             // Для 1.20.1 используется путь forge, для 1.20.2+ используется neoforge
+            // ВНИМАНИЕ: Для NeoForge версия Minecraft НЕ указывается в имени файла!
             let isOldNeo = minecraftVersion === "1.20.1";
             let mavenPath = isOldNeo ? "forge" : "neoforge";
             let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
             
             // Формируем URL для installer (основной + зеркала)
             let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
-                             minecraftVersion + "-" + neoforgeVersion + 
-                             "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+                             neoforgeVersion + 
+                             "/" + fileNamePrefix + "-" + neoforgeVersion + "-installer.jar";
             
             // BMCLAPI зеркало
             let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
-                            minecraftVersion + "-" + neoforgeVersion + 
-                            "/" + fileNamePrefix + "-" + minecraftVersion + "-" + neoforgeVersion + "-installer.jar";
+                            neoforgeVersion + 
+                            "/" + fileNamePrefix + "-" + neoforgeVersion + "-installer.jar";
             
             cb(neoforgeUrl, [bmclapiUrl]);
         });
