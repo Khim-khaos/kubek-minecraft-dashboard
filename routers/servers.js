@@ -44,6 +44,16 @@ router.get("/new", function (req, res) {
                 });
             })
         } else {
+            const LOGGER = require("./../modules/logger");
+            const colors = require("colors");
+            LOGGER.warning(`[Router] Bad request for new server creation. Missing parameters:`, {
+                server: !!q.server,
+                core: !!q.core,
+                coreVersion: !!q.coreVersion,
+                startParameters: !!q.startParameters,
+                javaVersion: !!q.javaVersion,
+                port: !!q.port
+            });
             res.sendStatus(400);
         }
     } else {

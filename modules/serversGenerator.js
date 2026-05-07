@@ -73,6 +73,13 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
     let isInstaller = ["forge", "fabric", "neoforge"].includes(core.toLowerCase());
     let coreFileName = core + "-" + cleanVersion + ".jar";
     let callbackCalled = false;
+
+    const safeCb = (res) => {
+        if (!callbackCalled) {
+            callbackCalled = true;
+            cb(res);
+        }
+    };
     
     if (isInstaller) {
         coreFileName = core + "-" + cleanVersion + "-installer.jar";
@@ -86,11 +93,17 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
         coreVersion: coreVersion,
         startParameters: startParameters,
         javaExecutablePath: javaExecutablePath,
-        currentStep: null
+        currentStep: PREDEFINED.SERVER_CREATION_STEPS.SEARCHING_CORE
     })
+
+    LOGGER.log(`[Creation] Starting creation of server: ${colors.cyan(serverName)} (Core: ${core}, Version: ${coreVersion})`);
 
     // Если сервер с таким названием уже существует - не продолжаем
     if (SERVERS_MANAGER.isServerExists(serverName)) {
+        LOGGER.warning(`[Creation] Server ${colors.red(serverName)} already exists!`);
+        if (TASK_MANAGER.isTaskExists(creationTaskID)) {
+            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+        }
         safeCb(false);
         return false;
     }
@@ -98,10 +111,21 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
     if (javaExecutablePath !== false) {
         // Создаём весь путь для сервера
         let serverDirectoryPath = "./servers/" + serverName;
-        fs.mkdirSync(serverDirectoryPath, {recursive: true});
+        try {
+            LOGGER.log(`[Creation] Creating directory: ${serverDirectoryPath}`);
+            fs.mkdirSync(serverDirectoryPath, {recursive: true});
+        } catch (e) {
+            LOGGER.error(`[Creation] Failed to create server directory: ${e.message}`);
+            if (TASK_MANAGER.isTaskExists(creationTaskID)) {
+                tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+            }
+            safeCb(false);
+            return false;
+        }
 
         if (core.match(/\:\/\//gim) === null && fs.existsSync("./servers/" + serverName + path.sep + core)) {
             // ЕСЛИ ЯДРО РАСПОЛОЖЕНО ЛОКАЛЬНО
+            LOGGER.log(`[Creation] Core for ${serverName} found locally.`);
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
             // Добавляем новый сервер в конфиг
             serversConfig[serverName] = {
@@ -119,9 +143,19 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             safeCb(true);
         } else {
             // ЕСЛИ ЯДРО НУЖНО СКАЧИВАТЬ
+            LOGGER.log(`[Creation] Core for ${serverName} needs to be downloaded.`);
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.SEARCHING_CORE;
             CORES_MANAGER.getCoreVersionURL(core, coreVersion, (url, mirrors = []) => {
+                if (url === false) {
+                    LOGGER.error(`[Creation] Failed to get URL for core: ${core} ${coreVersion}`);
+                    if (TASK_MANAGER.isTaskExists(creationTaskID)) {
+                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                    }
+                    safeCb(false);
+                    return;
+                }
                 coreDownloadURL = url;
+                LOGGER.log(`[Creation] Core URL: ${url}`);
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.CHECKING_JAVA;
                 // Скачиваем ядро для сервера (с поддержкой зеркал)
                 tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.DOWNLOADING_CORE;

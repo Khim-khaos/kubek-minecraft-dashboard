@@ -618,7 +618,25 @@ function prepareServerCreation(){
 }
 
 function startServerCreation(serverName, serverCore, serverVersion, startScript, javaVersion, serverPort){
-    KubekRequests.get("/servers/new?server=" + serverName + "&core=" + serverCore + "&coreVersion=" + serverVersion + "&startParameters=" + startScript + "&javaVersion=" + javaVersion + "&port=" + serverPort, () => {
-        $(".new-server-container #after-creation-text").text("{{newServerWizard.creationCompleted}}");
+    const url = "/servers/new?" + 
+        "server=" + encodeURIComponent(serverName) + 
+        "&core=" + encodeURIComponent(serverCore) + 
+        "&coreVersion=" + encodeURIComponent(serverVersion) + 
+        "&startParameters=" + encodeURIComponent(startScript) + 
+        "&javaVersion=" + encodeURIComponent(javaVersion) + 
+        "&port=" + encodeURIComponent(serverPort);
+
+    KubekRequests.get(url, (res) => {
+        if (res === true) {
+            $(".new-server-container #after-creation-text").text("{{newServerWizard.creationCompleted}}");
+            KubekAlerts.addAlert("{{newServerWizard.creationStarted}}", "check", serverName, 5000);
+        } else {
+            KubekAlerts.addAlert("{{newServerWizard.creationFailed}}", "error", serverName, 5000);
+            // Возвращаем кнопку в исходное состояние
+            $(".new-server-container #create-server-btn").removeAttr("disabled");
+            $(".new-server-container #create-server-btn .text").text("{{newServerWizard.create}} " + serverName);
+            $(".new-server-container #create-server-btn .material-symbols-rounded:not(.spinning)").show();
+            $(".new-server-container #create-server-btn .material-symbols-rounded.spinning").hide();
+        }
     });
 }
