@@ -118,13 +118,15 @@ exports.SERVER_CORE_MIRRORS = {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
         mirrors: [
             "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/",
+            "https://mcimirror.com/maven/net/minecraftforge/forge/",
             "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/"
         ]
     },
     fabric: {
         main: "https://meta.fabricmc.net/v2/versions/loader",
         mirrors: [
-            "https://bmclapi2.bangbang93.com/fabric-meta/"
+            "https://bmclapi2.bangbang93.com/fabric-meta/",
+            "https://mcimirror.com/fabric-meta/"
         ]
     },
     neoforge: {
@@ -133,10 +135,14 @@ exports.SERVER_CORE_MIRRORS = {
         mirrors: [
             "https://neoforged.forgecdn.net/releases/net/neoforged/neoforge/",
             "https://bmclapi2.bangbang93.com/maven/net/neoforged/neoforge/",
-            "https://mirror.nyist.edu.cn/bmclapi/maven/net/neoforged/neoforge/"
+            "https://mcimirror.com/maven/net/neoforged/neoforge/",
+            "https://mirror.sjtu.edu.cn/bmclapi/net/neoforged/neoforge/",
+            "https://mirrors.qlu.edu.cn/bmclapi/net/neoforged/neoforge/",
+            "https://mirror.nyist.edu.cn/bmclapi/net/neoforged/neoforge/"
         ],
         versionsApiMirrors: [
-            "https://bmclapi2.bangbang93.com/neoforge/list/%mcversion%"
+            "https://bmclapi2.bangbang93.com/neoforge/list/%mcversion%",
+            "https://mcimirror.com/neoforge/list/%mcversion%"
         ]
     },
     // MSLMC китайское зеркало (работает быстрее в РФ)

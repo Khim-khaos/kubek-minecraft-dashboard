@@ -178,15 +178,11 @@ exports.getForgeCoreURL = (version, cb) => {
                       mcVersion + "-" + forgeVersionFromInput + 
                       "/forge-" + mcVersion + "-" + forgeVersionFromInput + "-installer.jar";
         
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + 
-                        mcVersion + "-" + forgeVersionFromInput + 
-                        "/forge-" + mcVersion + "-" + forgeVersionFromInput + "-installer.jar";
+        // Получаем зеркала из PREDEFINED
+        const forgeMirrors = PREDEFINED.SERVER_CORE_MIRRORS.forge.mirrors;
+        const mirrors = forgeMirrors.map(m => m + mcVersion + "-" + forgeVersionFromInput + "/forge-" + mcVersion + "-" + forgeVersionFromInput + "-installer.jar");
         
-        let nyistUrl = "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/" +
-                       mcVersion + "-" + forgeVersionFromInput +
-                       "/forge-" + mcVersion + "-" + forgeVersionFromInput + "-installer.jar";
-        
-        return cb(forgeUrl, [bmclapiUrl, nyistUrl]);
+        return cb(forgeUrl, mirrors);
     }
 
     // Пробуем получить данные с основного URL или зеркала
@@ -233,17 +229,11 @@ exports.getForgeCoreURL = (version, cb) => {
                               mcVersion + "-" + forgeVersion + 
                               "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
                 
-                // BMCLAPI зеркало (прямой maven, без промежуточной verify-страницы)
-                let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/" + 
-                                mcVersion + "-" + forgeVersion + 
-                                "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
+                // Получаем зеркала из PREDEFINED
+                const forgeMirrors = PREDEFINED.SERVER_CORE_MIRRORS.forge.mirrors;
+                const mirrors = forgeMirrors.map(m => m + mcVersion + "-" + forgeVersion + "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar");
                 
-                // NYIST mirror (прямой путь bmclapi)
-                let nyistUrl = "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/" +
-                               mcVersion + "-" + forgeVersion +
-                               "/forge-" + mcVersion + "-" + forgeVersion + "-installer.jar";
-                
-                cb(forgeUrl, [bmclapiUrl, nyistUrl]);
+                cb(forgeUrl, mirrors);
             } else {
                 cb(false);
             }
@@ -341,10 +331,11 @@ exports.getFabricCoreURL = (version, cb) => {
         let fabricUrl = "https://meta.fabricmc.net/v2/versions/loader/" + 
                        minecraftVersion + "/" + loaderVersionFromInput + "/server/jar";
         
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + 
-                        minecraftVersion + "/" + loaderVersionFromInput + "/server/jar";
+        // Получаем зеркала из PREDEFINED
+        const fabricMirrors = PREDEFINED.SERVER_CORE_MIRRORS.fabric.mirrors;
+        const mirrors = fabricMirrors.map(m => m + "v2/versions/loader/" + minecraftVersion + "/" + loaderVersionFromInput + "/server/jar");
         
-        return cb(fabricUrl, [bmclapiUrl]);
+        return cb(fabricUrl, mirrors);
     }
 
     // Сначала получаем последнюю версию loader для этой версии Minecraft
@@ -362,11 +353,11 @@ exports.getFabricCoreURL = (version, cb) => {
         let fabricUrl = "https://meta.fabricmc.net/v2/versions/loader/" + 
                        minecraftVersion + "/" + loaderVersion + "/server/jar";
         
-        // BMCLAPI зеркало (правильный формат из документации)
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + 
-                        minecraftVersion + "/" + loaderVersion + "/server/jar";
+        // Получаем зеркала из PREDEFINED
+        const fabricMirrors = PREDEFINED.SERVER_CORE_MIRRORS.fabric.mirrors;
+        const mirrors = fabricMirrors.map(m => m + "v2/versions/loader/" + minecraftVersion + "/" + loaderVersion + "/server/jar");
         
-        cb(fabricUrl, [bmclapiUrl]);
+        cb(fabricUrl, mirrors);
     });
 };
 
@@ -516,28 +507,42 @@ exports.getNeoForgeCoreURL = (version, cb) => {
         let mavenPath = isOldNeo ? "forge" : "neoforge";
         let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
         
-        // Порядок зеркал: ForgeCDN (CloudFront), BMCLAPI (CN), Official
-        let urls = [
-            // ForgeCDN (CloudFront) - должен быть очень быстрым через CDN
-            "https://neoforged.forgecdn.net/releases/net/neoforged/" + mavenPath + "/" + 
-            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar",
-            
-            // BMCLAPI (Китай) - через прямой Maven путь
-            "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
-            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar",
-            
-            // Официальный репозиторий
-            "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
-            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar"
-        ];
+        // Получаем базовые зеркала из PREDEFINED
+        const nfMirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.mirrors;
         
+        // Формируем полные URL для всех зеркал
+        // Мы заменяем базовый путь /neoforge/ на версию и имя файла
+        let urls = nfMirrors.map(mirrorBase => {
+            // Если в зеркале уже есть правильный путь (с neoforge или forge в конце)
+            // Мы просто добавляем версию и файл
+            return mirrorBase.replace(/\/neoforge\/$/, `/${mavenPath}/`) + 
+                   neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
+        });
+        
+        // Добавляем официальный репозиторий в конец если его там нет
+        const officialUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
+                           neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
+        
+        if (!urls.includes(officialUrl)) {
+            urls.push(officialUrl);
+        }
+        
+        // Сортируем зеркала так, чтобы ForgeCDN или MCI Mirror были в начале для скорости
+        urls.sort((a, b) => {
+            if (a.includes("mcimirror.com")) return -1;
+            if (b.includes("mcimirror.com")) return 1;
+            if (a.includes("forgecdn.net")) return -1;
+            if (b.includes("forgecdn.net")) return 1;
+            return 0;
+        });
+
         return cb(urls[0], urls.slice(1));
     }
 
     // Пробуем основной URL и зеркала для получения версии
     let urlsToTry = [
         "https://meta.neoforged.org/api/v2/versions?minecraftVersion=" + minecraftVersion,
-        "https://bmclapi2.bangbang93.com/neoforge/versions?minecraftVersion=" + minecraftVersion
+        ...PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors.map(m => m.replace("%mcversion%", minecraftVersion))
     ];
     
     function tryNext(index) {
@@ -548,33 +553,32 @@ exports.getNeoForgeCoreURL = (version, cb) => {
         }
         
         COMMONS.getDataByURL(urlsToTry[index], (data) => {
-            if (data === false || !Array.isArray(data) || data.length === 0) {
+            if (data === false || (Array.isArray(data) && data.length === 0) || (typeof data === 'object' && !data.version && !Array.isArray(data))) {
                 LOGGER.warning("Failed to fetch from " + urlsToTry[index] + ", trying next...");
                 tryNext(index + 1);
                 return;
             }
             
             // Берем версию из ввода или первую (последнюю) доступную
-            let neoforgeVersion = neoforgeVersionFromInput || data[0].version;
+            let neoforgeVersion = neoforgeVersionFromInput;
             
-            // Определяем путь в maven в зависимости от версии Minecraft
-            // Для 1.20.1 используется путь forge, для 1.20.2+ используется neoforge
-            // ВНИМАНИЕ: Для NeoForge версия Minecraft НЕ указывается в имени файла!
-            let isOldNeo = minecraftVersion === "1.20.1";
-            let mavenPath = isOldNeo ? "forge" : "neoforge";
-            let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
+            if (!neoforgeVersion) {
+                if (Array.isArray(data)) {
+                    // BMCLAPI или MCI Mirror возвращают массив
+                    neoforgeVersion = data[0].version || data[0];
+                } else if (data.version) {
+                    // Официальный API возвращает объект
+                    neoforgeVersion = data.version;
+                }
+            }
             
-            // Формируем URL для installer (основной + зеркала)
-            // Используем прямой API эндпоинт BMCLAPI для скачивания (более надежно и быстро)
-            let bmclapiUrl = "https://bmclapi2.bangbang93.com/neoforge/version/" + 
-                            neoforgeVersion + "/download/installer.jar";
-            
-            let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
-                             neoforgeVersion + 
-                             "/" + fileNamePrefix + "-" + neoforgeVersion + "-installer.jar";
-            
-            // ВАЖНО: В регионах с ограничениями BMCLAPI работает лучше, поэтому ставим его ПЕРВЫМ
-            cb(bmclapiUrl, [neoforgeUrl]);
+            if (!neoforgeVersion) {
+                tryNext(index + 1);
+                return;
+            }
+
+            // Вызываем саму себя с уже известной версией для формирования списка зеркал
+            exports.getNeoForgeCoreURL(minecraftVersion + "#" + neoforgeVersion, cb);
         });
     }
     
