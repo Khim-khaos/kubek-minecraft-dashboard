@@ -17,7 +17,10 @@ async function prepareJavaForServer(javaVersion, cb) {
     let javaDownloadURL = "";
     let isJavaNaN = isNaN(parseInt(javaVersion));
 
-    if (isJavaNaN && fs.existsSync(javaVersion)) {
+    if (javaVersion === "java") {
+        // Если указано использовать системную Java
+        javaExecutablePath = "java";
+    } else if (isJavaNaN && fs.existsSync(javaVersion)) {
         // Если в аргументе указан путь к существующему файла Java
         javaExecutablePath = javaVersion;
     } else if (!isJavaNaN) {
@@ -25,6 +28,12 @@ async function prepareJavaForServer(javaVersion, cb) {
     } else {
         // Если версия Java не была передана
         cb(false);
+        return;
+    }
+
+    // Если указана системная java, сразу возвращаем её
+    if (javaExecutablePath === "java") {
+        cb(javaExecutablePath);
         return;
     }
 
@@ -270,6 +279,12 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                 }, coreMirrors);
             });
         }
+    } else {
+        // Если Java не найдена или не указана
+        if (TASK_MANAGER.isTaskExists(creationTaskID)) {
+            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+        }
+        safeCb(false);
     }
 }
 
