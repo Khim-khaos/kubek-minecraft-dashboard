@@ -118,13 +118,20 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
         try {
             LOGGER.log(`[Download] Sending request to: ${currentUrl}`);
-            let forceIpv4 = false;
             let isForgeHost = false;
+            let isNyist = false;
+            let isBmclapi = false;
+
             try {
                 const host = new URL(currentUrl).hostname;
                 if (host === "maven.minecraftforge.net" || host === "files.minecraftforge.net") {
-                    forceIpv4 = true;
                     isForgeHost = true;
+                }
+                if (host === "mirror.nyist.edu.cn") {
+                    isNyist = true;
+                }
+                if (host === "bmclapi2.bangbang93.com") {
+                    isBmclapi = true;
                 }
             } catch (e) {
                 // ignore URL parse errors
@@ -132,18 +139,18 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 30000 : 120000;
             
             const requestStream = async (url, headersOverride = null) => {
-                const isNyist = url.includes("mirror.nyist.edu.cn");
-                const isBmclapi = url.includes("bmclapi2.bangbang93.com");
+                const isUrlNyist = url.includes("mirror.nyist.edu.cn");
+                const isUrlBmclapi = url.includes("bmclapi2.bangbang93.com");
                 
                 return axiosInstance({
                     url,
                     method: "GET",
                     responseType: "stream",
-                    timeout: (isNyist || isBmclapi) ? 300000 : 180000, // Увеличиваем таймаут для зеркал
+                    timeout: (isUrlNyist || isUrlBmclapi) ? 300000 : 180000, 
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
                     signal: abortController.signal,
-                    family: forceIpv4 ? 4 : undefined,
+                    family: isForgeHost ? 4 : undefined,
                     headers: headersOverride ? Object.assign({}, headersOverride) : undefined
                 });
             };
