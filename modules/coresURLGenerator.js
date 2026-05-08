@@ -378,44 +378,33 @@ exports.getFabricCoreURL = (version, cb) => {
 exports.getAllNeoForgeCores = (cb) => {
     // Используем API maven.neoforged.net для получения всех версий или зеркала
     const mainApi = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApi;
+    // Для общего списка версий BMCLAPI не очень подходит без указания MC версии,
+    // но мы можем попробовать получить список для популярных версий или использовать основной API
     const mirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors;
     
     COMMONS.getDataByURL(mainApi, (data) => {
         if (data === false) {
-            LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
             cb(false);
             return;
         }
         
-        // Обработка данных (может быть разный формат у официального API и зеркал)
         let versionsList = [];
-        
         if (data && data.versions && Array.isArray(data.versions)) {
-            // Официальный формат API
             versionsList = data.versions;
-        } else if (Array.isArray(data)) {
-            // Формат BMCLAPI list (обычно массив объектов с полем version или просто строки)
-            versionsList = data.map(v => typeof v === 'object' ? v.version : v);
         }
         
         if (versionsList.length > 0) {
-            // Извлекаем версии Minecraft из версий ядра NeoForge
-            // С 26+ (новый формат): 26.1.2 = Minecraft 1.26.1
-            // До 26 (старый формат): 21.11.41 = Minecraft 1.21.4 (первая цифра minor = patch)
             let mcVersions = new Set();
             for (let version of versionsList) {
-                // Принимаем версии с 3+ частями (26.1.2, 26.1.2.42-beta, 21.11.41)
                 let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
                 if (match) {
-                    let major = parseInt(match[1]);  // 26 или 21
-                    let minor = match[2];  // 1 или 11
+                    let major = parseInt(match[1]);
+                    let minor = match[2];
                     let mcVersion;
                     
                     if (major >= 26) {
-                        // Новый формат: 26.1.2 = Minecraft 1.26.1
                         mcVersion = `1.${major}.${minor}`;
                     } else {
-                        // Старый формат: 21.11.41 = Minecraft 1.21.4 (первая цифра minor)
                         let patch = minor.charAt(0);
                         mcVersion = `1.${major}.${patch}`;
                     }
@@ -423,13 +412,6 @@ exports.getAllNeoForgeCores = (cb) => {
                 }
             }
             
-            if (mcVersions.size === 0) {
-                LOGGER.warning("Oops! An error occurred while fetching NeoForge versions");
-                cb(false);
-                return;
-            }
-            
-            // Сортируем версии от новых к старым с правильной числовой сортировкой
             let sortedVersions = Array.from(mcVersions).sort((a, b) => {
                 let parseVersion = (v) => {
                     let parts = v.split('.').map(Number);
@@ -441,14 +423,13 @@ exports.getAllNeoForgeCores = (cb) => {
         } else {
             cb(false);
         }
-    }, mirrors);
+    });
 };
 
 // Получить список версий ядра NeoForge для конкретной версии Minecraft
 exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
-    // Используем API maven.neoforged.net для получения всех версий или зеркала
     const mainApi = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApi;
-    const mirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors;
+    const mirrors = PREDEFINED.SERVER_CORE_MIRRORS.neoforge.versionsApiMirrors.map(m => m.replace("%mcversion%", minecraftVersion));
 
     COMMONS.getDataByURL(mainApi, (data) => {
         if (data === false) {
@@ -457,34 +438,31 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
             return;
         }
 
-        // Обработка данных
         let versionsList = [];
         if (data && data.versions && Array.isArray(data.versions)) {
+            // Формат официального API: { versions: ["21.1.228", ...] }
             versionsList = data.versions;
         } else if (Array.isArray(data)) {
+            // Формат BMCLAPI: [{ version: "21.1.228", ... }, ...]
             versionsList = data.map(v => typeof v === 'object' ? v.version : v);
         }
         
-        // Парсим версию Minecraft (например "1.26.1" или "1.21.4")
         let mcMatch = minecraftVersion.match(/^1\.(\d+)\.(\d+)$/);
         if (!mcMatch) {
             cb(false);
             return;
         }
         
-        let mcMajor = parseInt(mcMatch[1]);  // 26 или 21
-        let mcMinor = mcMatch[2];  // 1 или 4
+        let mcMajor = parseInt(mcMatch[1]);
+        let mcMinor = mcMatch[2];
         
-        // Фильтруем версии ядра под эту версию Minecraft
         let matchingVersions = [];
-        
         for (let version of versionsList) {
-            // Принимаем версии с 3+ частями
             let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
             if (match) {
-                let major = parseInt(match[1]);  // 26 или 21
-                let minor = match[2];  // 1 или 11
-                let patch = match[3];  // 2 или 41
+                let major = parseInt(match[1]);
+                let minor = match[2];
+                let patch = match[3];
                 
                 let matches = false;
                 if (major >= 26) {
@@ -508,11 +486,7 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
             return;
         }
         
-        // Сортируем от новых к старым по patch версии
-        matchingVersions.sort((a, b) => {
-            return parseInt(b.build) - parseInt(a.build);
-        });
-        
+        matchingVersions.sort((a, b) => parseInt(b.build) - parseInt(a.build));
         cb(matchingVersions);
     }, mirrors);
 };

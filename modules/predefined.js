@@ -135,7 +135,7 @@ exports.SERVER_CORE_MIRRORS = {
             "https://mirror.nyist.edu.cn/bmclapi/maven/net/neoforged/neoforge/"
         ],
         versionsApiMirrors: [
-            "https://bmclapi2.bangbang93.com/neoforge/version/list"
+            "https://bmclapi2.bangbang93.com/neoforge/list/%mcversion%"
         ]
     },
     // MSLMC китайское зеркало (работает быстрее в РФ)
