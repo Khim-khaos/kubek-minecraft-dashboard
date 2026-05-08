@@ -129,14 +129,17 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             } catch (e) {
                 // ignore URL parse errors
             }
-            const stallTimeoutMs = isForgeHost ? 15000 : 120000;
+            const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 30000 : 120000;
             
             const requestStream = async (url, headersOverride = null) => {
+                const isNyist = url.includes("mirror.nyist.edu.cn");
+                const isBmclapi = url.includes("bmclapi2.bangbang93.com");
+                
                 return axiosInstance({
                     url,
                     method: "GET",
                     responseType: "stream",
-                    timeout: 180000, // 3 минуты таймаут на запрос
+                    timeout: (isNyist || isBmclapi) ? 300000 : 180000, // Увеличиваем таймаут для зеркал
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
                     signal: abortController.signal,
