@@ -114,6 +114,30 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             tryDownload();
         };
 
+        LOGGER.log(`Попытка загрузки с: ${colors.cyan(currentUrl)} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
+
+        let isForgeHost = false;
+        let isNyist = false;
+        let isBmclapi = false;
+
+        try {
+            const host = new URL(currentUrl).hostname;
+            if (host.includes("minecraftforge.net") || host.includes("neoforged.net")) {
+                isForgeHost = true;
+            }
+            if (host === "mirror.nyist.edu.cn") {
+                isNyist = true;
+            }
+            if (host === "bmclapi2.bangbang93.com") {
+                isBmclapi = true;
+            }
+        } catch (e) {
+            // ignore URL parse errors
+        }
+        
+        // Переменная должна быть доступна для resetStallTimeout
+        const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 20000 : 60000;
+
         const resetStallTimeout = () => {
             if (downloadTimeout) {
                 clearTimeout(downloadTimeout);
@@ -133,30 +157,8 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             }, stallTimeoutMs);
         };
 
-        LOGGER.log(`Попытка загрузки с: ${colors.cyan(currentUrl)} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
-
         try {
             LOGGER.log(`[Download] Sending request to: ${currentUrl}`);
-            let isForgeHost = false;
-            let isNyist = false;
-            let isBmclapi = false;
-
-            try {
-                const host = new URL(currentUrl).hostname;
-                if (host.includes("minecraftforge.net") || host.includes("neoforged.net")) {
-                    isForgeHost = true;
-                }
-                if (host === "mirror.nyist.edu.cn") {
-                    isNyist = true;
-                }
-                if (host === "bmclapi2.bangbang93.com") {
-                    isBmclapi = true;
-                }
-            } catch (e) {
-                // ignore URL parse errors
-            }
-            // Если это "тяжелые" хосты, ставим таймаут на отсутствие данных в 20 секунд
-            const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 20000 : 60000;
             
             const requestStream = async (url, headersOverride = null) => {
                 const isUrlNyist = url.includes("mirror.nyist.edu.cn");
