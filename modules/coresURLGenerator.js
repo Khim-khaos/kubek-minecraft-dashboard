@@ -512,15 +512,16 @@ exports.getNeoForgeCoreURL = (version, cb) => {
         let mavenPath = isOldNeo ? "forge" : "neoforge";
         let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
         
+        // Используем прямой API эндпоинт BMCLAPI для скачивания (более надежно и быстро)
+        let bmclapiUrl = "https://bmclapi2.bangbang93.com/neoforge/version/" + 
+                        neoforgeVersionFromInput + "/download/installer.jar";
+        
         let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
                          neoforgeVersionFromInput + 
                          "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
         
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
-                        neoforgeVersionFromInput + 
-                        "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
-        
-        return cb(neoforgeUrl, [bmclapiUrl]);
+        // ВАЖНО: В регионах с ограничениями BMCLAPI работает лучше, поэтому ставим его ПЕРВЫМ
+        return cb(bmclapiUrl, [neoforgeUrl]);
     }
 
     // Пробуем основной URL и зеркала для получения версии
@@ -554,16 +555,16 @@ exports.getNeoForgeCoreURL = (version, cb) => {
             let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
             
             // Формируем URL для installer (основной + зеркала)
+            // Используем прямой API эндпоинт BMCLAPI для скачивания (более надежно и быстро)
+            let bmclapiUrl = "https://bmclapi2.bangbang93.com/neoforge/version/" + 
+                            neoforgeVersion + "/download/installer.jar";
+            
             let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
                              neoforgeVersion + 
                              "/" + fileNamePrefix + "-" + neoforgeVersion + "-installer.jar";
             
-            // BMCLAPI зеркало
-            let bmclapiUrl = "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
-                            neoforgeVersion + 
-                            "/" + fileNamePrefix + "-" + neoforgeVersion + "-installer.jar";
-            
-            cb(neoforgeUrl, [bmclapiUrl]);
+            // ВАЖНО: В регионах с ограничениями BMCLAPI работает лучше, поэтому ставим его ПЕРВЫМ
+            cb(bmclapiUrl, [neoforgeUrl]);
         });
     }
     

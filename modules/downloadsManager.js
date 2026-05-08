@@ -114,6 +114,25 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             tryDownload();
         };
 
+        const resetStallTimeout = () => {
+            if (downloadTimeout) {
+                clearTimeout(downloadTimeout);
+            }
+            if (downloadComplete || isComplete || attemptId !== activeAttemptId) return;
+
+            downloadTimeout = setTimeout(() => {
+                if (downloadComplete || attemptId !== activeAttemptId) return;
+                LOGGER.warning(`[Download] Timeout (no data for ${stallTimeoutMs/1000}s) for ${currentUrl}, trying next...`);
+                try {
+                    abortController.abort();
+                    if (responseStream && !responseStream.destroyed) responseStream.destroy();
+                } catch (e) {
+                    // ignore
+                }
+                failAttempt(new Error("Download stall timeout"));
+            }, stallTimeoutMs);
+        };
+
         LOGGER.log(`Попытка загрузки с: ${colors.cyan(currentUrl)} (попытка ${currentUrlIndex + 1}/${urlsToTry.length})`);
 
         try {
@@ -124,7 +143,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
 
             try {
                 const host = new URL(currentUrl).hostname;
-                if (host === "maven.minecraftforge.net" || host === "files.minecraftforge.net") {
+                if (host.includes("minecraftforge.net") || host.includes("neoforged.net")) {
                     isForgeHost = true;
                 }
                 if (host === "mirror.nyist.edu.cn") {
@@ -136,7 +155,8 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             } catch (e) {
                 // ignore URL parse errors
             }
-            const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 30000 : 120000;
+            // Если это "тяжелые" хосты, ставим таймаут на отсутствие данных в 20 секунд
+            const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 20000 : 60000;
             
             const requestStream = async (url, headersOverride = null) => {
                 const isUrlNyist = url.includes("mirror.nyist.edu.cn");
@@ -241,17 +261,8 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 }
             });
 
-            // Таймаут на скачивание (если прогресс не обновляется 2 минуты)
-            downloadTimeout = setTimeout(() => {
-                if (downloadComplete || attemptId !== activeAttemptId) return;
-                LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror... received=${receivedBytes} bytes`);
-                try {
-                    abortController.abort();
-                } catch (e) {
-                    // ignore
-                }
-                failAttempt(new Error("Download timeout"));
-            }, stallTimeoutMs);
+            // Инициализируем таймаут на отсутствие данных
+            resetStallTimeout();
 
             // Периодический лог прогресса (раз в 5 секунд)
             progressUpdateTimer = setInterval(() => {
@@ -271,19 +282,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 receivedBytes += chunk.length;
                 
                 // Сбрасываем таймаут при получении данных
-                if (downloadTimeout) {
-                    clearTimeout(downloadTimeout);
-                    downloadTimeout = setTimeout(() => {
-                        if (downloadComplete || attemptId !== activeAttemptId) return;
-                        LOGGER.warning(`[Download] Timeout for ${currentUrl}, trying next mirror... received=${receivedBytes} bytes`);
-                        try {
-                            abortController.abort();
-                        } catch (e) {
-                            // ignore
-                        }
-                        failAttempt(new Error("Download timeout"));
-                    }, stallTimeoutMs);
-                }
+                resetStallTimeout();
                 
                 // Проверяем, что задача ещё существует
                 if (tasks[dlTaskID]) {

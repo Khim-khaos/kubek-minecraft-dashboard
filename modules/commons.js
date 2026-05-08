@@ -41,7 +41,7 @@ exports.isObjectsValid = (...objects) => {
 function getAxiosInstance() {
     const config = {
         baseURL: '',
-        timeout: 30000,
+        timeout: 60000, // Увеличиваем до 60 секунд для медленных API
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
     };
