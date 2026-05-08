@@ -403,11 +403,18 @@ exports.getAllNeoForgeCores = (cb) => {
                     let mcVersion;
                     
                     if (major >= 26) {
+                        // Вероятно, это какая-то ошибка в тегах или будущие версии, пока ограничим до 1.21.x
+                        if (major > 30) continue; 
                         mcVersion = `1.${major}.${minor}`;
                     } else {
                         let patch = minor.charAt(0);
                         mcVersion = `1.${major}.${patch}`;
                     }
+                    
+                    // Фильтруем явно невозможные версии (например, 1.26.1 на данный момент)
+                    // Сегодня 2026 год, но Minecraft 1.26 еще не вышла (обычно +1 мажорная версия в год)
+                    if (mcVersion === "1.26.1") continue; 
+                    
                     mcVersions.add(mcVersion);
                 }
             }
@@ -460,25 +467,25 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
         for (let version of versionsList) {
             let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
             if (match) {
-                let major = parseInt(match[1]);
-                let minor = match[2];
-                let patch = match[3];
-                
-                let matches = false;
-                if (major >= 26) {
-                    matches = (major === mcMajor && minor === mcMinor);
-                } else {
-                    matches = (major === mcMajor && minor.charAt(0) === mcMinor.charAt(0));
+                    let major = parseInt(match[1]);
+                    let minor = match[2];
+                    let patch = match[3];
+                    
+                    let mcVersionFromNeo;
+                    if (major >= 26) {
+                        mcVersionFromNeo = `1.${major}.${minor}`;
+                    } else {
+                        mcVersionFromNeo = `1.${major}.${minor.charAt(0)}`;
+                    }
+
+                    if (mcVersionFromNeo === minecraftVersion) {
+                        matchingVersions.push({
+                            version: minecraftVersion + "#" + version,
+                            display: version,
+                            build: patch
+                        });
+                    }
                 }
-                
-                if (matches) {
-                    matchingVersions.push({
-                        version: minecraftVersion + "#" + version,
-                        display: version,
-                        build: patch
-                    });
-                }
-            }
         }
         
         if (matchingVersions.length === 0) {
@@ -505,23 +512,26 @@ exports.getNeoForgeCoreURL = (version, cb) => {
     // Если версия уже известна, сразу формируем URL без запросов к API (важно для работы без VPN)
     if (neoforgeVersionFromInput) {
         // Определяем путь в maven в зависимости от версии Minecraft
-        // Для 1.20.1 используется путь forge, для 1.20.2+ используется neoforge
-        // ВНИМАНИЕ: Для NeoForge версия Minecraft НЕ указывается в имени файла!
-        // Правильный формат: neoforge-21.1.228-installer.jar
         let isOldNeo = minecraftVersion === "1.20.1";
         let mavenPath = isOldNeo ? "forge" : "neoforge";
         let fileNamePrefix = isOldNeo ? "forge" : "neoforge";
         
-        // Используем прямой API эндпоинт BMCLAPI для скачивания (более надежно и быстро)
-        let bmclapiUrl = "https://bmclapi2.bangbang93.com/neoforge/version/" + 
-                        neoforgeVersionFromInput + "/download/installer.jar";
+        // Порядок зеркал: ForgeCDN (CloudFront), BMCLAPI (CN), Official
+        let urls = [
+            // ForgeCDN (CloudFront) - должен быть очень быстрым через CDN
+            "https://neoforged.forgecdn.net/releases/net/neoforged/" + mavenPath + "/" + 
+            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar",
+            
+            // BMCLAPI (Китай) - через прямой Maven путь
+            "https://bmclapi2.bangbang93.com/maven/net/neoforged/" + mavenPath + "/" + 
+            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar",
+            
+            // Официальный репозиторий
+            "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
+            neoforgeVersionFromInput + "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar"
+        ];
         
-        let neoforgeUrl = "https://maven.neoforged.net/releases/net/neoforged/" + mavenPath + "/" + 
-                         neoforgeVersionFromInput + 
-                         "/" + fileNamePrefix + "-" + neoforgeVersionFromInput + "-installer.jar";
-        
-        // ВАЖНО: В регионах с ограничениями BMCLAPI работает лучше, поэтому ставим его ПЕРВЫМ
-        return cb(bmclapiUrl, [neoforgeUrl]);
+        return cb(urls[0], urls.slice(1));
     }
 
     // Пробуем основной URL и зеркала для получения версии

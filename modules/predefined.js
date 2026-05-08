@@ -131,6 +131,7 @@ exports.SERVER_CORE_MIRRORS = {
         main: "https://maven.neoforged.net/releases/net/neoforged/neoforge/",
         versionsApi: "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false",
         mirrors: [
+            "https://neoforged.forgecdn.net/releases/net/neoforged/neoforge/",
             "https://bmclapi2.bangbang93.com/maven/net/neoforged/neoforge/",
             "https://mirror.nyist.edu.cn/bmclapi/maven/net/neoforged/neoforge/"
         ],

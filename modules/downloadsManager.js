@@ -119,6 +119,7 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         let isForgeHost = false;
         let isNyist = false;
         let isBmclapi = false;
+        let isForgeCDN = false;
 
         try {
             const host = new URL(currentUrl).hostname;
@@ -131,12 +132,15 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             if (host === "bmclapi2.bangbang93.com") {
                 isBmclapi = true;
             }
+            if (host === "neoforged.forgecdn.net") {
+                isForgeCDN = true;
+            }
         } catch (e) {
             // ignore URL parse errors
         }
         
         // Переменная должна быть доступна для resetStallTimeout
-        const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi) ? 20000 : 60000;
+        const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi || isForgeCDN) ? 20000 : 60000;
 
         const resetStallTimeout = () => {
             if (downloadTimeout) {
