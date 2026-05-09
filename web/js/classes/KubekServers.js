@@ -29,13 +29,13 @@ class KubekServers {
 
     // Отправить команду на сервер
     static sendCommandToServer = (server, cmd) => {
-        KubekRequests.get("/servers/" + server + "/send?cmd=" + cmd);
+        KubekRequests.post("/servers/" + server + "/send", () => {}, {cmd: cmd});
     };
 
     // Отправить команду на сервер из поля ввода консоли
     static sendCommandFromInput = (server) => {
         let inputElem = $("#cmd-input");
-        if(inputElem.length === 1){
+        if(inputElem.length === 1 && inputElem.val().trim() !== ""){
             this.sendCommandToServer(server, inputElem.val());
             inputElem.val("");
         }
@@ -43,16 +43,21 @@ class KubekServers {
 
     // Запустить сервер
     static startServer = (server) => {
-        KubekRequests.get("/servers/" + server + "/start");
+        KubekRequests.post("/servers/" + server + "/start");
     };
 
     // Перезапустить сервер
     static restartServer = (server) => {
-        KubekRequests.get("/servers/" + server + "/restart");
+        KubekRequests.post("/servers/" + server + "/restart");
     };
 
     // Остановить сервер
     static stopServer = (server) => {
-        KubekRequests.get("/servers/" + server + "/stop");
+        KubekRequests.post("/servers/" + server + "/stop");
+    };
+
+    // Принудительно завершить сервер
+    static killServer = (server) => {
+        KubekRequests.post("/servers/" + server + "/kill");
     };
 }

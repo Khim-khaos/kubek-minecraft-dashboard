@@ -81,6 +81,18 @@ exports.error = (...args) => {
     this.writeLineToLog("[ERR] " + preparedText);
 };
 
+// Вывести текст типа SUCCESS в консоль и записать в файл
+exports.success = (...args) => {
+    let text = args.map(arg => {
+        if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+        return String(arg);
+    }).join(" ");
+
+    let preparedText = this.getTimeFormatted() + " " + text;
+    console.log(colors.green(preparedText));
+    this.writeLineToLog("[SUCCESS] " + preparedText);
+};
+
 // Вывести текст типа DEBUG в консоль и записать в файл
 exports.debug = (...args) => {
     if (process.env.DEBUG !== 'true') return;

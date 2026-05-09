@@ -113,8 +113,9 @@
         "stopping": "終了中"
       },
       "sections": {
-        "console": "コンソール",
-        "fileManager": "ファイルマネージャー",
+      "dashboard": "ダッシュボード",
+      "console": "コンソール",
+      "fileManager": "ファイルマネージャー",
         "plugins": "プラグインとMOD",
         "serverSettings": "サーバーの設定",
         "kubekSettings": "Kubekの設定",

@@ -76,7 +76,7 @@ router.get("/:server/log", WEBSERVER.serversRouterMiddleware, function (req, res
 });
 
 // Router для запуска сервера
-router.get("/:server/start", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/start", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
         return res.send(SERVERS_CONTROLLER.startServer(q.server));
@@ -85,7 +85,7 @@ router.get("/:server/start", WEBSERVER.serversRouterMiddleware, function (req, r
 });
 
 // Router для перезапуска сервера
-router.get("/:server/restart", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/restart", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
         return res.send(SERVERS_CONTROLLER.restartServer(q.server));
@@ -94,7 +94,7 @@ router.get("/:server/restart", WEBSERVER.serversRouterMiddleware, function (req,
 });
 
 // Router для остановки сервера
-router.get("/:server/stop", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/stop", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
         return res.send(SERVERS_CONTROLLER.stopServer(q.server));
@@ -103,7 +103,7 @@ router.get("/:server/stop", WEBSERVER.serversRouterMiddleware, function (req, re
 });
 
 // Router для принудительного завершения сервера
-router.get("/:server/kill", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/kill", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
         return res.send(SERVERS_CONTROLLER.killServer(q.server));
@@ -112,9 +112,9 @@ router.get("/:server/kill", WEBSERVER.serversRouterMiddleware, function (req, re
 });
 
 // Router для отправки команд на сервер
-router.get("/:server/send", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/send", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
-    let q2 = req.query;
+    let q2 = req.body;
     if (COMMONS.isObjectsValid(q.server, q2.cmd)) {
         return res.send(SERVERS_CONTROLLER.writeToStdin(q.server, q2.cmd));
     }

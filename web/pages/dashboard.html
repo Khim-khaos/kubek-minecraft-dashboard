@@ -1,0 +1,55 @@
+<link rel="stylesheet" href="/pages/dashboard.css"/>
+
+<div class="dashboard-container animate__animated animate__fadeIn animate__faster">
+    <div class="dashboard-header">
+        <h1>{{sections.dashboard}}</h1>
+        <div class="system-quick-stats">
+            <div class="stat-item">
+                <span class="label">CPU</span>
+                <div class="progress-mini"><div id="total-cpu-bar" style="width: 0%"></div></div>
+                <span class="value" id="total-cpu-val">0%</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">RAM</span>
+                <div class="progress-mini"><div id="total-ram-bar" style="width: 0%"></div></div>
+                <span class="value" id="total-ram-val">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card servers-summary">
+            <h3>{{commons.server}}s</h3>
+            <div class="summary-stats">
+                <div class="summary-item">
+                    <span class="count" id="total-servers-count">0</span>
+                    <span class="label">{{commons.unknown}}</span>
+                </div>
+                <div class="summary-item success">
+                    <span class="count" id="running-servers-count">0</span>
+                    <span class="label">{{serverStatus.running}}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card quick-actions">
+            <h3>{{commons.actions}}</h3>
+            <div class="actions-list">
+                <button class="action-btn" onclick="window.location='/?act=newServer'">
+                    <span class="material-symbols-rounded">add</span>
+                    {{commons.create}}
+                </button>
+                <button class="action-btn" onclick="KubekPageManager.gotoPage('kubekSettings')">
+                    <span class="material-symbols-rounded">settings</span>
+                    {{sections.kubekSettings}}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="servers-grid" id="dashboard-servers-grid">
+        <!-- Servers will be loaded here -->
+    </div>
+</div>
+
+<script src="/pages/dashboard.js"></script>

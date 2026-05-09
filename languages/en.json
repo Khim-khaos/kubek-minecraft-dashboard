@@ -120,6 +120,7 @@
       "stopping": "Stops"
     },
     "sections": {
+      "dashboard": "Dashboard",
       "console": "Console",
       "fileManager": "File manager",
       "plugins": "Plugins and mods",

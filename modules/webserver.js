@@ -108,11 +108,26 @@ exports.authLoggingMiddleware = (req, res, next) => {
         if (SECURITY.isUserHasCookies(req) && SECURITY.authenticateUser(req.cookies["kbk__login"], req.cookies["kbk__hash"])) {
             return next();
         } else {
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                return res.status(401).json({error: "Unauthorized"});
+            }
             return res.redirect("/login.html");
         }
     } else {
         return next();
     }
+};
+
+// Middleware для обработки ошибок
+exports.errorHandlerMiddleware = (err, req, res, next) => {
+    LOGGER.error(`[EXPRESS ERROR] ${err.message}`);
+    if (err.stack) LOGGER.writeLineToLog(err.stack);
+    
+    res.status(500).send({
+        success: false,
+        error: "Internal Server Error",
+        message: process.env.DEBUG === 'true' ? err.message : undefined
+    });
 };
 
 // Middleware для статических страниц

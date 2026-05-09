@@ -11,6 +11,10 @@
         </div>
     </div>
     <div class="sidebar-box" id="main-menu-sidebar">
+        <div class="sidebar-item" data-page="dashboard">
+            <span class="material-symbols-rounded"> dashboard </span>
+            <span>{{sections.dashboard}}</span>
+        </div>
         <div class="sidebar-item" data-page="console">
             <span class="material-symbols-rounded"> terminal </span>
             <span>{{sections.console}}</span>
@@ -43,13 +47,23 @@
             <span class="material-symbols-rounded" id="theme-icon"> dark_mode </span>
             <span id="theme-text">{{commons.theme.dark}}</span>
         </div>
+        <div class="sidebar-item" id="logout-sidebar-btn" style="color: var(--error)">
+            <span class="material-symbols-rounded" style="color: var(--error)"> logout </span>
+            <span style="color: var(--error)">{{commons.logout}}</span>
+        </div>
     </div>
 </div>
 
 <script>
-    $("#main-menu-sidebar .sidebar-item:not(#theme-toggle)").on("click", function () {
+    $("#main-menu-sidebar .sidebar-item:not(#theme-toggle):not(#logout-sidebar-btn)").on("click", function () {
         KubekUI.changeItemByPage($(this).data("page"));
         KubekPageManager.gotoPage($(this).data("page"));
+    });
+
+    $("#logout-sidebar-btn").on("click", function() {
+        KubekRequests.get("/auth/logout", () => {
+            window.location = "/login.html";
+        });
     });
 
     $("#theme-toggle").on("click", function() {

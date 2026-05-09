@@ -1,6 +1,7 @@
 const os = require("os");
 const process = require("process");
 const nodeDiskInfo = require('node-disk-info');
+const HARDWARE_MANAGER = require("./hardwareManager");
 
 /**
  * Модуль для мониторинга состояния панели Kubek
@@ -10,6 +11,7 @@ const nodeDiskInfo = require('node-disk-info');
 exports.getHealthStatus = async () => {
     const memoryUsage = process.memoryUsage();
     const uptime = process.uptime();
+    const resources = await HARDWARE_MANAGER.getResourcesUsage();
     
     let disks = [];
     try {
@@ -21,6 +23,8 @@ exports.getHealthStatus = async () => {
     return {
         status: "ok",
         timestamp: new Date().toISOString(),
+        cpu: resources.cpu,
+        ram: resources.ram,
         panel: {
             uptime: Math.round(uptime),
             memory: {
