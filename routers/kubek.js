@@ -16,17 +16,15 @@ router.get("/health", function (req, res) {
 });
 
 // Endpoint для получения использования ресурсов
-router.get("/hardware/usage", function (req, res) {
-    HARDWARE_MANAGER.getResourcesUsage((result) => {
-        res.send(result);
-    })
+router.get("/hardware/usage", async function (req, res) {
+    const result = await HARDWARE_MANAGER.getResourcesUsage();
+    res.send(result);
 });
 
 // Endpoint для получения всей информации о hardware
-router.get("/hardware/summary", function (req, res) {
-    HARDWARE_MANAGER.getHardwareInfo((result) => {
-        res.send(result);
-    })
+router.get("/hardware/summary", async function (req, res) {
+    const result = await HARDWARE_MANAGER.getHardwareInfo();
+    res.send(result);
 });
 
 // Endpoint для получения версии Kubek

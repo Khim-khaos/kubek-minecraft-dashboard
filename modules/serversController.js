@@ -256,13 +256,13 @@ exports.getServerProperties = (serverName) => {
 };
 
 // Сохранить файл server.properties
-exports.saveServerProperties = (serverName, data) => {
+exports.saveServerProperties = async (serverName, data) => {
     let parsed = JSON.parse(data);
     let result = "";
     for (const [key, value] of Object.entries(parsed)) {
         result += "\n" + key.toString() + "=" + value.toString();
     }
-    FILE_MANAGER.writeFile(serverName, "/server.properties", result);
+    await FILE_MANAGER.writeFile(serverName, "/server.properties", result);
     return true;
 };
 

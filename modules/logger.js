@@ -34,12 +34,11 @@ exports.getLastLogFileName = () => {
 // Записать строку в лог
 exports.writeLineToLog = (line) => {
     let fileName = this.getLastLogFileName();
-    let readLog = "";
-    if (fs.existsSync("./logs/" + fileName)) {
-        readLog = fs.readFileSync("./logs/" + fileName);
-    }
-    readLog = readLog + "\n" + line;
-    fs.writeFileSync("./logs/" + fileName, readLog);
+    fs.appendFile("./logs/" + fileName, line + "\n", (err) => {
+        if (err) {
+            console.error(colors.red("[LOGGER ERROR] Failed to write to log file:"), err);
+        }
+    });
 };
 
 // Вывести текст в консоль и записать в файл

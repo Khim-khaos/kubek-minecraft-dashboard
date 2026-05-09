@@ -94,21 +94,23 @@ exports.getDataByURL = async (url, cb, mirrors = []) => {
 };
 
 // Функция для перемещения загруженного на сервер файла
-exports.moveUploadedFile = (server, sourceFile, filePath, cb) => {
+exports.moveUploadedFile = async (server, sourceFile, filePath) => {
     if (!this.isObjectsValid(server, sourceFile?.name)) {
-        return cb(400);
+        return 400;
     }
 
     const uploadPath = path.join("./servers", server, filePath);
     
     try {
-        fs.mkdirSync(path.dirname(uploadPath), {recursive: true});
-        sourceFile.mv(uploadPath, (err) => {
-            if (err) return cb(err);
-            cb(true);
+        await fs.promises.mkdir(path.dirname(uploadPath), {recursive: true});
+        return new Promise((resolve) => {
+            sourceFile.mv(uploadPath, (err) => {
+                if (err) resolve(err);
+                resolve(true);
+            });
         });
     } catch (err) {
-        cb(err);
+        return err;
     }
 }
 

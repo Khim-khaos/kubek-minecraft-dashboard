@@ -149,7 +149,7 @@ router.get("/:server/icon", WEBSERVER.serversRouterMiddleware, function (req, re
 });
 
 // Router для смены иконки сервера
-router.post("/:server/icon", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/icon", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let sourceFile, sourceExt;
     // Проверяем присутствие файлов в запросе
@@ -160,19 +160,18 @@ router.post("/:server/icon", WEBSERVER.serversRouterMiddleware, function (req, r
     sourceFile = req.files["server-icon-input"];
     sourceExt = path.extname(sourceFile.name);
 
-    COMMONS.moveUploadedFile(q.server, sourceFile, "/server-icon-PREPARED" + sourceExt, (result) => {
-        if (result === true) {
-            Jimp.read("./servers/" + q.server + "/server-icon-PREPARED" + sourceExt, (err, file) => {
-                if (err) throw err;
-                file
-                    .resize(64, 64) // resize
-                    .write("./servers/" + q.server + "/server-icon.png");
-                return res.send(true);
-            });
-        } else {
-            res.sendStatus(400);
-        }
-    })
+    const result = await COMMONS.moveUploadedFile(q.server, sourceFile, "/server-icon-PREPARED" + sourceExt);
+    if (result === true) {
+        Jimp.read("./servers/" + q.server + "/server-icon-PREPARED" + sourceExt, (err, file) => {
+            if (err) throw err;
+            file
+                .resize(64, 64) // resize
+                .write("./servers/" + q.server + "/server-icon.png");
+            return res.send(true);
+        });
+    } else {
+        res.sendStatus(400);
+    }
 });
 
 // Router для получения информации о сервере
@@ -239,11 +238,12 @@ router.get("/:server/server.properties", WEBSERVER.serversRouterMiddleware, func
 });
 
 // Router для записи server.properties
-router.put("/:server/server.properties", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.put("/:server/server.properties", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let q2 = req.query;
     if (COMMONS.isObjectsValid(q.server, q2.data) && SERVERS_MANAGER.isServerExists(q.server)) {
-        return res.send(SERVERS_CONTROLLER.saveServerProperties(q.server, Base64.decode(q2.data)));
+        const result = await SERVERS_CONTROLLER.saveServerProperties(q.server, Base64.decode(q2.data));
+        return res.send(result);
     }
     res.sendStatus(400);
 });

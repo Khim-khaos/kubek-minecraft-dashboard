@@ -88,7 +88,7 @@ exports.clearTranslatedFilesCache = () => {
 };
 global.clearTranslatedFilesCache = exports.clearTranslatedFilesCache;
 
-exports.staticsMiddleware = (req, res, next) => {
+exports.staticsMiddleware = async (req, res, next) => {
     let relPath = req.path === "/" ? "/index.html" : req.path;
     let filePath = path.join(__dirname, "./../web", relPath);
     let ext = path.extname(relPath).replace(".", "").toLowerCase();
@@ -101,32 +101,37 @@ exports.staticsMiddleware = (req, res, next) => {
         return next();
     }
 
-    if (PREDEFINED.ALLOWED_STATIC_EXTS.includes(ext) && fs.existsSync(resolvedPath) && !fs.lstatSync(resolvedPath).isDirectory()) {
-        // Если все проверки пройдены - детектим и отправляем content-type
-        res.set(
-            "content-type",
-            mime.getType(resolvedPath)
-        );
+    try {
+        const stats = await fs.promises.stat(resolvedPath);
+        if (PREDEFINED.ALLOWED_STATIC_EXTS.includes(ext) && stats.isFile()) {
+            // Если все проверки пройдены - детектим и отправляем content-type
+            res.set(
+                "content-type",
+                mime.getType(resolvedPath)
+            );
 
-        // Переводим файл, если нужно
-        if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {
-            const cacheKey = `${currentLanguage}:${resolvedPath}`;
-            
-            if (translatedFilesCache[cacheKey]) {
-                return res.send(translatedFilesCache[cacheKey]);
+            // Переводим файл, если нужно
+            if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {
+                const cacheKey = `${currentLanguage}:${resolvedPath}`;
+                
+                if (translatedFilesCache[cacheKey]) {
+                    return res.send(translatedFilesCache[cacheKey]);
+                }
+
+                let fileData = await fs.promises.readFile(resolvedPath);
+                fileData = MULTILANG.translateText(currentLanguage, fileData);
+                
+                // Сохраняем в кэш
+                translatedFilesCache[cacheKey] = fileData;
+                
+                return res.send(fileData);
+            } else {
+                // Для файлов без перевода используем sendFile для лучшей производительности
+                return res.sendFile(resolvedPath);
             }
-
-            let fileData = fs.readFileSync(resolvedPath);
-            fileData = MULTILANG.translateText(currentLanguage, fileData);
-            
-            // Сохраняем в кэш
-            translatedFilesCache[cacheKey] = fileData;
-            
-            return res.send(fileData);
-        } else {
-            // Для файлов без перевода используем sendFile для лучшей производительности
-            return res.sendFile(resolvedPath);
         }
+    } catch (e) {
+        // Если файл не найден или другая ошибка - просто идем дальше
     }
     return next();
 };
@@ -196,11 +201,12 @@ exports.loadAllDefinedRouters = () => {
     webServer.use("/api/updates", updatesRouter.router);
 
     // Хэндлер для ошибки 404
-    webServer.use((req, res) => {
+    webServer.use(async (req, res) => {
         if (!res.headersSent) {
             if (!errorPageCache) {
                 try {
-                    errorPageCache = fs.readFileSync(path.join(__dirname, "./../web/404.html")).toString();
+                    const data = await fs.promises.readFile(path.join(__dirname, "./../web/404.html"));
+                    errorPageCache = data.toString();
                 } catch (e) {
                     errorPageCache = "404 Not Found";
                 }

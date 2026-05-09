@@ -1,28 +1,32 @@
 const os = require("os");
 const nodeDiskInfo = require("node-disk-info");
 const osutils = require("os-utils");
-const { execSync } = require("child_process");
+const { exec } = require("child_process");
+const { promisify } = require("util");
+const execAsync = promisify(exec);
 
 // Получить информацию об использовании ЦПУ и ОЗУ
-exports.getResourcesUsage = (cb) => {
-    osutils.cpuUsage(function (cpuValue) {
-        cb({
-            cpu: Math.round(cpuValue * 100),
-            ram: {
-                total: os.totalmem(),
-                free: os.freemem(),
-                used: os.totalmem() - os.freemem(),
-                percent: 100 - Math.round((os.freemem() / os.totalmem()) * 100)
-            }
+exports.getResourcesUsage = () => {
+    return new Promise((resolve) => {
+        osutils.cpuUsage(function (cpuValue) {
+            resolve({
+                cpu: Math.round(cpuValue * 100),
+                ram: {
+                    total: os.totalmem(),
+                    free: os.freemem(),
+                    used: os.totalmem() - os.freemem(),
+                    percent: 100 - Math.round((os.freemem() / os.totalmem()) * 100)
+                }
+            });
         });
     });
 };
 
 // Функция для получения инфо о дисках через PowerShell (fallback для Windows)
-const getDisksWindowsFallback = () => {
+const getDisksWindowsFallback = async () => {
     try {
-        const output = execSync('powershell "Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free | ConvertTo-Json"', { encoding: 'utf8' });
-        const data = JSON.parse(output);
+        const { stdout } = await execAsync('powershell "Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free | ConvertTo-Json"', { encoding: 'utf8' });
+        const data = JSON.parse(stdout);
         const disks = Array.isArray(data) ? data : [data];
         return disks.map(d => ({
             _filesystem: 'Unknown',
@@ -38,19 +42,19 @@ const getDisksWindowsFallback = () => {
 };
 
 // Получить суммарную информацию о системе и железе
-exports.getHardwareInfo = async (cb) => {
+exports.getHardwareInfo = async () => {
     try {
         let disks = [];
         try {
             disks = await nodeDiskInfo.getDiskInfo();
         } catch (diskError) {
             if (process.platform === "win32") {
-                disks = getDisksWindowsFallback();
+                disks = await getDisksWindowsFallback();
             }
         }
 
         const cpuItem = os.cpus()[0];
-        cb({
+        return {
             uptime: Math.round(process.uptime()),
             platform: {
                 name: os.type(),
@@ -73,9 +77,9 @@ exports.getHardwareInfo = async (cb) => {
             enviroment: process.env,
             disks: disks,
             networkInterfaces: os.networkInterfaces(),
-        });
+        };
     } catch (reason) {
         console.error("Error getting hardware info:", reason);
-        cb(false);
+        return false;
     }
 }

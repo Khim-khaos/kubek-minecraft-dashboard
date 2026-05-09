@@ -1,4 +1,5 @@
 const fs = require("fs");
+const fsPromises = fs.promises;
 let fileWrites = {};
 const {Base64} = require('js-base64');
 
@@ -21,146 +22,156 @@ exports.verifyPathForTraversal = (baseDir, targetPath) => {
 };
 
 // Получить файлы в директории
-exports.scanDirectory = (server, directory, cb) => {
+exports.scanDirectory = async (server, directory) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, directory);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
-        cb(false);
-        return;
+        return false;
     }
 
-    if (
-        fs.existsSync(fullPath) &&
-        fs.lstatSync(fullPath).isDirectory()
-    ) {
-        fs.readdir(fullPath, function (err, readResult) {
-            if (err) throw err;
-            if (typeof readResult !== "undefined") {
-                let filesResult = [];
-                readResult.forEach((element) => {
-                    let filePath = path.join(fullPath, element);
-                    let fileStats = fs.lstatSync(filePath);
-                    let fileItem = {
-                        name: element,
-                        path: filePath.replace(baseDir, "").replaceAll("\\", "/"),
-                        type: fileStats.isDirectory() ? "directory" : "file",
-                        size: fileStats.size,
-                        modify: fileStats.mtime,
-                    };
-                    filesResult.push(fileItem);
-                });
-                cb(filesResult);
-                return;
+    try {
+        const stats = await fsPromises.lstat(fullPath);
+        if (stats.isDirectory()) {
+            const readResult = await fsPromises.readdir(fullPath);
+            let filesResult = [];
+            for (const element of readResult) {
+                let filePath = path.join(fullPath, element);
+                let fileStats = await fsPromises.lstat(filePath);
+                let fileItem = {
+                    name: element,
+                    path: filePath.replace(baseDir, "").replaceAll("\\", "/"),
+                    type: fileStats.isDirectory() ? "directory" : "file",
+                    size: fileStats.size,
+                    modify: fileStats.mtime,
+                };
+                filesResult.push(fileItem);
             }
-            cb(false);
-        });
-    } else {
-        cb(false);
+            return filesResult;
+        }
+    } catch (e) {
+        return false;
     }
+    return false;
 };
 
 // Прочитать содержимое файла
-exports.readFile = (server, filePath, cb) => {
+exports.readFile = async (server, filePath) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
-        cb(false);
-        return;
+        return false;
     }
 
-    if (fs.existsSync(fullPath) && !fs.lstatSync(fullPath).isDirectory()) {
-        fs.readFile(fullPath, (err, data) => {
-            if (err) throw err;
-            cb(data);
-        });
-    } else {
-        cb(false);
+    try {
+        const stats = await fsPromises.lstat(fullPath);
+        if (!stats.isDirectory()) {
+            return await fsPromises.readFile(fullPath);
+        }
+    } catch (e) {
+        return false;
     }
+    return false;
 };
 
 // Записать файл
-exports.writeFile = (server, filePath, data) => {
+exports.writeFile = async (server, filePath, data) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    fs.writeFileSync(fullPath, data);
-    return true;
+    try {
+        await fsPromises.writeFile(fullPath, data);
+        return true;
+    } catch (e) {
+        return false;
+    }
 };
 
 // Удалить файл
-exports.deleteFile = (server, filePath) => {
+exports.deleteFile = async (server, filePath) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(fullPath) && !fs.lstatSync(fullPath).isDirectory()) {
-        fs.unlinkSync(fullPath);
-        return true;
+    try {
+        const stats = await fsPromises.lstat(fullPath);
+        if (!stats.isDirectory()) {
+            await fsPromises.unlink(fullPath);
+            return true;
+        }
+    } catch (e) {
+        return false;
     }
     return false;
 };
 
 // Удалить директорию (пустую)
-exports.deleteEmptyDirectory = (server, filePath) => {
+exports.deleteEmptyDirectory = async (server, filePath) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(fullPath) && fs.lstatSync(fullPath).isDirectory() && fs.readdirSync(fullPath).length === 0) {
-        fs.rmdirSync(fullPath);
-        return true;
+    try {
+        const stats = await fsPromises.lstat(fullPath);
+        if (stats.isDirectory()) {
+            const files = await fsPromises.readdir(fullPath);
+            if (files.length === 0) {
+                await fsPromises.rmdir(fullPath);
+                return true;
+            }
+        }
+    } catch (e) {
+        return false;
     }
     return false;
 };
 
 // Переименовать файл
-exports.renameFile = (server, filePath, newName) => {
+exports.renameFile = async (server, filePath, newName) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
     let newPath = path.join(path.dirname(fullPath), newName);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath) || !this.verifyPathForTraversal(baseDir, newPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(fullPath)) {
-        fs.renameSync(fullPath, newPath);
+    try {
+        await fsPromises.rename(fullPath, newPath);
         return true;
+    } catch (e) {
+        return false;
     }
-    return false;
 };
 
 // Создать папку
-exports.newDirectory = (server, filePath, name) => {
+exports.newDirectory = async (server, filePath, name) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = path.join(this.constructFilePath(server, filePath), name);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    fs.mkdirSync(fullPath, {
-        recursive: true
-    })
+    try {
+        await fsPromises.mkdir(fullPath, {
+            recursive: true
+        });
+        return true;
+    } catch (e) {
+        return false;
+    }
 };
 
 /* ЗАПИСЬ ФАЙЛОВ ПО ЧАНКАМ */
@@ -170,7 +181,6 @@ exports.startChunkyFileWrite = (server, filePath) => {
     let fullPath = this.constructFilePath(server, filePath);
 
     if (!this.verifyPathForTraversal(baseDir, fullPath)) {
-        // Если найден path traversal, то ничего не делаем
         return false;
     }
 
@@ -194,7 +204,7 @@ exports.addFileChunk = (id, chunk) => {
 };
 
 // Архивация (Zip)
-exports.archiveFile = (server, filePath, archiveName) => {
+exports.archiveFile = async (server, filePath, archiveName) => {
     let baseDir = path.join(process.cwd(), "servers", server);
     let fullPath = this.constructFilePath(server, filePath);
     let archivePath = path.join(path.dirname(fullPath), archiveName);
@@ -205,7 +215,8 @@ exports.archiveFile = (server, filePath, archiveName) => {
 
     try {
         const zip = new AdmZip();
-        if (fs.lstatSync(fullPath).isDirectory()) {
+        const stats = await fsPromises.lstat(fullPath);
+        if (stats.isDirectory()) {
             zip.addLocalFolder(fullPath);
         } else {
             zip.addLocalFile(fullPath);
@@ -238,12 +249,17 @@ exports.unarchiveFile = async (server, filePath) => {
 };
 
 // Завершить запись
-exports.endChunkyFileWrite = (id) => {
+exports.endChunkyFileWrite = async (id) => {
     if (typeof fileWrites[id] !== "undefined") {
-        const fileData = Buffer.concat(fileWrites[id].chunks);
-        fs.writeFileSync(fileWrites[id].path, fileData);
-        delete fileWrites[id];
-        return true;
+        try {
+            const fileData = Buffer.concat(fileWrites[id].chunks);
+            await fsPromises.writeFile(fileWrites[id].path, fileData);
+            delete fileWrites[id];
+            return true;
+        } catch (e) {
+            delete fileWrites[id];
+            return false;
+        }
     } else {
         return false;
     }

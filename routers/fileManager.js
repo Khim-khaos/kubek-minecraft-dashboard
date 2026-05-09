@@ -8,23 +8,21 @@ const path = require("path");
 const router = express.Router();
 
 // Endpoint сканирования директории или чтения файлов
-router.get("/get", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/get", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path)) {
         res.set("Content-Type", "application/json");
-        FILE_MANAGER.readFile(q.server, q.path, (rdResult) => {
-            // Если путь оказался файлом
-            if (rdResult !== false) {
-                res.send({
-                    fileData: rdResult.toString()
-                });
-                return;
-            }
-            // Если путь оказался папкой
-            FILE_MANAGER.scanDirectory(q.server, q.path, (dirRdResult) => {
-                res.send(dirRdResult);
+        const rdResult = await FILE_MANAGER.readFile(q.server, q.path);
+        // Если путь оказался файлом
+        if (rdResult !== false) {
+            res.send({
+                fileData: rdResult.toString()
             });
-        });
+            return;
+        }
+        // Если путь оказался папкой
+        const dirRdResult = await FILE_MANAGER.scanDirectory(q.server, q.path);
+        res.send(dirRdResult);
     } else {
         res.sendStatus(400);
     }
@@ -49,65 +47,75 @@ router.post("/chunkWrite/add", WEBSERVER.serversRouterMiddleware, function (req,
 });
 
 // Endpoint для окончания записи чанков и сохранения в файл
-router.get("/chunkWrite/end", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/chunkWrite/end", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.id)) {
-        return res.send(FILE_MANAGER.endChunkyFileWrite(q.id));
+        const result = await FILE_MANAGER.endChunkyFileWrite(q.id);
+        return res.send(result);
     }
     res.sendStatus(400);
 });
 
 // Endpoint для удаления
-router.get("/delete", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/delete", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path)) {
         res.set("Content-Type", "application/json");
-        let fileDeleteResult = FILE_MANAGER.deleteFile(q.server, q.path);
-        let directoryDeleteResult = FILE_MANAGER.deleteEmptyDirectory(q.server, q.path);
+        let fileDeleteResult = await FILE_MANAGER.deleteFile(q.server, q.path);
+        let directoryDeleteResult = false;
+        if (!fileDeleteResult) {
+            directoryDeleteResult = await FILE_MANAGER.deleteEmptyDirectory(q.server, q.path);
+        }
         return res.send(fileDeleteResult || directoryDeleteResult);
     }
     res.sendStatus(400);
 });
 
 // Endpoint для переименования
-router.get("/rename", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/rename", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path, q.newName)) {
         res.set("Content-Type", "application/json");
-        return res.send(FILE_MANAGER.renameFile(q.server, q.path, q.newName));
+        const result = await FILE_MANAGER.renameFile(q.server, q.path, q.newName);
+        return res.send(result);
     }
     res.sendStatus(400);
 });
 
 // Endpoint для создания новой директории
-router.get("/newDirectory", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/newDirectory", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path, q.name)) {
         res.set("Content-Type", "application/json");
-        return res.send(FILE_MANAGER.newDirectory(q.server, q.path, q.name));
+        const result = await FILE_MANAGER.newDirectory(q.server, q.path, q.name);
+        return res.send(result);
     }
     res.sendStatus(400);
 });
 
 // Endpoint для скачивания файла
-router.get("/download", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/download", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
 
     if (COMMONS.isObjectsValid(q.server, q.path)) {
         let fPath = FILE_MANAGER.constructFilePath(q.server, q.path);
-        if (fs.existsSync(fPath) && !fs.lstatSync(fPath).isDirectory()) {
-            return res.download(path.resolve(fPath));
-        }
+        try {
+            const stats = await fs.promises.lstat(fPath);
+            if (stats.isFile()) {
+                return res.download(path.resolve(fPath));
+            }
+        } catch (e) {}
     }
     res.sendStatus(400);
 });
 
 // Endpoint для архивации
-router.get("/archive", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/archive", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path, q.name)) {
         res.set("Content-Type", "application/json");
-        return res.send(FILE_MANAGER.archiveFile(q.server, q.path, q.name));
+        const result = await FILE_MANAGER.archiveFile(q.server, q.path, q.name);
+        return res.send(result);
     }
     res.sendStatus(400);
 });
@@ -124,7 +132,7 @@ router.get("/unarchive", WEBSERVER.serversRouterMiddleware, async function (req,
 });
 
 // Endpoint для загрузки файла на сервер
-router.post("/upload", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/upload", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.server, q.path)) {
         let sourceFile;
@@ -135,14 +143,12 @@ router.post("/upload", WEBSERVER.serversRouterMiddleware, function (req, res) {
 
         sourceFile = req.files["g-file-input"];
 
-        COMMONS.moveUploadedFile(q.server, sourceFile, "/" + sourceFile.name, (result) => {
-            if (result === true) {
-                // DEVELOPED by seeeroy
-                return res.send(true);
-            }
-            console.log(result);
-            res.sendStatus(400);
-        })
+        const result = await COMMONS.moveUploadedFile(q.server, sourceFile, "/" + sourceFile.name);
+        if (result === true) {
+            return res.send(true);
+        }
+        console.log(result);
+        res.sendStatus(400);
     } else {
         return res.sendStatus(400);
     }

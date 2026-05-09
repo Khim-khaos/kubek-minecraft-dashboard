@@ -108,7 +108,7 @@ router.get("/:core/:version", function (req, res) {
 });
 
 // Endpoint для загрузки ядра
-router.post("/:server", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let sourceFile;
     // Проверяем присутствие файлов в запросе
@@ -118,13 +118,12 @@ router.post("/:server", WEBSERVER.serversRouterMiddleware, function (req, res) {
 
     sourceFile = req.files["server-core-input"];
 
-    COMMONS.moveUploadedFile(q.server, sourceFile, "/" + sourceFile.name, (result) => {
-        if (result === true) {
-            return res.send(true);
-        }
-        console.log(result);
-        res.sendStatus(400);
-    })
+    const result = await COMMONS.moveUploadedFile(q.server, sourceFile, "/" + sourceFile.name);
+    if (result === true) {
+        return res.send(true);
+    }
+    console.log(result);
+    res.sendStatus(400);
 });
 
 module.exports.router = router;
