@@ -40,10 +40,24 @@ webServer.use(
 // Получаем порт веб-сервера из конфига
 let webPort = mainConfig.webserverPort;
 
-// Функция для показа запроса в логах
-exports.logWebRequest = (req, res, username = null) => {
+/**
+ * Получить IP-адрес из запроса
+ * @param {express.Request} req 
+ * @returns {string}
+ */
+const getRequestIP = (req) => {
     let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    ip = ip.replace("::ffff:", "").replace("::1", "127.0.0.1");
+    return ip.replace("::ffff:", "").replace("::1", "127.0.0.1").split(',')[0].trim();
+};
+
+/**
+ * Логирование веб-запроса
+ * @param {express.Request} req 
+ * @param {express.Response} res 
+ * @param {string|null} username 
+ */
+exports.logWebRequest = (req, res, username = null) => {
+    const ip = getRequestIP(req);
     let additionalInfo2 = "";
     if (username !== null) {
         additionalInfo2 = "[" + colors.cyan(username) + "]"
@@ -51,10 +65,11 @@ exports.logWebRequest = (req, res, username = null) => {
     LOGGER.log("[" + colors.yellow(ip) + "]", additionalInfo2, colors.green(req.method) + " - " + req.originalUrl);
 };
 
-// Middleware для всех роутеров
+/**
+ * Middleware для аутентификации и логирования
+ */
 exports.authLoggingMiddleware = (req, res, next) => {
-    let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-    ip = ip.replace("::ffff:", "").replace("::1", "127.0.0.1");
+    const ip = getRequestIP(req);
 
     // Проверяем существование куков у пользователя на предмет логина
     let username = null;
@@ -82,22 +97,24 @@ exports.authLoggingMiddleware = (req, res, next) => {
     } else {
         return next();
     }
-
-    // Если ни один из этапов ранее не пропустил запрос дальше
-    return res.sendStatus(403);
 };
 
 // Middleware для статических страниц
 let errorPageCache = null;
 let translatedFilesCache = {};
 
-// Функция для очистки кэша переведённых файлов (например, при смене языка)
+/**
+ * Очистить кэш переведённых файлов
+ */
 exports.clearTranslatedFilesCache = () => {
     translatedFilesCache = {};
     errorPageCache = null;
 };
 global.clearTranslatedFilesCache = exports.clearTranslatedFilesCache;
 
+/**
+ * Middleware для отдачи статических файлов с переводом и кэшированием
+ */
 exports.staticsMiddleware = async (req, res, next) => {
     let relPath = req.path === "/" ? "/index.html" : req.path;
     let filePath = path.join(__dirname, "./../web", relPath);
@@ -114,11 +131,16 @@ exports.staticsMiddleware = async (req, res, next) => {
     try {
         const stats = await fs.promises.stat(resolvedPath);
         if (PREDEFINED.ALLOWED_STATIC_EXTS.includes(ext) && stats.isFile()) {
-            // Если все проверки пройдены - детектим и отправляем content-type
-            res.set(
-                "content-type",
-                mime.getType(resolvedPath)
-            );
+            // Устанавливаем заголовки кэширования для статики
+            // Для ассетов (картинки, шрифты) ставим долгий кэш
+            if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'ttf', 'otf'].includes(ext)) {
+                res.set('Cache-Control', 'public, max-age=604800'); // 7 дней
+            } else {
+                res.set('Cache-Control', 'public, max-age=3600'); // 1 час для остального
+            }
+
+            // Детектим и отправляем content-type
+            res.set("content-type", mime.getType(resolvedPath));
 
             // Переводим файл, если нужно
             if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {

@@ -64,12 +64,23 @@
     function login() {
         let login = $("#login-input").val();
         let password = $("#password-input").val();
-        KubekRequests.get("/auth/login/" + login + "/" + password, (result) => {
+        let button = $("#login-btn");
+        
+        // Показываем загрузку
+        button.attr("disabled", true);
+        button.html('<span class="loader"></span>');
+
+        KubekRequests.post("/auth/login", (result) => {
             if (result.success === true) {
                 window.location = "/";
             } else {
+                button.removeAttr("disabled");
+                button.html("{{commons.goto}}");
                 KubekAlerts.addAlert(result.error, "warning", "", 6000);
             }
+        }, {
+            login: login,
+            password: password
         });
     }
 
@@ -152,5 +163,26 @@
 
     .main-layout .grow {
         flex-grow: 1;
+    }
+
+    /* Loader inside button */
+    .loader {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #FFF;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>

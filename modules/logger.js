@@ -42,22 +42,40 @@ exports.writeLineToLog = (line) => {
 };
 
 // Вывести текст в консоль и записать в файл
-exports.log = (...text) => {
-    let preparedText = this.getTimeFormatted() + " " + text.join(" ");
+exports.log = (...args) => {
+    let text = args.map(arg => {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+        return String(arg);
+    }).join(" ");
+    
+    let preparedText = this.getTimeFormatted() + " " + text;
     console.log(preparedText);
     this.writeLineToLog(preparedText);
 };
 
 // Вывести текст типа WARNING в консоль и записать в файл
-exports.warning = (...text) => {
-    let preparedText = this.getTimeFormatted() + " " + text.join(" ");
+exports.warning = (...args) => {
+    let text = args.map(arg => {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+        return String(arg);
+    }).join(" ");
+
+    let preparedText = this.getTimeFormatted() + " " + text;
     console.log(colors.yellow(preparedText));
     this.writeLineToLog("[WARN] " + preparedText);
 };
 
 // Вывести текст типа ERROR в консоль и записать в файл
-exports.error = (...text) => {
-    let preparedText = this.getTimeFormatted() + " " + text.join(" ");
+exports.error = (...args) => {
+    let text = args.map(arg => {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+        return String(arg);
+    }).join(" ");
+
+    let preparedText = this.getTimeFormatted() + " " + text;
     console.log(colors.red(preparedText));
     this.writeLineToLog("[ERR] " + preparedText);
 };

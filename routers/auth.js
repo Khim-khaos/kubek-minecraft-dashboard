@@ -20,8 +20,8 @@ const loginRateLimiter = rateLimit({
 });
 
 // Endpoint для входа в систему
-router.get("/login/:login/:password", loginRateLimiter, function (req, res) {
-    let q = req.params;
+router.post("/login", loginRateLimiter, function (req, res) {
+    let q = req.body;
     // Если авторизация отключена в конфигурации
     if (mainConfig.authorization === false) {
         return res.send({
@@ -35,6 +35,8 @@ router.get("/login/:login/:password", loginRateLimiter, function (req, res) {
             let options = {
                 maxAge: 120 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production'
             };
             res.cookie("kbk__hash", usersConfig[q.login].secret, options);
             res.cookie("kbk__login", usersConfig[q.login].username, options);
