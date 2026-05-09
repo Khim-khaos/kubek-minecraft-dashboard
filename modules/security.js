@@ -48,12 +48,7 @@ exports.authenticateUser = (login, secret) => {
 
 // Получить данные пользователя из конфига по имени
 exports.getUserDataByUsername = (username) => {
-    for (const [, userData] of Object.entries(usersConfig)) {
-        if (userData.username === username) {
-            return userData;
-        }
-    }
-    return false;
+    return usersConfig[username] || false;
 };
 
 // Проверить существование куков у пользователя

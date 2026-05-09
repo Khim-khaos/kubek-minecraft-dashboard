@@ -40,10 +40,10 @@ router.get("/chunkWrite/start", WEBSERVER.serversRouterMiddleware, function (req
 });
 
 // Endpoint для записи чанка в файл
-router.get("/chunkWrite/add", WEBSERVER.serversRouterMiddleware, function (req, res) {
-    let q = req.query;
-    if (COMMONS.isObjectsValid(q.id, q.data)) {
-        return res.send(FILE_MANAGER.addFileChunk(q.id, q.data));
+router.post("/chunkWrite/add", WEBSERVER.serversRouterMiddleware, function (req, res) {
+    let b = req.body;
+    if (COMMONS.isObjectsValid(b.id, b.data)) {
+        return res.send(FILE_MANAGER.addFileChunk(b.id, b.data));
     }
     res.sendStatus(400);
 });

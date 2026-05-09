@@ -184,7 +184,7 @@ exports.startChunkyFileWrite = (server, filePath) => {
 // Дописать чанк
 exports.addFileChunk = (id, chunk) => {
     if (typeof fileWrites[id] !== "undefined") {
-        fileWrites[id].chunks.push(Base64.decode(chunk));
+        fileWrites[id].chunks.push(Buffer.from(chunk, 'base64'));
         return true;
     } else {
         return false;
@@ -194,8 +194,8 @@ exports.addFileChunk = (id, chunk) => {
 // Завершить запись
 exports.endChunkyFileWrite = (id) => {
     if (typeof fileWrites[id] !== "undefined") {
-        fs.writeFileSync(fileWrites[id].path, fileWrites[id].chunks.join("\n"));
-        fileWrites[id] = null;
+        const fileData = Buffer.concat(fileWrites[id].chunks);
+        fs.writeFileSync(fileWrites[id].path, fileData);
         delete fileWrites[id];
         return true;
     } else {

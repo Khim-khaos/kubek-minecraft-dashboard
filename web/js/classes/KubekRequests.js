@@ -6,7 +6,7 @@ class KubekRequests {
             url = KubekPredefined.API_ENDPOINT + url;
         }
         if(data !== ""){
-            $.ajax({
+            let ajaxSettings = {
                 url: url,
                 type: type.toString().toUpperCase(),
                 data: data,
@@ -18,10 +18,20 @@ class KubekRequests {
                         KubekAlerts.addAlert("{{commons.failedToRequest}}", "warning", "{{commons.maybeUDoesntHaveAccess}}", 5000);
                     }
                     cb(false, textStatus, errorThrown);
-                },
-                processData: false,
-                contentType: false
-            });
+                }
+            };
+
+            // Если данные - это FormData, отключаем обработку
+            if (data instanceof FormData) {
+                ajaxSettings.processData = false;
+                ajaxSettings.contentType = false;
+            } else if (typeof data === "object") {
+                // Если это объект (не FormData), отправляем как JSON
+                ajaxSettings.data = JSON.stringify(data);
+                ajaxSettings.contentType = "application/json; charset=utf-8";
+            }
+
+            $.ajax(ajaxSettings);
         } else {
             $.ajax({
                 url: url,

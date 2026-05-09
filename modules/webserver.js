@@ -12,15 +12,18 @@ const fileUpload = require("express-fileupload");
 const colors = require('colors');
 const mime = require("mime");
 const path = require('path');
+const os = require('os');
 const {isInSubnet} = require('is-in-subnet');
 
 global.webServer = express();
 global.webPagesPermissions = {};
 webServer.use(cookieParser());
+webServer.use(express.json({limit: '50mb'}));
+webServer.use(express.urlencoded({limit: '50mb', extended: true}));
 webServer.use(
     fileUpload({
         useTempFiles: true,
-        tempFileDir: "/tmp/",
+        tempFileDir: os.tmpdir(),
     })
 );
 
@@ -76,6 +79,15 @@ exports.authLoggingMiddleware = (req, res, next) => {
 
 // Middleware для статических страниц
 let errorPageCache = null;
+let translatedFilesCache = {};
+
+// Функция для очистки кэша переведённых файлов (например, при смене языка)
+exports.clearTranslatedFilesCache = () => {
+    translatedFilesCache = {};
+    errorPageCache = null;
+};
+global.clearTranslatedFilesCache = exports.clearTranslatedFilesCache;
+
 exports.staticsMiddleware = (req, res, next) => {
     let relPath = req.path === "/" ? "/index.html" : req.path;
     let filePath = path.join(__dirname, "./../web", relPath);
@@ -98,8 +110,18 @@ exports.staticsMiddleware = (req, res, next) => {
 
         // Переводим файл, если нужно
         if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {
+            const cacheKey = `${currentLanguage}:${resolvedPath}`;
+            
+            if (translatedFilesCache[cacheKey]) {
+                return res.send(translatedFilesCache[cacheKey]);
+            }
+
             let fileData = fs.readFileSync(resolvedPath);
             fileData = MULTILANG.translateText(currentLanguage, fileData);
+            
+            // Сохраняем в кэш
+            translatedFilesCache[cacheKey] = fileData;
+            
             return res.send(fileData);
         } else {
             // Для файлов без перевода используем sendFile для лучшей производительности
@@ -186,7 +208,16 @@ exports.loadAllDefinedRouters = () => {
 
 // Запустить веб-сервер на выбранном порту
 exports.startWebServer = () => {
-    webServer.listen(webPort, () => {
+    const server = webServer.listen(webPort, () => {
         LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.webserverStarted}}", colors.cyan(webPort)));
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            LOGGER.log(colors.red(`Ошибка: Порт ${webPort} уже занят. Пожалуйста, измените webserverPort в config.json.`));
+        } else {
+            LOGGER.log(colors.red(`Ошибка при запуске веб-сервера: ${err.message}`));
+        }
+        process.exit(1);
     });
 };

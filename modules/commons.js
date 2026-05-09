@@ -74,18 +74,23 @@ exports.getDataByURL = async (url, cb, mirrors = []) => {
 
     for (let i = 0; i < urlsToTry.length; i++) {
         const currentUrl = urlsToTry[i];
-        console.log(`Попытка подключения к: ${currentUrl} (попытка ${i + 1}/${urlsToTry.length})`);
 
         try {
             const response = await axiosInstance.get(currentUrl);
-            return cb(response.data);
+            if (typeof cb === 'function') {
+                return cb(response.data);
+            }
+            return response.data;
         } catch (error) {
             console.error(`Ошибка при подключении к ${currentUrl}: ${error.message}`);
         }
     }
 
     // Все URL перепробованы
-    return cb(false);
+    if (typeof cb === 'function') {
+        return cb(false);
+    }
+    return false;
 };
 
 // Функция для перемещения загруженного на сервер файла

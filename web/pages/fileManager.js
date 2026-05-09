@@ -271,7 +271,7 @@ KubekFileManagerUI = class {
         let path = currentPath + inputVal;
         let data = $("#code-edit").text();
         KubekFileManagerUI.closeEditor();
-        currentDataParts = data.match(/[\s\S]{1,500}/g) || [];
+        currentDataParts = data.match(/[\s\S]{1,51200}/g) || [];
         currentChunkWriting = -1;
         KubekFileManager.startChunkWrite(path, (result) => {
             currentChunkID = result;
@@ -287,7 +287,7 @@ KubekFileManagerUI = class {
         if (typeof currentDataParts[currentChunkWriting] !== "undefined") {
             // Если чанки не закончились - записываем
             console.log("Writing chunk", currentChunkWriting, "to ID", currentChunkID);
-            KubekFileManager.addChunkWrite(currentChunkID, Base64.encodeURI(currentDataParts[currentChunkWriting]), () => {
+            KubekFileManager.addChunkWrite(currentChunkID, Base64.encode(currentDataParts[currentChunkWriting]), () => {
                 KubekFileManagerUI.writeNextChunk();
             });
         } else {

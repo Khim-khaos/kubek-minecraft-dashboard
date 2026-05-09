@@ -49,6 +49,9 @@ router.put("/settings", function (req, res) {
         let writeResult = CONFIGURATION.writeMainConfig(Base64.decode(q.config));
         CONFIGURATION.reloadAllConfigurations();
         global.currentLanguage = mainConfig.language;
+        if (typeof global.clearTranslatedFilesCache === "function") {
+            global.clearTranslatedFilesCache();
+        }
         FTP_DAEMON.startFTP();
         return res.send(writeResult);
     }

@@ -41,7 +41,7 @@ class KubekFileManager {
 
     // Дополнить элемент для записи
     static addChunkWrite(id, data, cb){
-        KubekRequests.get("/fileManager/chunkWrite/add?id=" + id + "&data=" + data, cb);
+        KubekRequests.post("/fileManager/chunkWrite/add", cb, {id: id, data: data});
     }
 
     // Завершить элемент для записи
