@@ -122,7 +122,8 @@
       "systemMonitor": "System monitoring"
     },
     "gameConsole": {
-      "inputCommand": "Enter the command..."
+      "inputCommand": "Enter the command...",
+      "clearConsole": "Clear console"
     },
     "systemMonitor": {
       "briefInfo": "Commom information",

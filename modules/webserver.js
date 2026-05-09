@@ -56,7 +56,7 @@ exports.authLoggingMiddleware = (req, res, next) => {
 
     // Добавляем проверку на вхождение IP в range (при включенной функции)
     if (mainConfig.allowOnlyIPsList === true && !isInSubnet(ip, mainConfig.IPsAllowed)) {
-        return; // При простом return на запрос не будет ответа, т.е. запрос просто зависнет
+        return res.sendStatus(403);
     }
 
     // Проверяем включена ли авторизация и есть ли у пользователя доступ к серверу
@@ -75,26 +75,36 @@ exports.authLoggingMiddleware = (req, res, next) => {
 };
 
 // Middleware для статических страниц
+let errorPageCache = null;
 exports.staticsMiddleware = (req, res, next) => {
-    let filePath = path.join(__dirname, "./../web", req.path);
-    let ext = path.extname(req.path).replace(".", "").toLowerCase();
-    if (req.path === "/") {
-        filePath = path.join(__dirname, "./../web", "/index.html");
-        ext = "html";
+    let relPath = req.path === "/" ? "/index.html" : req.path;
+    let filePath = path.join(__dirname, "./../web", relPath);
+    let ext = path.extname(relPath).replace(".", "").toLowerCase();
+
+    // Базовая проверка на path traversal
+    const webDir = path.resolve(__dirname, "./../web");
+    const resolvedPath = path.resolve(filePath);
+
+    if (!resolvedPath.startsWith(webDir)) {
+        return next();
     }
-    if (PREDEFINED.ALLOWED_STATIC_EXTS.includes(ext) && FILE_MANAGER.verifyPathForTraversal(filePath) && fs.existsSync(filePath)) {
+
+    if (PREDEFINED.ALLOWED_STATIC_EXTS.includes(ext) && fs.existsSync(resolvedPath) && !fs.lstatSync(resolvedPath).isDirectory()) {
         // Если все проверки пройдены - детектим и отправляем content-type
         res.set(
             "content-type",
-            mime.getType(filePath)
+            mime.getType(resolvedPath)
         );
-        let fileData = fs.readFileSync(filePath);
+
         // Переводим файл, если нужно
         if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {
+            let fileData = fs.readFileSync(resolvedPath);
             fileData = MULTILANG.translateText(currentLanguage, fileData);
+            return res.send(fileData);
+        } else {
+            // Для файлов без перевода используем sendFile для лучшей производительности
+            return res.sendFile(resolvedPath);
         }
-        // Возвращаем файл
-        return res.send(fileData);
     }
     return next();
 };
@@ -166,8 +176,10 @@ exports.loadAllDefinedRouters = () => {
     // Хэндлер для ошибки 404
     webServer.use((req, res) => {
         if (!res.headersSent) {
-            let errFile = fs.readFileSync(path.join(__dirname, "./../web/404.html")).toString();
-            return res.status(404).send(errFile);
+            if (!errorPageCache) {
+                errorPageCache = fs.readFileSync(path.join(__dirname, "./../web/404.html")).toString();
+            }
+            return res.status(404).send(errorPageCache);
         }
     });
 };

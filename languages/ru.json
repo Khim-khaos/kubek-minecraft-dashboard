@@ -122,7 +122,8 @@
       "systemMonitor": "Мониторинг системы"
     },
     "gameConsole": {
-      "inputCommand": "Введите команду..."
+      "inputCommand": "Введите команду...",
+      "clearConsole": "Очистить консоль"
     },
     "systemMonitor": {
       "briefInfo": "Краткая информация",

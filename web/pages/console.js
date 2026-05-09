@@ -29,9 +29,33 @@ $(function () {
         KubekConsoleUI.refreshUsageItems(usage.cpu, usage.ram.percent, usage.ram);
     });
 
+    let commandHistory = [];
+    let historyIndex = -1;
+
     $("#cmd-input").on("keydown", (e) => {
         if (e.originalEvent.code === "Enter") {
+            const cmd = $("#cmd-input").val();
+            if (cmd.trim() !== "") {
+                commandHistory.unshift(cmd);
+                if (commandHistory.length > 50) commandHistory.pop();
+                historyIndex = -1;
+            }
             KubekServers.sendCommandFromInput(selectedServer);
+        } else if (e.originalEvent.code === "ArrowUp") {
+            if (historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                $("#cmd-input").val(commandHistory[historyIndex]);
+            }
+            e.preventDefault();
+        } else if (e.originalEvent.code === "ArrowDown") {
+            if (historyIndex > 0) {
+                historyIndex--;
+                $("#cmd-input").val(commandHistory[historyIndex]);
+            } else if (historyIndex === 0) {
+                historyIndex = -1;
+                $("#cmd-input").val("");
+            }
+            e.preventDefault();
         }
     });
 })

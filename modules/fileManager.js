@@ -4,30 +4,45 @@ const {Base64} = require('js-base64');
 
 const SECURITY = require('./security');
 
+const path = require("path");
+
+// Собрать путь к папке
+exports.constructFilePath = (server, filePath) => {
+    return path.join(process.cwd(), "servers", server, filePath);
+}
+
+// Проверка на path traversal
+exports.verifyPathForTraversal = (baseDir, targetPath) => {
+    const resolvedBase = path.resolve(baseDir);
+    const resolvedTarget = path.resolve(targetPath);
+    return resolvedTarget.startsWith(resolvedBase);
+};
+
 // Получить файлы в директории
 exports.scanDirectory = (server, directory, cb) => {
-    let relDirectoryPath = "./servers/" + server + directory;
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, directory);
 
-    if (!this.verifyPathForTraversal(relDirectoryPath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         cb(false);
         return;
     }
 
     if (
-        fs.existsSync(relDirectoryPath) &&
-        fs.lstatSync(relDirectoryPath).isDirectory()
+        fs.existsSync(fullPath) &&
+        fs.lstatSync(fullPath).isDirectory()
     ) {
-        fs.readdir(relDirectoryPath, function (err, readResult) {
+        fs.readdir(fullPath, function (err, readResult) {
             if (err) throw err;
             if (typeof readResult !== "undefined") {
                 let filesResult = [];
                 readResult.forEach((element) => {
-                    let filePath = relDirectoryPath + "/" + element;
+                    let filePath = path.join(fullPath, element);
                     let fileStats = fs.lstatSync(filePath);
                     let fileItem = {
                         name: element,
-                        path: filePath,
+                        path: filePath.replace(baseDir, "").replaceAll("\\", "/"),
                         type: fileStats.isDirectory() ? "directory" : "file",
                         size: fileStats.size,
                         modify: fileStats.mtime,
@@ -45,17 +60,18 @@ exports.scanDirectory = (server, directory, cb) => {
 };
 
 // Прочитать содержимое файла
-exports.readFile = (server, path, cb) => {
-    let filePath = this.constructFilePath(server, path);
+exports.readFile = (server, filePath, cb) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         cb(false);
         return;
     }
 
-    if (fs.existsSync(filePath) && !fs.lstatSync(filePath).isDirectory()) {
-        fs.readFile(filePath, (err, data) => {
+    if (fs.existsSync(fullPath) && !fs.lstatSync(fullPath).isDirectory()) {
+        fs.readFile(fullPath, (err, data) => {
             if (err) throw err;
             cb(data);
         });
@@ -65,100 +81,93 @@ exports.readFile = (server, path, cb) => {
 };
 
 // Записать файл
-exports.writeFile = (server, path, data) => {
-    let filePath = this.constructFilePath(server, path);
+exports.writeFile = (server, filePath, data) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    fs.writeFileSync(filePath, data);
+    fs.writeFileSync(fullPath, data);
     return true;
 };
 
 // Удалить файл
-exports.deleteFile = (server, path) => {
-    let filePath = this.constructFilePath(server, path);
+exports.deleteFile = (server, filePath) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(filePath) && !fs.lstatSync(filePath).isDirectory()) {
-        fs.unlinkSync(filePath);
+    if (fs.existsSync(fullPath) && !fs.lstatSync(fullPath).isDirectory()) {
+        fs.unlinkSync(fullPath);
         return true;
     }
     return false;
 };
 
 // Удалить директорию (пустую)
-exports.deleteEmptyDirectory = (server, path) => {
-    let filePath = this.constructFilePath(server, path);
+exports.deleteEmptyDirectory = (server, filePath) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory() && fs.readdirSync(filePath).length === 0) {
-        fs.rmdirSync(filePath);
+    if (fs.existsSync(fullPath) && fs.lstatSync(fullPath).isDirectory() && fs.readdirSync(fullPath).length === 0) {
+        fs.rmdirSync(fullPath);
         return true;
     }
     return false;
 };
 
 // Переименовать файл
-exports.renameFile = (server, path, newName) => {
-    let filePath = this.constructFilePath(server, path);
-    let newPath = filePath.split("/").slice(0, -1).join("/") + "/";
+exports.renameFile = (server, filePath, newName) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
+    let newPath = path.join(path.dirname(fullPath), newName);
 
-    if (!this.verifyPathForTraversal(filePath) || !this.verifyPathForTraversal(newPath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath) || !this.verifyPathForTraversal(baseDir, newPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    if (fs.existsSync(filePath)) {
-        fs.renameSync(filePath, newPath + newName);
+    if (fs.existsSync(fullPath)) {
+        fs.renameSync(fullPath, newPath);
         return true;
     }
     return false;
 };
 
 // Создать папку
-exports.newDirectory = (server, path, name) => {
-    let filePath = this.constructFilePath(server, path);
+exports.newDirectory = (server, filePath, name) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = path.join(this.constructFilePath(server, filePath), name);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
 
-    fs.mkdirSync(filePath + "/" + name, {
+    fs.mkdirSync(fullPath, {
         recursive: true
     })
 };
 
-// Собрать путь к папке
-exports.constructFilePath = (server, path) => {
-    return "./servers/" + server + path;
-}
-
-// Проверка на path traversal
-exports.verifyPathForTraversal = (path) => {
-    return path.match(/\%2e\./gim) == null &&
-        path.match(/\%2e\%2e/gim) == null &&
-        path.match(/\.\%2e/gim) == null &&
-        path.match(/\.\./gim) == null;
-};
-
 /* ЗАПИСЬ ФАЙЛОВ ПО ЧАНКАМ */
 // Начать запись
-exports.startChunkyFileWrite = (server, path) => {
-    let filePath = this.constructFilePath(server, path);
+exports.startChunkyFileWrite = (server, filePath) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
 
-    if (!this.verifyPathForTraversal(filePath)) {
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
         // Если найден path traversal, то ничего не делаем
         return false;
     }
@@ -166,8 +175,8 @@ exports.startChunkyFileWrite = (server, path) => {
     let randomUUID = SECURITY.generateSecureID(8);
     fileWrites[randomUUID] = {
         id: randomUUID,
-        path: filePath,
-        text: ""
+        path: fullPath,
+        chunks: []
     }
     return randomUUID;
 };
@@ -175,7 +184,7 @@ exports.startChunkyFileWrite = (server, path) => {
 // Дописать чанк
 exports.addFileChunk = (id, chunk) => {
     if (typeof fileWrites[id] !== "undefined") {
-        fileWrites[id].text === "" ? fileWrites[id].text = Base64.decode(chunk) : fileWrites[id].text += "\n" + Base64.decode(chunk);
+        fileWrites[id].chunks.push(Base64.decode(chunk));
         return true;
     } else {
         return false;
@@ -185,7 +194,7 @@ exports.addFileChunk = (id, chunk) => {
 // Завершить запись
 exports.endChunkyFileWrite = (id) => {
     if (typeof fileWrites[id] !== "undefined") {
-        fs.writeFileSync(fileWrites[id].path, fileWrites[id].text);
+        fs.writeFileSync(fileWrites[id].path, fileWrites[id].chunks.join("\n"));
         fileWrites[id] = null;
         delete fileWrites[id];
         return true;
