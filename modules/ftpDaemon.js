@@ -1,5 +1,6 @@
 const MULTILANG = require("./multiLanguage");
 const LOGGER = require("./logger");
+const APP_CONFIG = require("./appConfig");
 const colors = require("colors");
 const path = require("path");
 
@@ -25,7 +26,8 @@ async function loadFtpSrv() {
 
 exports.startFTP = async () => {
     await loadFtpSrv();
-    
+
+    const mainConfig = APP_CONFIG.getMainConfig();
     let isEnabled = mainConfig.ftpd.enabled;
     if (isEnabled) {
         let initPath = path.normalize("./");
@@ -40,34 +42,39 @@ exports.startFTP = async () => {
             pasv_min: 1025,
             pasv_max: 1050,
             tlsOptions: defaultOptions.tls,
-            allowUnauthorizedTls: true
+            allowUnauthorizedTls: true,
         });
 
         // Обработка аутентификации
-        ftpServer.on('login', ({ connection, username: inputUsername, password: inputPassword }, resolve, reject) => {
+        ftpServer.on("login", ({ connection, username: inputUsername, password: inputPassword }, resolve, reject) => {
             if (inputUsername === username && inputPassword === password) {
-                LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.ftpConnected}}") + colors.green(username));
+                LOGGER.log(
+                    MULTILANG.translateText(mainConfig.language, "{{console.ftpConnected}}") + colors.green(username)
+                );
                 resolve({
                     root: initPath,
-                    cwd: '/',
-                    blacklist: [] // Все команды разрешены
+                    cwd: "/",
+                    blacklist: [], // Все команды разрешены
                 });
             } else {
-                reject(new ftpErrors.GeneralError('Invalid username or password', 401));
+                reject(new ftpErrors.GeneralError("Invalid username or password", 401));
             }
         });
 
         // Обработка ошибок сервера
-        ftpServer.on('client:error', (err) => {
+        ftpServer.on("client:error", (err) => {
             LOGGER.error(MULTILANG.translateText(mainConfig.language, "{{console.ftpError}}") + err.toString());
         });
 
         // Запуск сервера
-        ftpServer.listen().then(() => {
-            LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.ftpStarted}}") + colors.cyan(port));
-        }).catch((err) => {
-            LOGGER.error(MULTILANG.translateText(mainConfig.language, "{{console.ftpError}}") + err.toString());
-        });
+        ftpServer
+            .listen()
+            .then(() => {
+                LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.ftpStarted}}") + colors.cyan(port));
+            })
+            .catch((err) => {
+                LOGGER.error(MULTILANG.translateText(mainConfig.language, "{{console.ftpError}}") + err.toString());
+            });
 
         return true;
     }
@@ -78,7 +85,7 @@ exports.stopFTP = () => {
     if (ftpServer) {
         ftpServer.close();
         ftpServer = null;
-        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.ftpStopped}}"));
+        LOGGER.log(MULTILANG.translateText(APP_CONFIG.getMainConfig().language, "{{console.ftpStopped}}"));
     }
     return true;
 };

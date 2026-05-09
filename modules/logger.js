@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const colors = require("colors");
 
 const PREDEFINED = require("./predefined");
@@ -93,6 +94,37 @@ exports.debug = (...args) => {
     let preparedText = this.getTimeFormatted() + " " + text;
     console.log(colors.gray(preparedText));
     this.writeLineToLog("[DEBUG] " + preparedText);
+};
+
+// Очистка старых лог-файлов (оставляем логи за последние 7 дней)
+exports.cleanupOldLogs = () => {
+    const logsDir = "./logs/";
+    if (!fs.existsSync(logsDir)) return;
+
+    fs.readdir(logsDir, (err, files) => {
+        if (err) {
+            this.error("[LOGGER] Error reading logs directory for cleanup:", err);
+            return;
+        }
+
+        const now = new Date();
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+
+        files.forEach(file => {
+            if (path.extname(file) === ".log") {
+                const filePath = path.join(logsDir, file);
+                fs.stat(filePath, (err, stats) => {
+                    if (err) return;
+                    if (now - stats.mtime > maxAge) {
+                        fs.unlink(filePath, (err) => {
+                            if (err) this.error(`[LOGGER] Failed to delete old log file: ${file}`, err);
+                            else this.debug(`[LOGGER] Deleted old log file: ${file}`);
+                        });
+                    }
+                });
+            }
+        });
+    });
 };
 
 // Вывести приветственное сообщение Kubek

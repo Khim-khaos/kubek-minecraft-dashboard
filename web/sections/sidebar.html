@@ -39,13 +39,44 @@
             <span class="material-symbols-rounded"> area_chart </span>
             <span>{{sections.systemMonitor}}</span>
         </div>
+        <div class="sidebar-item" id="theme-toggle">
+            <span class="material-symbols-rounded" id="theme-icon"> dark_mode </span>
+            <span id="theme-text">{{commons.theme.dark}}</span>
+        </div>
     </div>
 </div>
 
 <script>
-    $("#main-menu-sidebar .sidebar-item").on("click", function () {
+    $("#main-menu-sidebar .sidebar-item:not(#theme-toggle)").on("click", function () {
         KubekUI.changeItemByPage($(this).data("page"));
         KubekPageManager.gotoPage($(this).data("page"));
+    });
+
+    $("#theme-toggle").on("click", function() {
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        
+        updateThemeUI(newTheme);
+    });
+
+    function updateThemeUI(theme) {
+        if (theme === "light") {
+            $("#theme-icon").text("light_mode");
+            $("#theme-text").text("{{commons.theme.light}}");
+        } else {
+            $("#theme-icon").text("dark_mode");
+            $("#theme-text").text("{{commons.theme.dark}}");
+        }
+    }
+
+    // Инициализация темы при загрузке сайдбара
+    $(function() {
+        const savedTheme = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+        updateThemeUI(savedTheme);
     });
 </script>
 

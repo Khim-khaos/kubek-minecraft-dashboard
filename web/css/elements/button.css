@@ -52,6 +52,26 @@ button.danger-btn:hover {
   transform: translateY(-1px);
 }
 
+button.success-btn {
+  background: var(--success);
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+}
+
+button.success-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+button.ghost-btn {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+}
+
+button.ghost-btn:hover {
+  background: var(--glass-bg);
+  border-color: var(--bg-primary-500);
+}
+
 button.icon-only {
   padding: 10px;
   width: 42px;

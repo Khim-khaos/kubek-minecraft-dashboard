@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const APP_CONFIG = require("./appConfig");
+
 // Список кодов для доступных языков
 global.avaliableLanguages = {};
 // Кеш переводов
@@ -21,6 +23,7 @@ exports.loadAvailableLanguages = () => {
                 }
             }
         })
+        APP_CONFIG.setAvailableLanguages(avaliableLanguages);
         return true;
     }
     return false;

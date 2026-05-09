@@ -4,7 +4,18 @@
     <!-- Заголовок -->
     <h2>{{sections.systemMonitor}}</h2>
 
-    <!-- Первая таблица -->
+    <div class="usage-summary">
+        <div class="usage-card">
+            <div id="cpu-usage-circle"></div>
+            <span>CPU</span>
+        </div>
+        <div class="usage-card">
+            <div id="ram-usage-circle"></div>
+            <span>RAM</span>
+        </div>
+    </div>
+
+    <!-- Первая таблица -->$1
     <h4>{{systemMonitor.briefInfo}}</h4>
     <table>
         <tr>

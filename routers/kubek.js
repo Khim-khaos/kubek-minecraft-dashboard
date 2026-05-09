@@ -4,6 +4,7 @@ const COMMONS = require("./../modules/commons");
 const FTP_DAEMON = require("./../modules/ftpDaemon");
 const MULTILANG = require("./../modules/multiLanguage");
 const HEALTH = require("./../modules/health");
+const APP_CONFIG = require("./../modules/appConfig");
 
 const express = require("express");
 const router = express.Router();
@@ -39,19 +40,23 @@ router.get("/version", function (req, res) {
 
 // Endpoint для получения настроек Kubek
 router.get("/settings", function (req, res) {
-    res.send(mainConfig);
+    res.send(APP_CONFIG.getMainConfig());
 });
 
 // Endpoint для сохранения настроек Kubek
 router.put("/settings", function (req, res) {
     let q = req.query;
     if (COMMONS.isObjectsValid(q.config)) {
-        if(FTP_DAEMON.isFTPStarted()){
+        if (FTP_DAEMON.isFTPStarted()) {
             FTP_DAEMON.stopFTP();
         }
         let writeResult = CONFIGURATION.writeMainConfig(Base64.decode(q.config));
         CONFIGURATION.reloadAllConfigurations();
+
+        const mainConfig = APP_CONFIG.getMainConfig();
         global.currentLanguage = mainConfig.language;
+        APP_CONFIG.setCurrentLanguage(mainConfig.language);
+
         if (typeof global.clearTranslatedFilesCache === "function") {
             global.clearTranslatedFilesCache();
         }
@@ -63,6 +68,7 @@ router.put("/settings", function (req, res) {
 
 // Endpoint для соглашения с EULA
 router.get("/eula/accept", function (req, res) {
+    const mainConfig = APP_CONFIG.getMainConfig();
     mainConfig.eulaAccepted = true;
     CONFIGURATION.writeMainConfig(mainConfig);
     CONFIGURATION.reloadAllConfigurations();
@@ -71,7 +77,7 @@ router.get("/eula/accept", function (req, res) {
 
 // Endpoint для получения списка языков
 router.get("/languages", function (req, res) {
-    res.send(avaliableLanguages);
+    res.send(APP_CONFIG.getAvailableLanguages());
 });
 
 module.exports.router = router;

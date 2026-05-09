@@ -6,6 +6,7 @@ const PREDEFINED = require("./predefined");
 const COMMONS = require("./commons");
 const SECURITY = require("./security");
 const SERVERS_CONTROLLER = require("./serversController");
+const APP_CONFIG = require("./appConfig");
 
 global.autoStartedServers = [];
 
@@ -167,9 +168,17 @@ exports.writeServersConfig = (data) => {
 
 // Перезагрузить все конфиги в память
 exports.reloadAllConfigurations = () => {
-    global.mainConfig = this.readMainConfig();
-    global.usersConfig = this.readUsersConfig();
-    global.serversConfig = this.readServersConfig();
+    const main = this.readMainConfig();
+    const users = this.readUsersConfig();
+    const servers = this.readServersConfig();
+
+    global.mainConfig = main;
+    global.usersConfig = users;
+    global.serversConfig = servers;
+
+    APP_CONFIG.setMainConfig(main);
+    APP_CONFIG.setUsersConfig(users);
+    APP_CONFIG.setServersConfig(servers);
 };
 
 // DEVELOPED by seeeroy

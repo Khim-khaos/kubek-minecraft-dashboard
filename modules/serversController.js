@@ -4,6 +4,7 @@ const SERVERS_MANAGER = require("./serversManager");
 const FILE_MANAGER = require("./fileManager");
 const MULTILANG = require("./multiLanguage");
 const ERRORS_PARSER = require("./minecraftErrorsParser");
+const APP_CONFIG = require("./appConfig");
 
 const fs = require("fs");
 const path = require("path");
@@ -23,7 +24,12 @@ exports.isServerReadyToStart = (serverName) => {
     if (serverStarterPath === false) {
         return false;
     }
-    return Object.keys(serversConfig).includes(serverName) && serversConfig[serverName].status === PREDEFINED.SERVER_STATUSES.STOPPED && fs.existsSync(serverStarterPath);
+    const serversConfig = APP_CONFIG.getServersConfig();
+    return (
+        Object.keys(serversConfig).includes(serverName) &&
+        serversConfig[serverName].status === PREDEFINED.SERVER_STATUSES.STOPPED &&
+        fs.existsSync(serverStarterPath)
+    );
 };
 
 // Получить кол-во строк из лога сервера
@@ -116,6 +122,9 @@ exports.restartServer = (serverName) => {
 // Добавить handler для закрытия на instance
 exports.addInstanceCloseEventHandler = (serverName) => {
     serversInstances[serverName].on("close", (code) => {
+        const currentLanguage = APP_CONFIG.getCurrentLanguage();
+        const serversConfig = APP_CONFIG.getServersConfig();
+
         SERVERS_MANAGER.setServerStatus(serverName, PREDEFINED.SERVER_STATUSES.STOPPED);
         if (code != null && code > 1 && code !== 127) {
             // Если сервер завершился НЕНОРМАЛЬНО
@@ -123,7 +132,14 @@ exports.addInstanceCloseEventHandler = (serverName) => {
             if (serversConfig[serverName].restartOnError === true) {
                 if (restartAttempts[serverName] >= serversConfig[serverName].maxRestartAttempts) {
                     // Если не удалось запустить сервер после макс. кол-ва попыток
-                    this.writeServerLog(serverName, MULTILANG.translateText(currentLanguage, "{{serverConsole.restartFailed}}", restartAttempts[serverName]));
+                    this.writeServerLog(
+                        serverName,
+                        MULTILANG.translateText(
+                            currentLanguage,
+                            "{{serverConsole.restartFailed}}",
+                            restartAttempts[serverName]
+                        )
+                    );
                 } else {
                     // Пробуем перезапустить сервер
                     if (COMMONS.isObjectsValid(restartAttempts[serverName])) {
@@ -131,7 +147,14 @@ exports.addInstanceCloseEventHandler = (serverName) => {
                     } else {
                         restartAttempts[serverName] = 1;
                     }
-                    this.writeServerLog(serverName, MULTILANG.translateText(currentLanguage, "{{serverConsole.restartAttempt}}", restartAttempts[serverName]));
+                    this.writeServerLog(
+                        serverName,
+                        MULTILANG.translateText(
+                            currentLanguage,
+                            "{{serverConsole.restartAttempt}}",
+                            restartAttempts[serverName]
+                        )
+                    );
                     // Добавляем задержку перед перезапуском (5 секунд)
                     setTimeout(() => {
                         this.startServer(serverName);
@@ -144,7 +167,7 @@ exports.addInstanceCloseEventHandler = (serverName) => {
         } else {
             this.writeServerLog(serverName, MULTILANG.translateText(currentLanguage, "{{serverConsole.gracefulShutdown}}"));
             // Перезапускаем сервер, если он есть в массиве для перезапуска
-            if(serversToManualRestart.includes(serverName)){
+            if (serversToManualRestart.includes(serverName)) {
                 this.startServer(serverName);
                 serversToManualRestart.splice(serversToManualRestart.indexOf(serverName), 1);
             }
@@ -155,11 +178,12 @@ exports.addInstanceCloseEventHandler = (serverName) => {
 // Обрабатываем выходные потоки сервера
 exports.handleServerStd = (serverName, data) => {
     //data = iconvlite.decode(data, "utf-8").toString();
+    const currentLanguage = APP_CONFIG.getCurrentLanguage();
     data = data.toString();
     this.writeServerLog(serverName, data);
     // Проверяем на ошибки
     let isAnyErrorsHere = ERRORS_PARSER.checkStringForErrors(data);
-    if(isAnyErrorsHere !== false){
+    if (isAnyErrorsHere !== false) {
         // Добавляем в лог описание найденных ошибок
         this.writeServerLog(serverName, "§c§l" + MULTILANG.translateText(currentLanguage, isAnyErrorsHere));
     }

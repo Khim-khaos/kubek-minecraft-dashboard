@@ -4,6 +4,7 @@ const COMMONS = require("./commons");
 const SECURITY = require("./security");
 const FILE_MANAGER = require("./fileManager");
 const MULTILANG = require("./multiLanguage");
+const APP_CONFIG = require("./appConfig");
 
 const fs = require("fs");
 const express = require('express');
@@ -38,7 +39,7 @@ webServer.use(
 );
 
 // Получаем порт веб-сервера из конфига
-let webPort = mainConfig.webserverPort;
+let webPort = APP_CONFIG.getMainConfig().webserverPort;
 
 /**
  * Получить IP-адрес из запроса
@@ -74,17 +75,19 @@ exports.authLoggingMiddleware = (req, res, next) => {
 
     // Проверяем существование куков у пользователя на предмет логина
     let username = null;
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (SECURITY.isUserHasCookies(req) && mainConfig.authorization === true) {
         username = req.cookies["kbk__login"];
     }
 
     // Показываем запрос в логах
     if (!COMMONS.testForRegexArray(req.path, PREDEFINED.NO_LOG_URLS)) {
-        res.on('finish', () => {
+        res.on("finish", () => {
             const duration = Date.now() - startTime;
             const status = res.statusCode;
-            const statusColor = status >= 500 ? colors.red : status >= 400 ? colors.yellow : status >= 300 ? colors.cyan : colors.green;
-            
+            const statusColor =
+                status >= 500 ? colors.red : status >= 400 ? colors.yellow : status >= 300 ? colors.cyan : colors.green;
+
             this.logWebRequest(req, res, username);
             LOGGER.debug(`[REQUEST] ${req.method} ${req.originalUrl} - ${statusColor(status)} (${duration}ms)`);
         });
@@ -152,6 +155,7 @@ exports.staticsMiddleware = async (req, res, next) => {
 
             // Переводим файл, если нужно
             if (PREDEFINED.TRANSLATION_STATIC_EXTS.includes(ext)) {
+                const currentLanguage = APP_CONFIG.getCurrentLanguage();
                 const cacheKey = `${currentLanguage}:${resolvedPath}`;
                 
                 if (translatedFilesCache[cacheKey]) {
@@ -179,7 +183,7 @@ exports.staticsMiddleware = async (req, res, next) => {
 // Middleware для проверки на доступ к серверу (ставится ко всем роутерам!)
 exports.serversRouterMiddleware = (req, res, next) => {
     // Если авторизация отключена
-    if (mainConfig.authorization === false) {
+    if (APP_CONFIG.getMainConfig().authorization === false) {
         return next();
     }
 
@@ -277,7 +281,13 @@ exports.loadAllDefinedRouters = () => {
 // Запустить веб-сервер на выбранном порту
 exports.startWebServer = () => {
     const server = webServer.listen(webPort, () => {
-        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.webserverStarted}}", colors.cyan(webPort)));
+        LOGGER.log(
+            MULTILANG.translateText(
+                APP_CONFIG.getMainConfig().language,
+                "{{console.webserverStarted}}",
+                colors.cyan(webPort)
+            )
+        );
     });
 
     server.on('error', (err) => {

@@ -1,6 +1,30 @@
 $(function () {
     KubekUI.setTitle("Kubek | {{sections.systemMonitor}}");
 
+    let cpuCircle = new KubekCircleProgress("#cpu-usage-circle", 0, 100, "var(--bg-dark-accent)", "var(--bg-dark-accent-light)", "var(--bg-primary-500)");
+    let ramCircle = new KubekCircleProgress("#ram-usage-circle", 0, 100, "var(--bg-dark-accent)", "var(--bg-dark-accent-light)", "var(--success)");
+    
+    cpuCircle.create();
+    ramCircle.create();
+
+    const refreshUsage = () => {
+        KubekHardware.getUsage((usage) => {
+            cpuCircle.setValue(Math.round(usage.cpu));
+            ramCircle.setValue(Math.round(usage.ram.percent));
+        });
+    };
+
+    refreshUsage();
+    let usageInterval = setInterval(refreshUsage, 3000);
+
+    // Остановка интервала при уходе со страницы
+    const pageCheckInterval = setInterval(() => {
+        if ($("#cpu-usage-circle").length === 0) {
+            clearInterval(usageInterval);
+            clearInterval(pageCheckInterval);
+        }
+    }, 1000);
+
     KubekHardware.getSummary( (data) => {
         // Загружаем список переменных системы
         for (const [key, value] of Object.entries(data.enviroment)) {

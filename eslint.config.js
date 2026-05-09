@@ -1,6 +1,12 @@
+const prettier = require("eslint-plugin-prettier");
+const prettierConfig = require("eslint-config-prettier");
+
 module.exports = [
     {
         files: ["**/*.js"],
+        plugins: {
+            prettier: prettier,
+        },
         languageOptions: {
             ecmaVersion: "latest",
             sourceType: "commonjs",
@@ -25,6 +31,8 @@ module.exports = [
             }
         },
         rules: {
+            ...prettierConfig.rules,
+            "prettier/prettier": "error",
             "no-unused-vars": "warn",
             "no-undef": "error"
         }
