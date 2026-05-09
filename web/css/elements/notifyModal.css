@@ -1,69 +1,67 @@
 .notify-modal {
     width: 100%;
     height: 100%;
-    z-index: 10;
+    z-index: 1000;
     display: block;
 }
 
 .notify-modal .notify-window {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: max-content;
-    max-width: 48vw;
-    min-width: 19vw;
-    height: max-content;
-    padding: 32px;
-    border-radius: 16px;
-    z-index: 11;
-    background: var(--bg-dark);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    height: auto;
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    z-index: 1001;
+    background: var(--bg-dark-accent);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: auto;
 }
 
 .notify-modal .notify-window .notify-icon {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-dark-accent-light);
-    border-radius: 8px;
+    background: var(--bg-primary-900);
+    border-radius: var(--radius-md);
+    margin-bottom: 24px;
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
 }
 
-.notify-modal .notify-window .notify-icon div {
-    height: 64px;
-    width: 64px;
-}
-
-.notify-modal .notify-window .notify-icon svg {
-    height: 32px;
-    width: 32px;
+.notify-modal .notify-window .notify-icon span {
+    font-size: 32px;
+    color: var(--bg-primary-400);
 }
 
 .notify-modal .notify-window .notify-caption {
-    font-weight: 700;
-    font-size: 15pt;
-    color: white;
-    margin: 12px 0;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--text-main);
+    margin-bottom: 12px;
     text-align: center;
 }
 
 .notify-modal .notify-window .notify-description {
     font-weight: 500;
-    font-size: 14pt;
-    color: rgb(210, 210, 210);
+    font-size: 16px;
+    color: var(--text-muted);
     text-align: center;
+    line-height: 1.5;
 }
 
 .notify-modal .notify-window button {
     width: 100%;
-    margin-top: 18px;
+    margin-top: 32px;
+    height: 48px;
 }
 
 /* Developed by Khim-khaos */

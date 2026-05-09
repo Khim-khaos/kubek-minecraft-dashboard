@@ -1,49 +1,59 @@
 <link rel="stylesheet" href="/pages/console.css"/>
 
 <div class="console-container animate__animated animate__fadeIn animate__fast">
-    <!-- Заголовок -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h2 style="margin: 0;">{{sections.console}}</h2>
-        <div style="display: flex; gap: 8px;">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="title-group">
+            <span class="material-symbols-rounded page-icon">terminal</span>
+            <h2>{{sections.console}}</h2>
+        </div>
+        <div class="actions-group">
             <div class="search-box">
                 <span class="material-symbols-rounded">search</span>
                 <input type="text" id="console-search" placeholder="{{gameConsole.searchLog}}"/>
             </div>
             <button class="dark-btn" onclick="$('#console-text').empty()">
                 <span class="material-symbols-rounded">delete_sweep</span>
-                {{gameConsole.clearConsole}}
+                <span>{{gameConsole.clearConsole}}</span>
             </button>
         </div>
     </div>
-    <!-- Главный контейнер -->
+
+    <!-- Main Content -->
     <div class="console-layout">
-        <!-- Сама консоль -->
-        <div class="console" id="console-text"></div>
-        <!-- Поле ввода команд -->
-        <div class="input">
-            <input type="text" id="cmd-input" placeholder="{{gameConsole.inputCommand}}"/>
-            <button class="dark-btn icon-only">
-                <span class="material-symbols-rounded"
-                      onclick="KubekServers.sendCommandFromInput(selectedServer)"> send </span>
-            </button>
+        <div class="console-main card-panel">
+            <div class="console-body" id="console-text"></div>
+            <div class="console-input-group">
+                <input type="text" id="cmd-input" placeholder="{{gameConsole.inputCommand}}"/>
+                <button class="primary-btn icon-only" onclick="KubekServers.sendCommandFromInput(selectedServer)">
+                    <span class="material-symbols-rounded">send</span>
+                </button>
+            </div>
         </div>
-        <!-- Доп. блоки -->
-        <div class="settings">
-            <!-- Блок мониторинга CPU -->
-            <div class="layout-accent-box">
-                <div class="lds-spinner flexCentered developed-by-seeeroy" id="cpu-usage-spinner"><div></div><div></div><div></div></div>
-                <div id="cpu-usage-bar"></div>
-                <div class="desc-text">
+
+        <div class="console-sidebar">
+            <!-- CPU Usage -->
+            <div class="usage-card card-panel">
+                <div class="usage-header">
+                    <span class="material-symbols-rounded">memory</span>
                     <h4>CPU</h4>
                 </div>
+                <div class="usage-content">
+                    <div class="lds-spinner" id="cpu-usage-spinner"><div></div><div></div><div></div></div>
+                    <div id="cpu-usage-bar"></div>
+                </div>
             </div>
-            <!-- Блок мониторинга RAM -->
-            <div class="layout-accent-box">
-                <div class="lds-spinner flexCentered" id="ram-usage-spinner"><div></div><div></div><div></div></div>
-                <div id="ram-usage-bar"></div>
-                <div class="desc-text">
+
+            <!-- RAM Usage -->
+            <div class="usage-card card-panel">
+                <div class="usage-header">
+                    <span class="material-symbols-rounded">monitoring</span>
                     <h4>RAM</h4>
-                    <sup id="ram-usage-text">{{commons.loading}}</sup>
+                </div>
+                <div class="usage-content">
+                    <div class="lds-spinner" id="ram-usage-spinner"><div></div><div></div><div></div></div>
+                    <div id="ram-usage-bar"></div>
+                    <div class="usage-stats" id="ram-usage-text">{{commons.loading}}</div>
                 </div>
             </div>
         </div>

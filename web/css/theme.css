@@ -1,25 +1,44 @@
 :root {
-  --bg-primary-300: #a4cafe;
-  --bg-primary-400: #76a9fa;
-  --bg-primary-500: #3f83f8;
-  --bg-primary-600: #1c64f2;
-  --bg-primary-700: #1a56db;
-  --bg-primary-800: #1e429f;
-  --bg-primary-900: #233876;
-  --bg-primary-1000: #192a3a;
-  --bg-primary-1050: #15222e;
-  --bg-primary-1100: #060b13;
-  --bg-primary-anim: #233876;
-  --bg-primary-transparent: rgba(35, 52, 68, 0.4);
-  --bg-dark: #151e27;
-  --bg-dark-accent: #222c3a;
-  --bg-dark-accent-light: #2e3e53;
-  --bg-dark-accent-lighter: #68798a;
-  --success: #32d583;
-  --error: #f04438;
-  --warning: #fdb022;
-  --info: #53b1fd;
-  --text-color: white;
+  /* Core Colors */
+  --bg-dark: #0f172a; /* Deeper, more modern dark blue */
+  --bg-dark-accent: #1e293b;
+  --bg-dark-accent-light: #334155;
+  --bg-dark-accent-lighter: #64748b;
+  
+  /* Primary Brand Colors */
+  --bg-primary-300: #93c5fd;
+  --bg-primary-400: #60a5fa;
+  --bg-primary-500: #3b82f6;
+  --bg-primary-600: #2563eb;
+  --bg-primary-700: #1d4ed8;
+  --bg-primary-800: #1e40af;
+  --bg-primary-900: #1e3a8a;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(12px);
+  
+  /* Semantic Colors */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+  
+  /* Text */
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  /* Layout */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .bg-error {

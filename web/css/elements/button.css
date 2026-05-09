@@ -2,57 +2,78 @@ button {
   appearance: none;
   outline: none;
   border: 0;
-  padding: 12px;
-  border-radius: 6px;
-  color: white;
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-weight: 600;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  font-size: 14pt;
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  gap: 8px;
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 button.dark-btn {
   background: var(--bg-dark-accent);
+  border: 1px solid var(--glass-border);
 }
 
 button.dark-btn:hover {
   background: var(--bg-dark-accent-light);
-}
-
-button.primary-btn:hover {
-  background: var(--bg-primary-600);
+  border-color: var(--bg-dark-accent-lighter);
 }
 
 button.primary-btn {
+  background: var(--bg-primary-600);
+  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+}
+
+button.primary-btn:hover {
   background: var(--bg-primary-500);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.23);
+  transform: translateY(-1px);
 }
 
 button.danger-btn {
   background: var(--error);
+  box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+}
+
+button.danger-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 button.icon-only {
-  padding: 8px;
+  padding: 10px;
+  width: 42px;
+  height: 42px;
 }
 
 button.icon-only * {
-  font-size: 22pt;
+  font-size: 20px;
 }
 
 button span:last-child:not(.material-symbols-rounded) {
-  margin-left: 8px;
-  margin-right: 4px;
-  font-size: 12pt;
+  font-size: 14px;
 }
 
 button:disabled,
 button:disabled:hover,
 button:disabled:focus {
   cursor: not-allowed !important;
+  opacity: 0.5;
   background: var(--bg-dark-accent) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* Developed by Khim-khaos */

@@ -1,5 +1,5 @@
 .preloader {
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
@@ -9,11 +9,33 @@
   z-index: 99999;
   background: var(--bg-dark);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
 }
 
 #main-preloader {
-  animation-duration: 0.35s !important;
+  animation-duration: 0.4s !important;
+}
+
+/* Add a nice logo pulse or similar if needed */
+.preloader::after {
+  content: "KUBEK";
+  margin-top: 24px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
 }

@@ -1,88 +1,147 @@
 .console-container {
     width: 100%;
-    height: 62vh;
+    height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
 }
 
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
 
+.title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title-group h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.page-icon {
+    font-size: 32px;
+    color: var(--bg-primary-500);
+}
+
+.actions-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
 .console-layout {
-    margin-top: 16px;
-    width: 100%;
-    height: 100%;
-
     display: grid;
-    grid-template-columns: 1fr max-content;
-    grid-template-rows: 1fr max-content;
-    grid-auto-columns: 1fr;
-    gap: 0.7em 1.3em;
-    grid-auto-flow: row;
-    grid-template-areas:
-    "console settings"
-    "input settings";
-}
-
-.console-layout .console {
-    grid-area: console;
-    width: 100%;
-    height: 100%;
-    background: var(--bg-dark-accent);
-    border-radius: 10px;
-    padding: 12px;
-    overflow-y: auto;
-}
-
-.console-layout .console * {
-    font-family: 'Roboto Mono', monospace, sans-serif;
-    font-size: 11pt;
-}
-
-.console-layout .input {
-    grid-area: input;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.console-layout .input button {
-    height: 48px;
-}
-
-.console-layout .input input {
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
     flex-grow: 1;
-    margin-right: 8px;
-    height: 48px;
+    min-height: 0;
 }
 
-.console-layout .settings {
-    grid-area: settings;
+.console-main {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+    overflow: hidden;
 }
 
-.console-layout .settings .layout-accent-box:not(:first-child) {
-    margin-top: 8px;
+.console-body {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    font-family: 'Roboto Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #0a0f1d;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
-.console-layout .settings .layout-accent-box .lds-spinner {
-    width: 100px;
-    height: 100px;
+.console-body span {
+    font-family: inherit;
 }
 
-.console-layout .settings .layout-accent-box .lds-spinner * {
-    width: 64px;
-    height: 64px;
+.console-input-group {
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    background: var(--bg-dark-accent);
+    border-top: 1px solid var(--glass-border);
 }
 
-.console-layout .settings .layout-accent-box .lds-spinner * {
-    border-color: var(--bg-dark-accent-light) transparent transparent transparent;
+.console-input-group input {
+    flex-grow: 1;
 }
 
-.console-layout .settings .layout-accent-box .desc-text {
+.console-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.usage-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.usage-header {
     display: flex;
     align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    width: 100%;
     justify-content: center;
-    flex-direction: column;
-    margin-top: 6px;
 }
 
-.console-layout .settings .layout-accent-box .desc-text * {
-    margin: 4px 0;
+.usage-header span {
+    font-size: 20px;
+    color: var(--text-muted);
+}
+
+.usage-header h4 {
+    margin: 0;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.usage-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.usage-stats {
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Circle Progress Overrides */
+.circle-progress .text {
+    font-weight: 800 !important;
+    font-size: 20px !important;
+}
+
+@media screen and (max-width: 1100px) {
+    .console-layout {
+        grid-template-columns: 1fr;
+    }
+    .console-sidebar {
+        flex-direction: row;
+        justify-content: center;
+    }
+    .usage-card {
+        flex: 1;
+    }
 }

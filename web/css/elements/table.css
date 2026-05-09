@@ -1,50 +1,41 @@
-table * {
-    border: none !important;
-}
-
 table {
-    border-radius: 8px;
+    width: 100%;
     border-spacing: 0;
+    border-collapse: separate;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-dark-accent);
+    border: 1px solid var(--glass-border);
 }
 
 table th,
-table td,
-table tr {
-    padding: 12px;
+table td {
+    padding: 16px 20px;
     text-align: left;
-    color: white;
-}
-
-table tr:not(:last-child) td,
-table tr:not(:last-child) th {
-    border-bottom: 1px solid var(--bg-dark-accent-light) !important;
+    color: var(--text-main);
+    font-size: 14px;
 }
 
 table th {
     background: var(--bg-dark-accent-light);
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 12px;
 }
 
-table tr,
-table td {
-    background: var(--bg-dark-accent);
+table tr:not(:last-child) td {
+    border-bottom: 1px solid var(--glass-border);
 }
 
-table tr:first-child td:first-child,
-table tr:first-child th:first-child {
-    border-top-left-radius: 8px;
+table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
 }
 
-table tr:first-child td:last-child,
-table tr:first-child th:last-child {
-    border-top-right-radius: 8px;
-}
-
-table tr:last-child td:first-child,
-table tr:last-child th:first-child {
-    border-bottom-left-radius: 8px;
-}
-
-table tr:last-child td:last-child,
-table tr:last-child th:last-child {
-    border-bottom-right-radius: 8px;
+.tableWrapper {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
 }
