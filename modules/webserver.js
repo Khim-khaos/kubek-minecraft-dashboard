@@ -9,6 +9,8 @@ const fs = require("fs");
 const express = require('express');
 const cookieParser = require("cookie-parser");
 const fileUpload = require("express-fileupload");
+const helmet = require("helmet");
+const compression = require("compression");
 const colors = require('colors');
 const mime = require("mime");
 const path = require('path');
@@ -17,6 +19,14 @@ const {isInSubnet} = require('is-in-subnet');
 
 global.webServer = express();
 global.webPagesPermissions = {};
+
+// Применяем базовую защиту и сжатие
+webServer.use(helmet({
+    contentSecurityPolicy: false, // Отключаем CSP для совместимости со старым фронтендом
+    crossOriginEmbedderPolicy: false
+}));
+webServer.use(compression());
+
 webServer.use(cookieParser());
 webServer.use(express.json({limit: '50mb'}));
 webServer.use(express.urlencoded({limit: '50mb', extended: true}));

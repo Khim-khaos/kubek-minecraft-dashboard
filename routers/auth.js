@@ -4,10 +4,23 @@ const MULTI_LANGUAGE = require("./../modules/multiLanguage");
 const COMMONS = require("./../modules/commons");
 
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
+// Ограничение попыток входа (максимум 10 попыток за 15 минут)
+const loginRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: {
+        success: false,
+        error: "Too many login attempts, please try again after 15 minutes"
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Endpoint для входа в систему
-router.get("/login/:login/:password", function (req, res) {
+router.get("/login/:login/:password", loginRateLimiter, function (req, res) {
     let q = req.params;
     // Если авторизация отключена в конфигурации
     if (mainConfig.authorization === false) {

@@ -15,6 +15,11 @@ router.get("/health", function (req, res) {
     res.send(HEALTH.getHealthStatus());
 });
 
+// Упрощенный эндпоинт для проверки работоспособности
+router.get("/ping", function (req, res) {
+    res.send("pong");
+});
+
 // Endpoint для получения использования ресурсов
 router.get("/hardware/usage", async function (req, res) {
     const result = await HARDWARE_MANAGER.getResourcesUsage();

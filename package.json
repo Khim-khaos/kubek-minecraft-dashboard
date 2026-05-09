@@ -1,11 +1,22 @@
 {
   "name": "kubek-minecraft-dashboard",
   "version": "3.0.8",
-  "description": "",
+  "description": "Веб-панель управления серверами Minecraft",
   "main": "app.js",
+  "keywords": [
+    "minecraft",
+    "dashboard",
+    "admin-panel",
+    "web-ui",
+    "server-management"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "author": "Khim-khaos",
   "scripts": {
     "start": "node app.js",
+    "dev": "node --watch app.js",
     "build": "pkg --config pkgconfig.json app.js",
     "dockerBuild": "docker build -t Khim-khaos/kubek-minecraft-dashboard .",
     "dockerPush": "docker push Khim-khaos/kubek-minecraft-dashboard"
@@ -18,12 +29,15 @@
     "adm-zip": "^0.5.17",
     "axios": "^1.7.9",
     "colors": "^1.4.0",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "crypto-js": "^4.2.0",
     "decompress": "^4.2.1",
     "express": "^4.21.1",
     "express-fileupload": "^1.5.1",
+    "express-rate-limit": "^8.5.1",
     "ftp-srv-esm": "^5.0.1",
+    "helmet": "^8.1.0",
     "http-proxy-agent": "^8.0.0",
     "https-proxy-agent": "^8.0.0",
     "iconv-lite": "^0.7.2",
