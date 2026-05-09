@@ -181,7 +181,11 @@
       "selectCoreType": "Select core type",
       "selectCoreVersionFirst": "Select core type first",
       "searchCoreType": "Search core type...",
-      "searchCoreVersion": "Search core version..."
+      "searchCoreVersion": "Search core version...",
+      "noOptions": "No available options",
+      "nothingFound": "Nothing found",
+      "errorLoadingVersions": "Error loading versions",
+      "createWithServerName": "Create %0%"
     },
     "tasksTypes": {
       "downloading": "Downloading",

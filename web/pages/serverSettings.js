@@ -10,7 +10,7 @@ $(function () {
 KubekServerSettingsUI = class {
     // Загрузить настройки в интерфейс
     static loadSettings = () => {
-        KubekRequests.get("/servers/" + selectedServer + "/info", (kSettings) => {
+        KubekRequests.get("/servers/" + encodeURIComponent(selectedServer) + "/info", (kSettings) => {
             loadedSettings = kSettings;
             if (kSettings.restartOnError === false) {
                 $("#restart-attempts-tr").hide();
@@ -24,7 +24,7 @@ KubekServerSettingsUI = class {
 
     // Загрузить start script в интерфейс
     static loadStartScript = () => {
-        KubekRequests.get("/servers/" + selectedServer + "/startScript", (startScript) => {
+        KubekRequests.get("/servers/" + encodeURIComponent(selectedServer) + "/startScript", (startScript) => {
             $("#start-script").val(startScript);
         });
     }
@@ -35,8 +35,8 @@ KubekServerSettingsUI = class {
         loadedSettings.restartOnError = $("#restart-on-error").is(":checked");
         loadedSettings.stopCommand = $("#stop-command").val();
         let startScript = $("#start-script").val();
-        KubekRequests.put("/servers/" + selectedServer + "/info?data=" + Base64.encodeURI(JSON.stringify(loadedSettings)), (result) => {
-            KubekRequests.put("/servers/" + selectedServer + "/startScript?data=" + Base64.encodeURI(startScript), (result2) => {
+        KubekRequests.put("/servers/" + encodeURIComponent(selectedServer) + "/info?data=" + Base64.encodeURI(JSON.stringify(loadedSettings)), (result) => {
+            KubekRequests.put("/servers/" + encodeURIComponent(selectedServer) + "/startScript?data=" + Base64.encodeURI(startScript), (result2) => {
                 if (result !== false && result2 !== false) {
                     KubekAlerts.addAlert("{{fileManager.writeEnd}}", "check", "", 5000);
                 }
@@ -49,7 +49,7 @@ KubekServerSettingsUI = class {
     // Удалить сервер с модалкой подтверждения
     static deleteServer = () => {
         KubekNotifyModal.create(selectedServer, "{{serverSettings.deleteServer}}", "{{commons.delete}}", "delete", () => {
-            KubekRequests.delete("/servers/" + selectedServer, () => {});
+            KubekRequests.delete("/servers/" + encodeURIComponent(selectedServer), () => {});
         }, KubekPredefined.MODAL_CANCEL_BTN);
     }
 }

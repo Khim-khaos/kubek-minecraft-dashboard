@@ -264,7 +264,7 @@ KubekFileManagerUI = class {
         inputElement.off("change");
         inputElement.on("change", () => {
             let formData = new FormData($("#g-file-form")[0]);
-            KubekRequests.post("/fileManager/upload?server=" + selectedServer + "&path=" + currentPath, () => {
+            KubekRequests.post("/fileManager/upload?server=" + encodeURIComponent(selectedServer) + "&path=" + encodeURIComponent(currentPath), () => {
                 KubekFileManagerUI.refreshDir();
             }, formData);
         });

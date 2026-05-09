@@ -6,7 +6,7 @@ class KubekServers {
 
     // Получить информацию о сервере (в т.ч. статус)
     static getServerInfo = (server, cb) => {
-        KubekRequests.get("/servers/" + server + "/info", cb);
+        KubekRequests.get("/servers/" + encodeURIComponent(server) + "/info", cb);
     };
 
     // Проверить сервер на существование
@@ -18,7 +18,7 @@ class KubekServers {
 
     // Получить лог сервера
     static getServerLog = (server, cb) => {
-        KubekRequests.get("/servers/" + server + "/log", (log) => {
+        KubekRequests.get("/servers/" + encodeURIComponent(server) + "/log", (log) => {
             if(log === false){
                 cb("");
             } else {
@@ -29,7 +29,7 @@ class KubekServers {
 
     // Отправить команду на сервер
     static sendCommandToServer = (server, cmd) => {
-        KubekRequests.post("/servers/" + server + "/send", () => {}, {cmd: cmd});
+        KubekRequests.post("/servers/" + encodeURIComponent(server) + "/send", () => {}, {cmd: cmd});
     };
 
     // Отправить команду на сервер из поля ввода консоли
@@ -43,21 +43,21 @@ class KubekServers {
 
     // Запустить сервер
     static startServer = (server) => {
-        KubekRequests.post("/servers/" + server + "/start");
+        KubekRequests.post("/servers/" + encodeURIComponent(server) + "/start");
     };
 
     // Перезапустить сервер
     static restartServer = (server) => {
-        KubekRequests.post("/servers/" + server + "/restart");
+        KubekRequests.post("/servers/" + encodeURIComponent(server) + "/restart");
     };
 
     // Остановить сервер
     static stopServer = (server) => {
-        KubekRequests.post("/servers/" + server + "/stop");
+        KubekRequests.post("/servers/" + encodeURIComponent(server) + "/stop");
     };
 
     // Принудительно завершить сервер
     static killServer = (server) => {
-        KubekRequests.post("/servers/" + server + "/kill");
+        KubekRequests.post("/servers/" + encodeURIComponent(server) + "/kill");
     };
 }

@@ -172,7 +172,11 @@
         "selectCoreType": "コアタイプを選択",
         "selectCoreVersionFirst": "先にコアタイプを選択してください",
         "searchCoreType": "コアタイプを検索...",
-        "searchCoreVersion": "コアバージョンを検索..."
+        "searchCoreVersion": "コアバージョンを検索...",
+        "noOptions": "利用可能なオプションはありません",
+        "nothingFound": "何も見つかりませんでした",
+        "errorLoadingVersions": "バージョンの読み込みエラー",
+        "createWithServerName": "%0% を作成"
       },
       "tasksTypes": {
         "downloading": "ダウンロード中",

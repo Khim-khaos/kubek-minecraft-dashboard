@@ -181,7 +181,11 @@
       "selectCoreType": "Выберите тип ядра",
       "selectCoreVersionFirst": "Сначала выберите тип ядра",
       "searchCoreType": "Поиск типа ядра...",
-      "searchCoreVersion": "Поиск версии ядра..."
+      "searchCoreVersion": "Поиск версии ядра...",
+      "noOptions": "Нет доступных вариантов",
+      "nothingFound": "Ничего не найдено",
+      "errorLoadingVersions": "Ошибка загрузки версий",
+      "createWithServerName": "Создать %0%"
     },
     "tasksTypes": {
       "downloading": "Скачивание",

@@ -68,7 +68,7 @@ class KubekServerHeaderUI {
             let elemPos = elem.getBoundingClientRect();
             KubekDropdowns.addDropdown(drpDataPool, elemPos.left, elemPos.top + 64, 3, (clickResult) => {
                 if (clickResult === "kill") {
-                    KubekRequests.get("/servers/" + selectedServer + "/kill");
+                    KubekRequests.get("/servers/" + encodeURIComponent(selectedServer) + "/kill");
                 }
             });
         }

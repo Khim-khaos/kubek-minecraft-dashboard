@@ -10,7 +10,7 @@ $(function () {
 
 KubekServerPropertiesUI = class {
     static loadProperties() {
-        KubekRequests.get("/servers/" + selectedServer + "/server.properties", (result) => {
+        KubekRequests.get("/servers/" + encodeURIComponent(selectedServer) + "/server.properties", (result) => {
             for (const [key, value] of Object.entries(result)) {
                 let keyStr = key;
                 let valueStr = value;
@@ -56,7 +56,7 @@ KubekServerPropertiesUI = class {
             }
             saveResult[key] = value;
         });
-        KubekRequests.put("/servers/" + selectedServer + "/server.properties?server=" + selectedServer + "&data=" + Base64.encodeURI(JSON.stringify(saveResult)), (result) => {
+        KubekRequests.put("/servers/" + encodeURIComponent(selectedServer) + "/server.properties?server=" + encodeURIComponent(selectedServer) + "&data=" + Base64.encodeURI(JSON.stringify(saveResult)), (result) => {
             if (result !== false) {
                 KubekAlerts.addAlert("{{fileManager.writeEnd}}", "check", "", 5000);
             }

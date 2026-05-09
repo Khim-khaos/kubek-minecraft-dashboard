@@ -91,7 +91,7 @@ class SearchableDropdown {
         this.optionsContainer.innerHTML = '';
         
         if (this.items.length === 0) {
-            this.optionsContainer.innerHTML = '<div class="dropdown-empty">Нет доступных вариантов</div>';
+            this.optionsContainer.innerHTML = '<div class="dropdown-empty">{{newServerWizard.noOptions}}</div>';
             return;
         }
         
@@ -135,7 +135,7 @@ class SearchableDropdown {
             if (!emptyMsg) {
                 emptyMsg = document.createElement('div');
                 emptyMsg.className = 'dropdown-empty';
-                emptyMsg.textContent = 'Ничего не найдено';
+                emptyMsg.textContent = '{{newServerWizard.nothingFound}}';
                 this.optionsContainer.appendChild(emptyMsg);
             }
         } else if (emptyMsg) {
@@ -286,7 +286,7 @@ function validateNewServerInputs(){
 
     // Если все проверки прошли
     $(".new-server-container #create-server-btn").prop("disabled", false);
-    $(".new-server-container #create-server-btn .text").text("Создать " + sName);
+    $(".new-server-container #create-server-btn .text").text("{{newServerWizard.createWithServerName}}".replace("%0%", sName));
 }
 
 // Инициализация кастомных дропдаунов
@@ -367,7 +367,7 @@ function populateVersionDropdownForCore(coreId) {
             console.error("[Core Error] Invalid response for core", coreId, ":", versions);
             mcVersionDropdown.setItems([{
                 value: "error",
-                text: "Ошибка загрузки версий"
+                text: "{{newServerWizard.errorLoadingVersions}}"
             }]);
             mcVersionDropdown.setEnabled(false);
             KubekUI.hidePreloader();
@@ -494,8 +494,8 @@ function refreshServerCoresList(cb = () => {}) {
                 $(this).addClass("active");
                 currentSelectedCore = $(this).data("id");
                 // Синхронизируем с дропдауном
-                if (coreDropdown) {
-                    coreDropdown.setValue(currentSelectedCore);
+                if (coreTypeDropdown) {
+                    coreTypeDropdown.setValue(currentSelectedCore);
                 }
                 validateNewServerInputs();
             }
