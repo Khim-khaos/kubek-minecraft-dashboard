@@ -1,0 +1,1585 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Kubek Minecraft Dashboard API",
+    "description": "Документация API для веб-панели управления серверами Minecraft",
+    "version": "1.0.0"
+  },
+  "host": "localhost:4200",
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "securityDefinitions": {
+    "cookieAuth": {
+      "type": "apiKey",
+      "in": "cookie",
+      "name": "kbk__hash",
+      "description": "Аутентификация через куки kbk__hash и kbk__login"
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "servers",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{login}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "servers",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{login}/regenHash": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{login}/password": {
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "login",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "newPassword",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "oldPassword",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "login": {
+                  "example": "any"
+                },
+                "password": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/servers": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/isEnabled": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/minecraft-versions": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/for-mc-version/{version}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{core}/for-mc-version/{mcversion}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "core",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "mcversion",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/{core}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "core",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{core}/{version}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "core",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{server}": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/get": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          },
+          {
+            "name": "path)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/chunkWrite/start": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/chunkWrite/add": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "example": "any"
+                },
+                "data": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/chunkWrite/end": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/delete": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          },
+          {
+            "name": "path)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/rename": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "newName",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path,",
+            "in": "query"
+          },
+          {
+            "name": "newName))",
+            "in": "query"
+          },
+          {
+            "name": "newName)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/newDirectory": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path,",
+            "in": "query"
+          },
+          {
+            "name": "name))",
+            "in": "query"
+          },
+          {
+            "name": "name)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/download": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          },
+          {
+            "name": "path)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/archive": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path,",
+            "in": "query"
+          },
+          {
+            "name": "name))",
+            "in": "query"
+          },
+          {
+            "name": "name)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/unarchive": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          },
+          {
+            "name": "path)",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "path))",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/kubek": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/online": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/all": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/download/{version}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/hardware/usage": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/hardware/summary": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "config",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/eula/accept": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/languages": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/new": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "gameType",
+            "in": "query"
+          },
+          {
+            "name": "minecraftType",
+            "in": "query"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "core",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "coreVersion",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "startParameters",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "javaVersion",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "port",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "core,",
+            "in": "query"
+          },
+          {
+            "name": "coreVersion,",
+            "in": "query"
+          },
+          {
+            "name": "startParameters,",
+            "in": "query"
+          },
+          {
+            "name": "javaVersion,",
+            "in": "query"
+          },
+          {
+            "name": "port))",
+            "in": "query"
+          },
+          {
+            "name": "port,",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/{server}/log": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/start": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/restart": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/stop": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/kill": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/send": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cmd",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/icon": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/info": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/query": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/startScript": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{server}/server.properties": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "put": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    }
+  }
+}

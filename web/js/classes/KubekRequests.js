@@ -10,6 +10,9 @@ class KubekRequests {
                 url: url,
                 type: type.toString().toUpperCase(),
                 data: data,
+                headers: {
+                    'X-Kubek-CSRF': 'true'
+                },
                 success: function (response) {
                     cb(response);
                 },
@@ -36,6 +39,9 @@ class KubekRequests {
             $.ajax({
                 url: url,
                 type: type.toString().toUpperCase(),
+                headers: {
+                    'X-Kubek-CSRF': 'true'
+                },
                 success: function (response) {
                     cb(response);
                 },

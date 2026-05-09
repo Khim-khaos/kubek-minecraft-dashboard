@@ -1,28 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const os = require("os");
+const HEALTH = require("../modules/health");
 const packageJSON = require("./../package.json");
 
 /**
  * Endpoint для проверки работоспособности системы
  */
-router.get("/", function (req, res) {
-    const uptime = process.uptime();
-    const memoryUsage = process.memoryUsage();
-    
-    res.send({
-        status: "ok",
-        version: packageJSON.version,
-        uptime: Math.floor(uptime),
-        platform: os.platform(),
-        arch: os.arch(),
-        memory: {
-            rss: Math.round(memoryUsage.rss / 1024 / 1024) + " MB",
-            heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + " MB",
-            heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + " MB"
-        },
-        timestamp: new Date().toISOString()
-    });
+router.get("/", async function (req, res) {
+    try {
+        const health = await HEALTH.getHealthStatus();
+        health.version = packageJSON.version;
+        res.send(health);
+    } catch (error) {
+        res.status(500).send({
+            status: "error",
+            message: error.message
+        });
+    }
 });
 
 module.exports.router = router;

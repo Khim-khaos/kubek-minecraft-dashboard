@@ -1,0 +1,17 @@
+services:
+  kubek:
+    build: .
+    container_name: kubek-dashboard
+    ports:
+      - "4200:4200"
+      - "2121:2121"
+    environment:
+      - KUBEK_WEBSERVER_PORT=4200
+      - KUBEK_FTPD_PORT=2121
+      - NODE_ENV=production
+    volumes:
+      - ./config.json:/usr/kubek/config.json
+      - ./users.json:/usr/kubek/users.json
+      - ./servers:/usr/kubek/servers
+      - ./logs:/usr/kubek/logs
+    restart: unless-stopped

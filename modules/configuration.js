@@ -168,9 +168,12 @@ exports.writeServersConfig = (data) => {
 
 // Перезагрузить все конфиги в память
 exports.reloadAllConfigurations = () => {
-    const main = this.readMainConfig();
+    let main = this.readMainConfig();
     const users = this.readUsersConfig();
     const servers = this.readServersConfig();
+
+    // Перекрываем настройки из переменных окружения
+    main = this.applyEnvOverrides(main);
 
     global.mainConfig = main;
     global.usersConfig = users;
@@ -179,6 +182,37 @@ exports.reloadAllConfigurations = () => {
     APP_CONFIG.setMainConfig(main);
     APP_CONFIG.setUsersConfig(users);
     APP_CONFIG.setServersConfig(servers);
+};
+
+/**
+ * Применить переопределения из переменных окружения (KUBEK_*)
+ * @param {object} config 
+ * @returns {object}
+ */
+exports.applyEnvOverrides = (config) => {
+    const prefix = "KUBEK_";
+    const envVars = process.env;
+
+    for (const key in envVars) {
+        if (key.startsWith(prefix)) {
+            const configKey = key.slice(prefix.length).toLowerCase();
+            
+            // Маппинг простых ключей
+            if (configKey === "webserver_port") config.webserverPort = parseInt(envVars[key]);
+            if (configKey === "language") config.language = envVars[key];
+            if (configKey === "authorization") config.authorization = envVars[key] === "true";
+            
+            // Маппинг вложенных ключей (например KUBEK_FTPD_ENABLED)
+            if (configKey.startsWith("ftpd_")) {
+                const subKey = configKey.slice(5);
+                if (subKey === "enabled") config.ftpd.enabled = envVars[key] === "true";
+                if (subKey === "port") config.ftpd.port = parseInt(envVars[key]);
+                if (subKey === "username") config.ftpd.username = envVars[key];
+                if (subKey === "password") config.ftpd.password = envVars[key];
+            }
+        }
+    }
+    return config;
 };
 
 // DEVELOPED by seeeroy

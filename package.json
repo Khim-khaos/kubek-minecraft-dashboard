@@ -20,7 +20,8 @@
     "build": "pkg --config pkgconfig.json app.js",
     "dockerBuild": "docker build -t Khim-khaos/kubek-minecraft-dashboard .",
     "dockerPush": "docker push Khim-khaos/kubek-minecraft-dashboard",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "swagger": "node swagger.js"
   },
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
     "node-mcstatus": "^1.2.1",
     "os-utils": "^0.0.14",
     "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1",
     "tree-kill": "^1.2.2"
   },
   "devDependencies": {

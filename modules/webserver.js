@@ -17,6 +17,8 @@ const mime = require("mime");
 const path = require('path');
 const os = require('os');
 const {isInSubnet} = require('is-in-subnet');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('../swagger-output.json');
 
 global.webServer = express();
 global.webPagesPermissions = {};
@@ -27,6 +29,9 @@ webServer.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 webServer.use(compression());
+
+// Настройка Swagger
+webServer.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 webServer.use(cookieParser());
 webServer.use(express.json({limit: '50mb'}));
@@ -205,10 +210,37 @@ exports.serversRouterMiddleware = (req, res, next) => {
     return res.sendStatus(403);
 }
 
+/**
+ * Middleware для защиты от CSRF через проверку заголовка
+ */
+exports.csrfMiddleware = (req, res, next) => {
+    // Пропускаем GET, HEAD, OPTIONS
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        return next();
+    }
+
+    // Проверяем наличие заголовка
+    if (req.headers['x-kubek-csrf'] === 'true') {
+        return next();
+    }
+
+    // Если заголовка нет, но есть авторизация - это подозрительно
+    if (SECURITY.isUserHasCookies(req)) {
+        LOGGER.warn(`[SECURITY] Potential CSRF blocked from IP: ${getRequestIP(req)} on ${req.method} ${req.originalUrl}`);
+        return res.status(403).send({
+            success: false,
+            error: "CSRF check failed"
+        });
+    }
+
+    return next();
+};
+
 // Функция для загрузки всех роутеров из списка в predefined
 exports.loadAllDefinedRouters = () => {
     require("./permissionsMiddleware");
     webServer.use(this.authLoggingMiddleware);
+    webServer.use(this.csrfMiddleware);
     webServer.use(this.staticsMiddleware);
 
     // Подключаем системные роутеры
