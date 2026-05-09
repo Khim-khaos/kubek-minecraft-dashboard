@@ -1,18 +1,29 @@
 @media (max-width: 1360px) {
     .main-layout .sidebar {
-        position: absolute;
-        left: 16px;
+        position: fixed;
+        left: 0;
         right: 0;
         bottom: 0;
         top: 0;
-        z-index: 4;
-        width: max-content;
-        height: max-content;
-        margin: auto 0;
+        z-index: 1000;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: var(--bg-dark);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .main-layout .sidebar:not(.minimized) #close-btn {
         display: block !important;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
     }
 
     .main-layout .sidebar.minimized {
@@ -24,19 +35,55 @@
     }
 
     .main-layout {
-        grid-template-columns: 8px 1fr 8px !important;
+        grid-template-columns: 1fr !important;
         grid-template-areas:
-                "header header header"
-                ". content-header ."
-                ". content ." !important;
+                "header"
+                "content-header"
+                "content" !important;
+        padding: 0 16px; /* Increased padding */
+        gap: 12px;
+    }
+
+    .main-layout .content {
+        padding-bottom: 32px; /* Bottom spacing for mobile */
     }
 
     .ksettings-container table {
-        width: 90vw !important;
+        width: 100% !important;
     }
 }
 
 @media (max-width: 600px) {
+    /* Global touch target improvements */
+    button, 
+    .sidebar-item,
+    .account,
+    .dropdown-item,
+    .searchable-dropdown .dropdown-trigger,
+    .searchable-dropdown .dropdown-options > div {
+        min-height: 48px; /* Recommended touch target size */
+    }
+
+    button {
+        font-size: 16px !important;
+        padding: 12px 24px !important;
+    }
+
+    button.icon-only {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    /* Input improvements */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="password"],
+    textarea,
+    select {
+        font-size: 16px !important; /* Prevents iOS zoom */
+        padding: 14px 16px !important;
+    }
 
     /* Content-header fixes */
     .content-header > .icon-bg {
@@ -44,11 +91,62 @@
     }
 
     .content-header {
-        width: 105vw !important;
-        grid-gap: 0 1em !important;
-        grid-template-columns: max-content 1fr !important;
-        grid-template-areas: "caption actions"
-    "status actions" !important;
+        width: 100% !important;
+        grid-gap: 8px !important;
+        grid-template-columns: 1fr !important;
+        grid-template-areas: 
+            "caption"
+            "status"
+            "actions" !important;
+        padding: 16px 0 !important;
+        text-align: center;
+    }
+
+    .content-header .caption {
+        font-size: 1.5rem !important;
+    }
+
+    .content-header .status {
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+
+    .content-header .actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .content-header .actions button {
+        flex: 1 1 calc(50% - 8px);
+        margin: 0 !important;
+        max-width: none;
+    }
+
+    /* Sidebar improvements */
+    .main-layout .sidebar .sidebar-box {
+        width: 100%;
+        max-width: 340px;
+    }
+
+    .main-layout .sidebar .sidebar-box .sidebar-item {
+        padding: 14px 16px;
+    }
+
+    .main-layout .sidebar .sidebar-box .sidebar-item span:not(.material-symbols-rounded) {
+        font-size: 16px;
+    }
+
+    .server-item .quick-actions {
+        display: flex !important; /* Always show on mobile */
+        gap: 12px !important;
+    }
+
+    .server-item .quick-actions span {
+        font-size: 22px !important;
+        padding: 8px !important;
+        background: var(--bg-dark-accent-light) !important;
     }
 
     /* File manager fixes */
@@ -58,7 +156,8 @@
     }
 
     .fm-container .table-container {
-        width: 95vw !important;
+        width: 100% !important;
+        overflow-x: auto;
     }
 
     .fm-container #fm-table tr td:nth-child(3),
@@ -77,94 +176,143 @@
     "table" !important;
     }
 
+    .fm-container .actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .fm-container .actions button {
+        flex: 1 1 calc(50% - 8px);
+        margin: 0 !important;
+    }
+
+    /* New Server Page fixes */
+    .new-server-container .stage > div[style*="display: flex"] {
+        flex-direction: column !important;
+    }
+
+    .new-server-container .stage > div[style*="display: flex"] > div {
+        margin: 8px 0 !important;
+        width: 100% !important;
+    }
+
+    .new-server-container .stage > div[style*="display: flex"] input {
+        width: 100% !important;
+    }
+
+    /* Table improvements */
+    .tableWrapper {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table th, table td {
+        padding: 12px 14px !important;
+        white-space: nowrap;
+    }
+
+    /* Card improvements */
+    .cardsGrid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    .cardsGrid .card {
+        padding: 20px !important;
+        min-height: auto !important;
+    }
+
+    /* Checkbox improvements */
+    .checkbox + label::before {
+        width: 28px !important;
+        height: 28px !important;
+        margin-right: 12px !important;
+    }
+
+    .checkbox + label {
+        font-size: 16px !important;
+        padding: 8px 0 !important;
+    }
+
     /* Plugins page fixes */
     .plugins-container {
         flex-direction: column !important;
         overflow-y: auto;
+        width: 100%;
     }
 
     .plugins-container .panel {
-        height: 50vh;
+        height: auto;
+        min-height: 40vh;
+        width: 100%;
     }
 
     .plugins-container .panel .header {
-        width: 80vw;
-    }
-
-    .plugins-container .panel .header h2 {
-        flex-grow: 1;
+        width: 100%;
     }
 
     /* Server settings fixes */
     .ssettings-container table {
-        width: 93vw !important;
+        width: 100% !important;
     }
 
     .ssettings-container table input[type="number"] {
-        width: 30vw !important;
+        width: 100% !important;
     }
 
     /* Server.properties fixes */
     .speditor-container .tableWrapper,
     .speditor-container #sp-table {
-        width: 93vw !important;
+        width: 100% !important;
     }
 
     /* Kubek settings fixes */
     .ksettings-container .tablesWrapper,
     .ksettings-container table {
-        width: 93vw !important;
-    }
-
-    .ksettings-container table .iconBg {
-        background: transparent !important;
+        width: 100% !important;
     }
 
     .ksettings-container .footer {
-        width: 93vw !important;
+        width: 100% !important;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .userEditModal {
-        width: 100vw !important;
-        height: 100vh !important;
-    }
-
-    /* System monitor fixes */
-    .sysmon-container {
-        width: 100vw !important;
-    }
-
-    .sysmon-container table {
-        width: 93vw !important;
+    .ksettings-container .footer button {
+        width: 100%;
     }
 
     /* Console fixes */
     .console-layout {
-        grid-template-columns: 1fr max-content 1fr !important;
-        grid-template-rows: 60vh max-content max-content !important;
-        grid-template-areas: "console console console"
-    "input input input"
-    ". settings ." !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: auto auto auto !important;
+        grid-template-areas: 
+            "console"
+            "input"
+            "settings" !important;
+    }
+
+    .console-layout .console {
+        height: 50vh !important;
     }
 
     .console-layout .settings {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        grid-area: unset     !important;
+        flex-direction: column;
+        width: 100% !important;
+        gap: 12px;
     }
 
     .console-layout .settings .layout-accent-box {
-        width: 40vw !important;
-        height: 200px !important;
-        margin: 0 4px !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
     }
 
     .console-layout .console,
     .console-layout .input,
     .console-layout .settings {
-        width: 94vw !important;
+        width: 100% !important;
     }
 
     /* Login page fixes */
@@ -172,29 +320,35 @@
         width: 100vw !important;
         height: 100vh !important;
         border-radius: 0 !important;
+        flex-direction: column !important;
     }
 
     .login-modal .left {
         width: 100% !important;
-        align-items: center;
+        padding: 24px !important;
+        flex-grow: 1;
         justify-content: center;
+        align-items: center;
+        text-align: center;
     }
 
-    .login-modal #login-btn {
-        width: 100%;
+    .login-modal .left .logo {
+        justify-content: center;
     }
 
     .login-modal .right {
         display: none !important;
     }
 
-    .login-modal .grow {
-        display: none !important;
+    .login-modal button {
+        height: 56px !important;
+        font-size: 18px !important;
     }
 
     /* Alert fixes */
     .alert {
-        max-width: 90vw;
+        max-width: 95vw;
+        width: 95vw;
     }
 }
 

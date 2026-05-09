@@ -2,7 +2,7 @@ button {
   appearance: none;
   outline: none;
   border: 0;
-  padding: 10px 20px;
+  padding: 10px 24px;
   border-radius: var(--radius-md);
   color: var(--text-main);
   font-weight: 600;
@@ -12,13 +12,15 @@ button {
   justify-content: center;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
-  gap: 8px;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
 }
 
 button:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 button.dark-btn {
@@ -29,57 +31,65 @@ button.dark-btn {
 button.dark-btn:hover {
   background: var(--bg-dark-accent-light);
   border-color: var(--bg-dark-accent-lighter);
+  box-shadow: var(--shadow-md);
 }
 
 button.primary-btn {
-  background: var(--bg-primary-600);
-  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+  background: linear-gradient(135deg, var(--bg-primary-600) 0%, var(--bg-primary-500) 100%);
+  color: white;
+  box-shadow: 0 4px 15px 0 rgba(99, 102, 241, 0.3);
 }
 
 button.primary-btn:hover {
-  background: var(--bg-primary-500);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.23);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--bg-primary-500) 0%, var(--bg-primary-400) 100%);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
 }
 
 button.danger-btn {
-  background: var(--error);
-  box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: white;
+  box-shadow: 0 4px 15px 0 rgba(244, 63, 94, 0.3);
 }
 
 button.danger-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 25px rgba(244, 63, 94, 0.4);
+  transform: translateY(-2px);
 }
 
 button.success-btn {
-  background: var(--success);
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 15px 0 rgba(16, 185, 129, 0.3);
 }
 
 button.success-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
 }
 
 button.ghost-btn {
   background: transparent;
-  border: 1px solid var(--glass-border);
+  border: 1.5px solid var(--glass-border);
 }
 
 button.ghost-btn:hover {
   background: var(--glass-bg);
   border-color: var(--bg-primary-500);
+  color: var(--bg-primary-400);
 }
 
 button.icon-only {
-  padding: 10px;
-  width: 42px;
-  height: 42px;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
 }
 
 button.icon-only * {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 button span:last-child:not(.material-symbols-rounded) {
@@ -91,9 +101,10 @@ button:disabled:hover,
 button:disabled:focus {
   cursor: not-allowed !important;
   opacity: 0.5;
-  background: var(--bg-dark-accent) !important;
+  background: var(--bg-dark-accent-light) !important;
   transform: none !important;
   box-shadow: none !important;
+  color: var(--text-dim) !important;
 }
 
 /* Developed by Khim-khaos */

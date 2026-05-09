@@ -173,29 +173,29 @@
         overflow-y: auto;
         overflow-x: hidden;
         display: grid;
-        grid-template-columns: 1fr minmax(280px, 300px) 32px minmax(auto, 1100px) 1fr;
+        grid-template-columns: 1fr minmax(280px, 320px) 40px minmax(auto, 1200px) 1fr;
         grid-template-rows: auto auto 1fr;
         gap: 0;
         grid-template-areas:
             "header header header header header"
             ". sidebar . content-header ."
             ". sidebar . content .";
-        padding-bottom: 40px;
+        padding-bottom: 60px;
     }
 
     .main-layout .sidebar {
         grid-area: sidebar;
-        padding-top: 24px;
+        padding-top: 32px;
     }
 
     .main-layout .content-header {
         grid-area: content-header;
-        padding-top: 24px;
+        padding-top: 32px;
     }
 
     .main-layout .content {
         grid-area: content;
-        padding-top: 16px;
+        padding-top: 20px;
     }
 
     @media screen and (max-width: 1400px) {

@@ -71,6 +71,7 @@
         gap: 0;
         grid-template-areas: ". logo . account .";
         justify-items: center;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     }
 
     #main-header .logo {
@@ -78,11 +79,11 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: transform 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #main-header .logo:hover {
-        transform: scale(1.02);
+        transform: scale(1.05) translateY(-1px);
     }
 
     #main-header .account {
@@ -90,30 +91,31 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        padding: 6px 16px;
-        border-radius: var(--radius-full);
+        padding: 6px 14px;
+        border-radius: var(--radius-md);
         cursor: pointer;
         background: var(--bg-dark-accent);
         border: 1px solid var(--glass-border);
-        transition: all 0.2s ease;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #main-header .account:hover {
         background: var(--bg-dark-accent-light);
         border-color: var(--bg-primary-500);
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
     }
 
     #main-header .account .bg-circle {
-        background: var(--bg-primary-600);
-        border-radius: 50%;
+        background: linear-gradient(135deg, var(--bg-primary-600) 0%, var(--bg-primary-500) 100%);
+        border-radius: var(--radius-sm);
         width: 32px;
         height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 12px;
-        box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
     }
 
     #main-header .account .bg-circle * {
@@ -125,6 +127,7 @@
         font-weight: 600;
         font-size: 14px;
         color: var(--text-main);
+        letter-spacing: -0.01em;
     }
 
     #main-header #menu-btn {

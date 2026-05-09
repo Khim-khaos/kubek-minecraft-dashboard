@@ -1,53 +1,54 @@
 :root {
-  /* Core Colors (Dark - Default) */
-  --bg-dark: #0f172a;
-  --bg-dark-accent: #1e293b;
-  --bg-dark-accent-light: #334155;
-  --bg-dark-accent-lighter: #64748b;
+  /* Core Colors (Dark - Modern Slate) */
+  --bg-dark: #020617;
+  --bg-dark-accent: #0f172a;
+  --bg-dark-accent-light: #1e293b;
+  --bg-dark-accent-lighter: #334155;
   
-  /* Primary Brand Colors */
-  --bg-primary-300: #93c5fd;
-  --bg-primary-400: #60a5fa;
-  --bg-primary-500: #3b82f6;
-  --bg-primary-600: #2563eb;
-  --bg-primary-700: #1d4ed8;
-  --bg-primary-800: #1e40af;
-  --bg-primary-900: #1e3a8a;
+  /* Primary Brand Colors (Indigo/Violet) */
+  --bg-primary-300: #a5b4fc;
+  --bg-primary-400: #818cf8;
+  --bg-primary-500: #6366f1;
+  --bg-primary-600: #4f46e5;
+  --bg-primary-700: #4338ca;
+  --bg-primary-800: #3730a3;
+  --bg-primary-900: #312e81;
   
-  /* Glassmorphism */
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(12px);
+  /* Glassmorphism - More Refined */
+  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px);
   
-  /* Semantic Colors */
+  /* Semantic Colors - Vibrant */
   --success: #10b981;
-  --error: #ef4444;
+  --error: #f43f5e;
   --warning: #f59e0b;
   --info: #0ea5e9;
   
-  /* Text */
+  /* Text - High Contrast */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   
   /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
   --radius-full: 9999px;
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
 }
 
 [data-theme="light"] {
-  --bg-dark: #f1f5f9;
-  --bg-dark-accent: #e2e8f0;
-  --bg-dark-accent-light: #cbd5e1;
-  --bg-dark-accent-lighter: #94a3b8;
+  --bg-dark: #f8fafc;
+  --bg-dark-accent: #ffffff;
+  --bg-dark-accent-light: #f1f5f9;
+  --bg-dark-accent-lighter: #e2e8f0;
 
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(0, 0, 0, 0.05);
 
   --text-main: #0f172a;

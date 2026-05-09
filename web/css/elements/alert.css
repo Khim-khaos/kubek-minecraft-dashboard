@@ -1,51 +1,57 @@
 .alert {
-    min-width: 300px;
-    max-width: 450px;
+    min-width: 320px;
+    max-width: 480px;
     width: 100%;
     height: auto;
-    background: var(--bg-dark-accent);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 16px;
+    border-radius: var(--radius-lg);
+    padding: 20px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     flex-direction: row;
     cursor: pointer;
-    box-shadow: var(--shadow-lg);
-    transition: all 0.2s ease;
-    margin-bottom: 12px;
+    box-shadow: var(--shadow-xl);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 16px;
+    animation: alertSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes alertSlideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 .alert:hover {
-    transform: translateX(-4px);
-    background: var(--bg-dark-accent-light);
+    transform: scale(1.02) translateX(-4px);
+    border-color: var(--bg-primary-500);
 }
 
 .alert .icon-bg {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-dark-accent-light);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     margin-right: 16px;
+    box-shadow: var(--shadow-sm);
 }
 
 .alert .content-2 {
     display: flex;
     flex-direction: column;
-}
-
-.alert .content-2 .description {
-    margin-top: 4px;
+    gap: 4px;
 }
 
 .alert .icon-bg * {
     color: var(--text-main);
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .alert .icon-bg.circle {
@@ -53,21 +59,23 @@
 }
 
 .alert .icon-bg.colored {
-    background: var(--bg-primary-900);
+    background: linear-gradient(135deg, var(--bg-primary-600) 0%, var(--bg-primary-500) 100%);
 }
 
 .alert .icon-bg.colored * {
-    color: var(--bg-primary-400);
+    color: white;
 }
 
 .alert .caption {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--text-main);
+    letter-spacing: -0.01em;
 }
 
 .alert .description {
     font-size: 14px;
     color: var(--text-muted);
-    line-height: 1.4;
+    line-height: 1.5;
+    font-weight: 500;
 }
