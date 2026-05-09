@@ -246,51 +246,78 @@ exports.getForgeCoreURL = (version, cb) => {
 // Получить список версий ядра Forge для конкретной версии Minecraft
 // Для новых версий Forge (начиная с 1.21.9/26.x) используется отдельная нумерация
 exports.getForgeVersionsForMC = (minecraftVersion, cb) => {
-    // Используем BMCLAPI для получения списка версий Forge для данной версии Minecraft
-    let url = "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion;
-    
-    COMMONS.getDataByURL(url, (data) => {
-        if (data === false || !Array.isArray(data) || data.length === 0) {
+    // Пробуем зеркала для получения списка версий
+    let urlsToTry = [
+        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion,
+        "https://mcimirror.com/forge/minecraft/" + minecraftVersion
+    ];
+
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             // Если не удалось получить список, возвращаем просто версию Minecraft
-            // (для старых версий Forge где версия ядра = версия Minecraft)
             cb([{
                 version: minecraftVersion,
                 display: minecraftVersion
             }]);
             return;
         }
-        
-        // Формируем список версий ядра (от новых к старым)
-        let versions = data.map(item => ({
-            version: minecraftVersion + "-" + item.version,
-            display: item.version,
-            forgeVersion: item.version
-        }));
-        
-        cb(versions);
-    });
+
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false || !Array.isArray(data) || data.length === 0) {
+                tryNext(index + 1);
+                return;
+            }
+            
+            // Формируем список версий ядра (от новых к старым)
+            let versions = data.map(item => ({
+                version: minecraftVersion + "-" + item.version,
+                display: item.version,
+                forgeVersion: item.version
+            }));
+            
+            cb(versions);
+        });
+    }
+    
+    tryNext(0);
 };
 
 // Получить список версий ядра Fabric для конкретной версии Minecraft
 exports.getFabricVersionsForMC = (minecraftVersion, cb) => {
-    COMMONS.getDataByURL("https://meta.fabricmc.net/v2/versions/loader/" + minecraftVersion, (data) => {
-        if (data === false || !Array.isArray(data) || data.length === 0) {
+    // Пробуем зеркала для получения списка версий
+    let urlsToTry = [
+        "https://meta.fabricmc.net/v2/versions/loader/" + minecraftVersion,
+        "https://mcimirror.com/fabric-meta/v2/versions/loader/" + minecraftVersion,
+        "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + minecraftVersion
+    ];
+
+    function tryNext(index) {
+        if (index >= urlsToTry.length) {
             cb([{
                 version: minecraftVersion,
                 display: minecraftVersion
             }]);
             return;
         }
-        
-        // Формируем список версий (loader versions)
-        let versions = data.map(item => ({
-            version: minecraftVersion + "#" + item.loader.version,
-            display: item.loader.version,
-            loader: item.loader.version
-        }));
-        
-        cb(versions);
-    });
+
+        COMMONS.getDataByURL(urlsToTry[index], (data) => {
+            if (data === false || !Array.isArray(data) || data.length === 0) {
+                tryNext(index + 1);
+                return;
+            }
+            
+            // Формируем список версий (loader versions)
+            let versions = data.map(item => ({
+                version: minecraftVersion + "#" + item.loader.version,
+                display: item.loader.version,
+                loader: item.loader.version
+            }));
+            
+            cb(versions);
+        });
+    }
+
+    tryNext(0);
 };
 
 /////////////////////////////////////////////////////
@@ -527,13 +554,17 @@ exports.getNeoForgeCoreURL = (version, cb) => {
             urls.push(officialUrl);
         }
         
-        // Сортируем зеркала так, чтобы ForgeCDN или MCI Mirror были в начале для скорости
+        // Сортируем зеркала на основе тестов скорости (MCI Mirror > BMCLAPI > University > Official > ForgeCDN)
         urls.sort((a, b) => {
-            if (a.includes("mcimirror.com")) return -1;
-            if (b.includes("mcimirror.com")) return 1;
-            if (a.includes("forgecdn.net")) return -1;
-            if (b.includes("forgecdn.net")) return 1;
-            return 0;
+            const getPriority = (url) => {
+                if (url.includes("mcimirror.com")) return 1;
+                if (url.includes("bmclapi2.bangbang93.com")) return 2;
+                if (url.includes("mirror.sjtu.edu.cn") || url.includes("mirrors.qlu.edu.cn") || url.includes("mirror.nyist.edu.cn")) return 3;
+                if (url.includes("neoforged.net")) return 4;
+                if (url.includes("forgecdn.net")) return 5;
+                return 6;
+            };
+            return getPriority(a) - getPriority(b);
         });
 
         return cb(urls[0], urls.slice(1));
