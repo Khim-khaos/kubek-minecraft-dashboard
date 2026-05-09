@@ -331,11 +331,12 @@ function findServerJar(directory, core) {
             return 'server.jar';
         }
         
-        // Приоритет 2: Для Forge ищем universal.jar
-        if (core.toLowerCase() === 'forge') {
+        // Приоритет 2: Для Forge и NeoForge ищем universal.jar или специфичные JAR
+        const coreLower = core.toLowerCase();
+        if (coreLower === 'forge' || coreLower === 'neoforge') {
             for (let file of files) {
-                if (file.endsWith('-universal.jar')) {
-                    LOGGER.log("[Installer] Found forge universal jar: " + file);
+                if (file.endsWith('-universal.jar') || (coreLower === 'neoforge' && file.includes('neoforge-') && file.endsWith('.jar') && !file.includes('-installer'))) {
+                    LOGGER.log("[Installer] Found core jar: " + file);
                     return file;
                 }
             }
@@ -397,19 +398,29 @@ exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaEx
         }
         
         if (process.platform === "win32" && hasRunBat) {
-            // Ищем win_args.txt в папке libraries
+            // Ищем win_args.txt в папке libraries (поддерживаем Forge и NeoForge)
             let winArgsPath = null;
-            try {
-                let forgeDir = serverDir + '/libraries/net/minecraftforge/forge/';
-                let versions = fs.readdirSync(forgeDir);
-                for (let ver of versions) {
-                    if (fs.existsSync(forgeDir + ver + '/win_args.txt')) {
-                        winArgsPath = 'libraries/net/minecraftforge/forge/' + ver + '/win_args.txt';
-                        break;
+            let libPathPrefixes = [
+                'libraries/net/neoforged/neoforge/',
+                'libraries/net/minecraftforge/forge/'
+            ];
+            
+            for (let prefix of libPathPrefixes) {
+                try {
+                    let fullLibPath = serverDir + '/' + prefix;
+                    if (fs.existsSync(fullLibPath)) {
+                        let versions = fs.readdirSync(fullLibPath);
+                        for (let ver of versions) {
+                            if (fs.existsSync(fullLibPath + ver + '/win_args.txt')) {
+                                winArgsPath = prefix + ver + '/win_args.txt';
+                                break;
+                            }
+                        }
                     }
+                } catch (e) {
+                    continue;
                 }
-            } catch (e) {
-                LOGGER.warning("[Installer] Could not find win_args.txt, using default");
+                if (winArgsPath) break;
             }
             
             // Создаём start.bat который запускает Java напрямую с nogui
@@ -420,25 +431,37 @@ exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaEx
             if (winArgsPath) {
                 startBat += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt @"' + winArgsPath + '" nogui\n';
             } else {
-                startBat += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar forge.jar nogui\n';
+                // Пытаемся найти любой подходящий jar если win_args не найден
+                let fallbackJar = core.toLowerCase() === 'neoforge' ? 'neoforge.jar' : 'forge.jar';
+                startBat += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar ' + fallbackJar + ' nogui\n';
             }
             
             fs.writeFileSync(serverDir + "/start.bat", startBat);
             LOGGER.log("[Installer] Created start.bat with nogui argument");
         } else if (process.platform === "linux" && hasRunSh) {
-            // Ищем unix_args.txt в папке libraries
+            // Ищем unix_args.txt в папке libraries (поддерживаем Forge и NeoForge)
             let unixArgsPath = null;
-            try {
-                let forgeDir = serverDir + '/libraries/net/minecraftforge/forge/';
-                let versions = fs.readdirSync(forgeDir);
-                for (let ver of versions) {
-                    if (fs.existsSync(forgeDir + ver + '/unix_args.txt')) {
-                        unixArgsPath = 'libraries/net/minecraftforge/forge/' + ver + '/unix_args.txt';
-                        break;
+            let libPathPrefixes = [
+                'libraries/net/neoforged/neoforge/',
+                'libraries/net/minecraftforge/forge/'
+            ];
+            
+            for (let prefix of libPathPrefixes) {
+                try {
+                    let fullLibPath = serverDir + '/' + prefix;
+                    if (fs.existsSync(fullLibPath)) {
+                        let versions = fs.readdirSync(fullLibPath);
+                        for (let ver of versions) {
+                            if (fs.existsSync(fullLibPath + ver + '/unix_args.txt')) {
+                                unixArgsPath = prefix + ver + '/unix_args.txt';
+                                break;
+                            }
+                        }
                     }
+                } catch (e) {
+                    continue;
                 }
-            } catch (e) {
-                LOGGER.warning("[Installer] Could not find unix_args.txt, using default");
+                if (unixArgsPath) break;
             }
             
             // Создаём start.sh который запускает Java напрямую с nogui
@@ -448,10 +471,17 @@ exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaEx
             if (unixArgsPath) {
                 startSh += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt @"' + unixArgsPath + '" nogui\n';
             } else {
-                startSh += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar forge.jar nogui\n';
+                // Пытаемся найти любой подходящий jar если unix_args не найден
+                let fallbackJar = core.toLowerCase() === 'neoforge' ? 'neoforge.jar' : 'forge.jar';
+                startSh += '"' + fullJavaExecutablePath + '" @user_jvm_args.txt -jar ' + fallbackJar + ' nogui\n';
             }
             
             fs.writeFileSync(serverDir + "/start.sh", startSh);
+            try {
+                fs.chmodSync(serverDir + "/start.sh", 0o755);
+            } catch (e) {
+                LOGGER.warning("[Installer] Could not set execute permissions on start.sh: " + e.message);
+            }
             LOGGER.log("[Installer] Created start.sh with nogui argument");
         }
     } else {
@@ -459,7 +489,12 @@ exports.writeJavaStartFiles = (serverName, coreFileName, startParameters, javaEx
         if (process.platform === "win32") {
             fs.writeFileSync(serverDir + "/start.bat", "@echo off\nchcp 65001>nul\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
         } else if (process.platform === "linux") {
-            fs.writeFileSync(serverDir + "/start.sh", "cd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+            fs.writeFileSync(serverDir + "/start.sh", "#!/bin/bash\ncd servers\ncd " + serverName + "\n" + '"' + fullJavaExecutablePath + '"' + " " + fullStartParameters);
+            try {
+                fs.chmodSync(serverDir + "/start.sh", 0o755);
+            } catch (e) {
+                // ignore
+            }
         }
     }
     
