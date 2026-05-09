@@ -45,11 +45,14 @@ const getDisksWindowsFallback = async () => {
 exports.getHardwareInfo = async () => {
     try {
         let disks = [];
-        try {
-            disks = await nodeDiskInfo.getDiskInfo();
-        } catch (diskError) {
-            if (process.platform === "win32") {
-                disks = await getDisksWindowsFallback();
+        if (process.platform === "win32") {
+            // На Windows используем PowerShell напрямую, чтобы избежать ошибок отсутствующего wmic
+            disks = await getDisksWindowsFallback();
+        } else {
+            try {
+                disks = await nodeDiskInfo.getDiskInfo();
+            } catch (diskError) {
+                disks = [];
             }
         }
 
