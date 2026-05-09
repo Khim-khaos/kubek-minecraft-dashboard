@@ -19,7 +19,8 @@
     "dev": "node --watch app.js",
     "build": "pkg --config pkgconfig.json app.js",
     "dockerBuild": "docker build -t Khim-khaos/kubek-minecraft-dashboard .",
-    "dockerPush": "docker push Khim-khaos/kubek-minecraft-dashboard"
+    "dockerPush": "docker push Khim-khaos/kubek-minecraft-dashboard",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -33,6 +34,7 @@
     "cookie-parser": "^1.4.7",
     "crypto-js": "^4.2.0",
     "decompress": "^4.2.1",
+    "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "express-fileupload": "^1.5.1",
     "express-rate-limit": "^8.5.1",
@@ -52,5 +54,8 @@
     "os-utils": "^0.0.14",
     "swagger-autogen": "^2.23.7",
     "tree-kill": "^1.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^10.3.0"
   }
 }

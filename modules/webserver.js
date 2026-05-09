@@ -70,6 +70,7 @@ exports.logWebRequest = (req, res, username = null) => {
  */
 exports.authLoggingMiddleware = (req, res, next) => {
     const ip = getRequestIP(req);
+    const startTime = Date.now();
 
     // Проверяем существование куков у пользователя на предмет логина
     let username = null;
@@ -79,7 +80,14 @@ exports.authLoggingMiddleware = (req, res, next) => {
 
     // Показываем запрос в логах
     if (!COMMONS.testForRegexArray(req.path, PREDEFINED.NO_LOG_URLS)) {
-        this.logWebRequest(req, res, username);
+        res.on('finish', () => {
+            const duration = Date.now() - startTime;
+            const status = res.statusCode;
+            const statusColor = status >= 500 ? colors.red : status >= 400 ? colors.yellow : status >= 300 ? colors.cyan : colors.green;
+            
+            this.logWebRequest(req, res, username);
+            LOGGER.debug(`[REQUEST] ${req.method} ${req.originalUrl} - ${statusColor(status)} (${duration}ms)`);
+        });
     }
 
     // Добавляем проверку на вхождение IP в range (при включенной функции)
@@ -198,6 +206,10 @@ exports.loadAllDefinedRouters = () => {
     require("./permissionsMiddleware");
     webServer.use(this.authLoggingMiddleware);
     webServer.use(this.staticsMiddleware);
+
+    // Подключаем системные роутеры
+    let healthRouter = require("./../routers/health.js");
+    webServer.use("/api/health", healthRouter.router);
 
     let coresRouter = require("./../routers/cores.js");
     webServer.use("/api/cores", coresRouter.router);

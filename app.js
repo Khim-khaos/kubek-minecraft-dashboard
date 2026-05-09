@@ -1,3 +1,6 @@
+// Загружаем переменные окружения
+require('dotenv').config();
+
 // Загружаем нужные самописные модули
 const COMMONS = require("./modules/commons");
 const CONFIGURATION = require("./modules/configuration");

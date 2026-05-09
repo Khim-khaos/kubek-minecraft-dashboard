@@ -12,3 +12,5 @@ binaries/
 .idea/
 .serena/
 .windsurf/
+.env
+.env.local

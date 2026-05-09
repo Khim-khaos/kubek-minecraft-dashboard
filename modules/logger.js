@@ -80,6 +80,21 @@ exports.error = (...args) => {
     this.writeLineToLog("[ERR] " + preparedText);
 };
 
+// Вывести текст типа DEBUG в консоль и записать в файл
+exports.debug = (...args) => {
+    if (process.env.DEBUG !== 'true') return;
+
+    let text = args.map(arg => {
+        if (arg instanceof Error) return arg.stack || arg.message;
+        if (typeof arg === 'object') return JSON.stringify(arg, null, 2);
+        return String(arg);
+    }).join(" ");
+
+    let preparedText = this.getTimeFormatted() + " " + text;
+    console.log(colors.gray(preparedText));
+    this.writeLineToLog("[DEBUG] " + preparedText);
+};
+
 // Вывести приветственное сообщение Kubek
 exports.kubekWelcomeMessage = () => {
     console.log("");
