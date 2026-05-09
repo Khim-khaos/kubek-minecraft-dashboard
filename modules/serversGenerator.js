@@ -132,8 +132,28 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             return false;
         }
 
+        // Проверяем локальный кэш ядер (server-core/{CoreName}/{coreFileName})
+        const coreCacheDir = path.join("./server-core", core);
+        const coreCachePath = path.join(coreCacheDir, coreFileName);
+        const serverCorePath = path.join(serverDirectoryPath, coreFileName);
+
+        if (!fs.existsSync("./server-core")) fs.mkdirSync("./server-core");
+        if (!fs.existsSync(coreCacheDir)) fs.mkdirSync(coreCacheDir, {recursive: true});
+
+        if (fs.existsSync(coreCachePath)) {
+            LOGGER.log(`[Creation] Core found in local cache: ${coreCachePath}`);
+            try {
+                fs.copyFileSync(coreCachePath, serverCorePath);
+                // Если ядро найдено в кэше, переходим сразу к установке/завершению
+                handleCoreReady(creationTaskID, serverName, core, coreFileName, startParameters, javaExecutablePath, serverPort, serverDirectoryPath, isInstaller, safeCb);
+                return;
+            } catch (copyErr) {
+                LOGGER.error(`[Creation] Failed to copy core from cache: ${copyErr.message}`);
+            }
+        }
+
         if (core.match(/\:\/\//gim) === null && fs.existsSync("./servers/" + serverName + path.sep + core)) {
-            // ЕСЛИ ЯДРО РАСПОЛОЖЕНО ЛОКАЛЬНО
+            // ЕСЛИ ЯДРО РАСПОЛОЖЕНО ЛОКАЛЬНО (передано как путь)
             LOGGER.log(`[Creation] Core for ${serverName} found locally.`);
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
             // Добавляем новый сервер в конфиг
@@ -157,6 +177,7 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             CORES_MANAGER.getCoreVersionURL(core, coreVersion, (url, mirrors = []) => {
                 if (url === false) {
                     LOGGER.error(`[Creation] Failed to get URL for core: ${core} ${coreVersion}`);
+                    LOGGER.error(`[Creation] Please manually put the core file in: ${colors.yellow(path.resolve(coreCachePath))}`);
                     if (TASK_MANAGER.isTaskExists(creationTaskID)) {
                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
                     }
@@ -183,97 +204,21 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
                     coreMirrors = coreMirrors.concat(PREDEFINED.SERVER_CORE_MIRRORS[coreKey].mirrors || []);
                 }
 
-                DOWNLOADS_MANAGER.addDownloadTask(coreDownloadURL, serverDirectoryPath + path.sep + coreFileName, (coreDlResult) => {
+                DOWNLOADS_MANAGER.addDownloadTask(coreDownloadURL, serverCorePath, (coreDlResult) => {
                     if (coreDlResult === true) {
-                        // Если это installer (Forge/Fabric/NeoForge), запускаем установку
-                        if (isInstaller) {
-                            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.INSTALLING;
-                            
-                            let installerArgs = "--installServer";
-                            let fullJavaPath = path.resolve(javaExecutablePath);
-                            
-                            // Запускаем installer
-                            const { exec } = require('child_process');
-                            let installProcess = exec('"' + fullJavaPath + '" -jar "' + coreFileName + '" ' + installerArgs, {
-                                cwd: serverDirectoryPath
-                            });
-                            
-                            installProcess.on('exit', (code) => {
-                                LOGGER.log("[Installer] Installer exited with code: " + code);
-                                
-                                if (code === 0 || code === null) {
-                                    // Установка успешна, определяем имя целевого JAR файла
-                                    LOGGER.log("[Installer] Installation completed, searching for server jar...");
-                                    let targetCoreJar = findServerJar(serverDirectoryPath, core);
-                                    
-                                    if (targetCoreJar) {
-                                        LOGGER.log("[Installer] Found server jar: " + targetCoreJar);
-                                        
-                                        // Удаляем installer после успешной установки (с задержкой)
-                                        setTimeout(() => {
-                                            try {
-                                                let installerPath = serverDirectoryPath + path.sep + coreFileName;
-                                                if (fs.existsSync(installerPath)) {
-                                                    fs.unlinkSync(installerPath);
-                                                    LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
-                                                }
-                                            } catch (e) {
-                                                // Файл может быть ещё заблокирован, не критично
-                                                LOGGER.warning("[Installer] Could not delete installer file (may be locked): " + e.message);
-                                            }
-                                        }, 2000); // Ждём 2 секунды перед удалением
-                                        
-                                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
-                                        // Добавляем новый сервер в конфиг
-                                        serversConfig[serverName] = {
-                                            status: PREDEFINED.SERVER_STATUSES.STOPPED,
-                                            restartOnError: true,
-                                            maxRestartAttempts: 3,
-                                            game: "minecraft",
-                                            minecraftType: "java",
-                                            stopCommand: "stop"
-                                        };
-                                        CONFIGURATION.writeServersConfig(serversConfig);
-                                        this.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort, core);
-                                        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-                                        safeCb(true);
-                                    } else {
-                                        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
-                                        LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
-                                        safeCb(false);
-                                    }
-                                } else {
-                                    tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
-                                    LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}") + " (exit code: " + code + ")");
-                                    safeCb(false);
-                                }
-                            });
-
-                            installProcess.on('error', (err) => {
-                                tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
-                                LOGGER.warning("Installer error: " + err.message);
-                                safeCb(false);
-                            });
-                        } else {
-                            // Обычное ядро (не installer)
-                            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
-                            // Добавляем новый сервер в конфиг
-                            serversConfig[serverName] = {
-                                status: PREDEFINED.SERVER_STATUSES.STOPPED,
-                                restartOnError: true,
-                                maxRestartAttempts: 3,
-                                game: "minecraft",
-                                minecraftType: "java",
-                                stopCommand: "stop"
-                            };
-                            CONFIGURATION.writeServersConfig(serversConfig);
-                            this.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort, core);
-                            LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
-                            safeCb(true);
+                        // Сохраняем в кэш для будущего использования
+                        try {
+                            fs.copyFileSync(serverCorePath, coreCachePath);
+                            LOGGER.log(`[Creation] Core saved to local cache: ${coreCachePath}`);
+                        } catch (cacheErr) {
+                            LOGGER.warning(`[Creation] Failed to cache downloaded core: ${cacheErr.message}`);
                         }
+
+                        handleCoreReady(creationTaskID, serverName, core, coreFileName, startParameters, javaExecutablePath, serverPort, serverDirectoryPath, isInstaller, safeCb);
                     } else {
                         tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
-                        LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreDownloadFailed}}"));
+                        LOGGER.error(`[Creation] Failed to download core!`);
+                        LOGGER.error(`[Creation] You can manually put the core file in: ${colors.yellow(path.resolve(coreCachePath))} and try again.`);
                         safeCb(false);
                     }
                 }, coreMirrors);
@@ -285,6 +230,96 @@ async function startJavaServerGeneration(serverName, core, coreVersion, startPar
             tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
         }
         safeCb(false);
+    }
+}
+
+// Вспомогательная функция для обработки готового ядра (после загрузки или из кэша)
+function handleCoreReady(creationTaskID, serverName, core, coreFileName, startParameters, javaExecutablePath, serverPort, serverDirectoryPath, isInstaller, safeCb) {
+    // Если это installer (Forge/Fabric/NeoForge), запускаем установку
+    if (isInstaller) {
+        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.INSTALLING;
+        
+        let installerArgs = "--installServer";
+        let fullJavaPath = path.resolve(javaExecutablePath);
+        
+        // Запускаем installer
+        const { exec } = require('child_process');
+        let installProcess = exec('"' + fullJavaPath + '" -jar "' + coreFileName + '" ' + installerArgs, {
+            cwd: serverDirectoryPath
+        });
+        
+        installProcess.on('exit', (code) => {
+            LOGGER.log("[Installer] Installer exited with code: " + code);
+            
+            if (code === 0 || code === null) {
+                // Установка успешна, определяем имя целевого JAR файла
+                LOGGER.log("[Installer] Installation completed, searching for server jar...");
+                let targetCoreJar = findServerJar(serverDirectoryPath, core);
+                
+                if (targetCoreJar) {
+                    LOGGER.log("[Installer] Found server jar: " + targetCoreJar);
+                    
+                    // Удаляем installer после успешной установки (с задержкой)
+                    setTimeout(() => {
+                        try {
+                            let installerPath = serverDirectoryPath + path.sep + coreFileName;
+                            if (fs.existsSync(installerPath)) {
+                                fs.unlinkSync(installerPath);
+                                LOGGER.log("[Installer] Installer file deleted: " + coreFileName);
+                            }
+                        } catch (e) {
+                            // Файл может быть ещё заблокирован, не критично
+                            LOGGER.warning("[Installer] Could not delete installer file (may be locked): " + e.message);
+                        }
+                    }, 2000); // Ждём 2 секунды перед удалением
+                    
+                    tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
+                    // Добавляем новый сервер в конфиг
+                    serversConfig[serverName] = {
+                        status: PREDEFINED.SERVER_STATUSES.STOPPED,
+                        restartOnError: true,
+                        maxRestartAttempts: 3,
+                        game: "minecraft",
+                        minecraftType: "java",
+                        stopCommand: "stop"
+                    };
+                    CONFIGURATION.writeServersConfig(serversConfig);
+                    module.exports.writeJavaStartFiles(serverName, targetCoreJar, startParameters, javaExecutablePath, serverPort, core);
+                    LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
+                    safeCb(true);
+                } else {
+                    tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                    LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}"));
+                    safeCb(false);
+                }
+            } else {
+                tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+                LOGGER.warning(MULTILANG.translateText(mainConfig.language, "{{console.coreInstallFailed}}") + " (exit code: " + code + ")");
+                safeCb(false);
+            }
+        });
+
+        installProcess.on('error', (err) => {
+            tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.FAILED;
+            LOGGER.warning("Installer error: " + err.message);
+            safeCb(false);
+        });
+    } else {
+        // Обычное ядро (не installer)
+        tasks[creationTaskID].currentStep = PREDEFINED.SERVER_CREATION_STEPS.COMPLETED;
+        // Добавляем новый сервер в конфиг
+        serversConfig[serverName] = {
+            status: PREDEFINED.SERVER_STATUSES.STOPPED,
+            restartOnError: true,
+            maxRestartAttempts: 3,
+            game: "minecraft",
+            minecraftType: "java",
+            stopCommand: "stop"
+        };
+        CONFIGURATION.writeServersConfig(serversConfig);
+        module.exports.writeJavaStartFiles(serverName, coreFileName, startParameters, javaExecutablePath, serverPort, core);
+        LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.serverCreatedSuccess}}", colors.cyan(serverName)));
+        safeCb(true);
     }
 }
 
