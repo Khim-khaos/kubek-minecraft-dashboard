@@ -55,6 +55,10 @@ class KubekUI {
                             selectedServer = list[0];
                             // Загружаем новый выбранный сервер без перезагрузки
                             KubekServerHeaderUI.loadServerByName(selectedServer, () => {});
+                        } else {
+                            // Если список пуст, сбрасываем выбранный сервер
+                            window.localStorage.removeItem("selectedServer");
+                            selectedServer = undefined;
                         }
                     });
                 }
@@ -66,6 +70,10 @@ class KubekUI {
                     window.localStorage.selectedServer = list[0];
                     selectedServer = list[0];
                     KubekServerHeaderUI.loadServerByName(selectedServer, () => {});
+                } else {
+                    // Если список пуст, сбрасываем выбранный сервер
+                    window.localStorage.removeItem("selectedServer");
+                    selectedServer = undefined;
                 }
             });
         }

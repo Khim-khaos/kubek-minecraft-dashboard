@@ -121,7 +121,6 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
         let isBmclapi = false;
         let isForgeCDN = false;
         let isUniversityMirror = false;
-        let isMciMirror = false;
 
         try {
             const host = new URL(currentUrl).hostname;
@@ -140,15 +139,12 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
             if (host === "mirror.sjtu.edu.cn" || host === "mirrors.qlu.edu.cn") {
                 isUniversityMirror = true;
             }
-            if (host === "mcimirror.com") {
-                isMciMirror = true;
-            }
         } catch (e) {
             // ignore URL parse errors
         }
         
         // Переменная должна быть доступна для resetStallTimeout
-        const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi || isForgeCDN || isUniversityMirror || isMciMirror) ? 20000 : 60000;
+        const stallTimeoutMs = (isForgeHost || isNyist || isBmclapi || isForgeCDN || isUniversityMirror) ? 20000 : 60000;
 
         const resetStallTimeout = () => {
             if (downloadTimeout) {
@@ -176,13 +172,12 @@ async function addDownloadTask(downloadURL, filePath, cb = () => {}, mirrors = [
                 const isUrlNyist = url.includes("mirror.nyist.edu.cn");
                 const isUrlBmclapi = url.includes("bmclapi2.bangbang93.com");
                 const isUrlUni = url.includes("mirror.sjtu.edu.cn") || url.includes("mirrors.qlu.edu.cn");
-                const isUrlMci = url.includes("mcimirror.com");
                 
                 return axiosInstance({
                     url,
                     method: "GET",
                     responseType: "stream",
-                    timeout: (isUrlNyist || isUrlBmclapi || isUrlUni || isUrlMci) ? 300000 : 180000, 
+                    timeout: (isUrlNyist || isUrlBmclapi || isUrlUni) ? 300000 : 180000, 
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
                     signal: abortController.signal,

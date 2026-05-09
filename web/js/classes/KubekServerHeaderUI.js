@@ -15,7 +15,7 @@ class KubekServerHeaderUI {
             return;
         }
         KubekServers.getServerInfo(server, (data) => {
-            if (data.status !== false) {
+            if (data !== false && typeof data.status !== "undefined") {
                 $(".content-header > .caption").text(server);
                 this.setServerStatus(data.status);
                 $(".content-header .icon-bg img").attr(

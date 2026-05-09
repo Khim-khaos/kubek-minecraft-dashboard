@@ -248,8 +248,7 @@ exports.getForgeCoreURL = (version, cb) => {
 exports.getForgeVersionsForMC = (minecraftVersion, cb) => {
     // Пробуем зеркала для получения списка версий
     let urlsToTry = [
-        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion,
-        "https://mcimirror.com/forge/minecraft/" + minecraftVersion
+        "https://bmclapi2.bangbang93.com/forge/minecraft/" + minecraftVersion
     ];
 
     function tryNext(index) {
@@ -287,7 +286,6 @@ exports.getFabricVersionsForMC = (minecraftVersion, cb) => {
     // Пробуем зеркала для получения списка версий
     let urlsToTry = [
         "https://meta.fabricmc.net/v2/versions/loader/" + minecraftVersion,
-        "https://mcimirror.com/fabric-meta/v2/versions/loader/" + minecraftVersion,
         "https://bmclapi2.bangbang93.com/fabric-meta/v2/versions/loader/" + minecraftVersion
     ];
 
@@ -417,21 +415,17 @@ exports.getAllNeoForgeCores = (cb) => {
                 let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
                 if (match) {
                     let major = parseInt(match[1]);
-                    let minor = match[2];
+                    let minor = parseInt(match[2]);
                     let mcVersion;
                     
-                    if (major >= 26) {
-                        // Вероятно, это какая-то ошибка в тегах или будущие версии, пока ограничим до 1.21.x
-                        if (major > 30) continue; 
-                        mcVersion = `1.${major}.${minor}`;
+                    if (minor === 0) {
+                        mcVersion = `1.${major}`;
                     } else {
-                        let patch = minor.charAt(0);
-                        mcVersion = `1.${major}.${patch}`;
+                        mcVersion = `1.${major}.${minor}`;
                     }
                     
-                    // Фильтруем явно невозможные версии (например, 1.26.1 на данный момент)
-                    // Сегодня 2026 год, но Minecraft 1.26 еще не вышла (обычно +1 мажорная версия в год)
-                    if (mcVersion === "1.26.1") continue; 
+                    // Фильтруем явно невозможные версии (например, версии из далекого будущего)
+                    if (major > 40) continue; 
                     
                     mcVersions.add(mcVersion);
                 }
@@ -486,14 +480,14 @@ exports.getNeoForgeVersionsForMC = (minecraftVersion, cb) => {
             let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
             if (match) {
                     let major = parseInt(match[1]);
-                    let minor = match[2];
+                    let minor = parseInt(match[2]);
                     let patch = match[3];
                     
                     let mcVersionFromNeo;
-                    if (major >= 26) {
-                        mcVersionFromNeo = `1.${major}.${minor}`;
+                    if (minor === 0) {
+                        mcVersionFromNeo = `1.${major}`;
                     } else {
-                        mcVersionFromNeo = `1.${major}.${minor.charAt(0)}`;
+                        mcVersionFromNeo = `1.${major}.${minor}`;
                     }
 
                     if (mcVersionFromNeo === minecraftVersion) {
@@ -554,15 +548,14 @@ exports.getNeoForgeCoreURL = (version, cb) => {
             urls.push(officialUrl);
         }
         
-        // Сортируем зеркала на основе тестов скорости (MCI Mirror > BMCLAPI > University > Official > ForgeCDN)
+        // Сортируем зеркала на основе тестов скорости (BMCLAPI > University > Official > ForgeCDN)
         urls.sort((a, b) => {
             const getPriority = (url) => {
-                if (url.includes("mcimirror.com")) return 1;
-                if (url.includes("bmclapi2.bangbang93.com")) return 2;
-                if (url.includes("mirror.sjtu.edu.cn") || url.includes("mirrors.qlu.edu.cn") || url.includes("mirror.nyist.edu.cn")) return 3;
-                if (url.includes("neoforged.net")) return 4;
-                if (url.includes("forgecdn.net")) return 5;
-                return 6;
+                if (url.includes("bmclapi2.bangbang93.com")) return 1;
+                if (url.includes("mirror.sjtu.edu.cn") || url.includes("mirrors.qlu.edu.cn") || url.includes("mirror.nyist.edu.cn")) return 2;
+                if (url.includes("neoforged.net")) return 3;
+                if (url.includes("forgecdn.net")) return 4;
+                return 5;
             };
             return getPriority(a) - getPriority(b);
         });
@@ -712,14 +705,13 @@ exports.getSupportedMCVersionsForCore = (core, cb) => {
                     let match = version.match(/^(\d+)\.(\d+)\.(\d+)/);
                     if (match) {
                         let major = parseInt(match[1]);
-                        let minor = match[2];
+                        let minor = parseInt(match[2]);
                         let mcVersion;
                         
-                        if (major >= 26) {
-                            mcVersion = `1.${major}.${minor}`;
+                        if (minor === 0) {
+                            mcVersion = `1.${major}`;
                         } else {
-                            let patch = minor.charAt(0);
-                            mcVersion = `1.${major}.${patch}`;
+                            mcVersion = `1.${major}.${minor}`;
                         }
                         mcVersions.add(mcVersion);
                     }

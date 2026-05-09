@@ -117,7 +117,6 @@ exports.SERVER_CORE_MIRRORS = {
     forge: {
         main: "https://maven.minecraftforge.net/net/minecraftforge/forge/",
         mirrors: [
-            "https://mcimirror.com/maven/net/minecraftforge/forge/",
             "https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/",
             "https://mirror.nyist.edu.cn/bmclapi/net/minecraftforge/forge/"
         ]
@@ -125,7 +124,6 @@ exports.SERVER_CORE_MIRRORS = {
     fabric: {
         main: "https://meta.fabricmc.net/v2/versions/loader",
         mirrors: [
-            "https://mcimirror.com/fabric-meta/",
             "https://bmclapi2.bangbang93.com/fabric-meta/"
         ]
     },
@@ -133,7 +131,6 @@ exports.SERVER_CORE_MIRRORS = {
         main: "https://maven.neoforged.net/releases/net/neoforged/neoforge/",
         versionsApi: "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge?sorted=false",
         mirrors: [
-            "https://mcimirror.com/maven/net/neoforged/neoforge/",
             "https://bmclapi2.bangbang93.com/maven/net/neoforged/neoforge/",
             "https://mirror.sjtu.edu.cn/bmclapi/net/neoforged/neoforge/",
             "https://mirrors.qlu.edu.cn/bmclapi/net/neoforged/neoforge/",
@@ -141,7 +138,6 @@ exports.SERVER_CORE_MIRRORS = {
             "https://neoforged.forgecdn.net/releases/net/neoforged/neoforge/"
         ],
         versionsApiMirrors: [
-            "https://mcimirror.com/neoforge/list/%mcversion%",
             "https://bmclapi2.bangbang93.com/neoforge/list/%mcversion%"
         ]
     },

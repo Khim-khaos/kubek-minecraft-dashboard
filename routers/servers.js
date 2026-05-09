@@ -124,7 +124,10 @@ router.get("/:server/send", WEBSERVER.serversRouterMiddleware, function (req, re
 // Router для получения иконки сервера
 router.get("/:server/icon", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
-    if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
+    if (COMMONS.isObjectsValid(q.server)) {
+        if (!SERVERS_MANAGER.isServerExists(q.server)) {
+            return res.sendStatus(404);
+        }
         let iconPath = "./servers/" + q.server + "/server-icon.png";
         if (fs.existsSync(iconPath)) {
             // Если есть файл иконки, то отправляем его
@@ -175,7 +178,10 @@ router.post("/:server/icon", WEBSERVER.serversRouterMiddleware, function (req, r
 // Router для получения информации о сервере
 router.get("/:server/info", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
-    if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
+    if (COMMONS.isObjectsValid(q.server)) {
+        if (!SERVERS_MANAGER.isServerExists(q.server)) {
+            return res.sendStatus(404);
+        }
         return res.send(SERVERS_MANAGER.getServerInfo(q.server));
     }
     return res.sendStatus(400);
