@@ -114,12 +114,26 @@ KubekFileManagerUI = class {
                     "icon": "download",
                     "text": "{{commons.download}}",
                     "data": "download:" + currentPath + fileName
+                },
+                {
+                    "icon": "folder_zip",
+                    "text": "{{commons.zip}}",
+                    "data": "zip:" + currentPath + fileName
                 }
             ]
 
             // Если директория - удалить лишнее
             if (fileType === "directory") {
                 dropdownData.splice(2, 1);
+            }
+
+            // Если это zip-архив, добавляем опцию "Unzip"
+            if (fileName.toLowerCase().endsWith(".zip")) {
+                dropdownData.push({
+                    "icon": "unarchive",
+                    "text": "{{commons.unzip}}",
+                    "data": "unzip:" + currentPath + fileName
+                });
             }
 
             KubekDropdowns.addDropdown(dropdownData, e.clientX, e.clientY, 5, (clickResult) => {
@@ -150,6 +164,21 @@ KubekFileManagerUI = class {
                         case "download":
                             // Скачивание файла
                             KubekFileManager.downloadFile(path, () => {
+                            });
+                            break;
+                        case "zip":
+                            // Архивация
+                            KubekNotifyModal.askForInput("{{commons.zip}}", "folder_zip", (txt) => {
+                                if(!txt.endsWith(".zip")) txt += ".zip";
+                                KubekFileManager.archive(path, txt, () => {
+                                    KubekFileManagerUI.refreshDir();
+                                })
+                            }, "", "{{fileManager.enterName}}", KubekUtils.pathFilename(path) + ".zip", "text");
+                            break;
+                        case "unzip":
+                            // Разархивация
+                            KubekFileManager.unarchive(path, () => {
+                                KubekFileManagerUI.refreshDir();
                             });
                             break;
                     }

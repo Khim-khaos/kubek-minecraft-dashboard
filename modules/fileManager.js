@@ -5,6 +5,8 @@ const {Base64} = require('js-base64');
 const SECURITY = require('./security');
 
 const path = require("path");
+const AdmZip = require("adm-zip");
+const decompress = require("decompress");
 
 // Собрать путь к папке
 exports.constructFilePath = (server, filePath) => {
@@ -13,9 +15,9 @@ exports.constructFilePath = (server, filePath) => {
 
 // Проверка на path traversal
 exports.verifyPathForTraversal = (baseDir, targetPath) => {
-    const resolvedBase = path.resolve(baseDir);
+    const resolvedBase = path.resolve(baseDir) + path.sep;
     const resolvedTarget = path.resolve(targetPath);
-    return resolvedTarget.startsWith(resolvedBase);
+    return resolvedTarget.startsWith(resolvedBase) || resolvedTarget === path.resolve(baseDir);
 };
 
 // Получить файлы в директории
@@ -187,6 +189,50 @@ exports.addFileChunk = (id, chunk) => {
         fileWrites[id].chunks.push(Buffer.from(chunk, 'base64'));
         return true;
     } else {
+        return false;
+    }
+};
+
+// Архивация (Zip)
+exports.archiveFile = (server, filePath, archiveName) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
+    let archivePath = path.join(path.dirname(fullPath), archiveName);
+
+    if (!this.verifyPathForTraversal(baseDir, fullPath) || !this.verifyPathForTraversal(baseDir, archivePath)) {
+        return false;
+    }
+
+    try {
+        const zip = new AdmZip();
+        if (fs.lstatSync(fullPath).isDirectory()) {
+            zip.addLocalFolder(fullPath);
+        } else {
+            zip.addLocalFile(fullPath);
+        }
+        zip.writeZip(archivePath);
+        return true;
+    } catch (e) {
+        console.error("Archive error:", e);
+        return false;
+    }
+};
+
+// Разархивация (Unzip)
+exports.unarchiveFile = async (server, filePath) => {
+    let baseDir = path.join(process.cwd(), "servers", server);
+    let fullPath = this.constructFilePath(server, filePath);
+    let extractPath = path.dirname(fullPath);
+
+    if (!this.verifyPathForTraversal(baseDir, fullPath)) {
+        return false;
+    }
+
+    try {
+        await decompress(fullPath, extractPath);
+        return true;
+    } catch (e) {
+        console.error("Unarchive error:", e);
         return false;
     }
 };

@@ -47,6 +47,9 @@ class KubekRefresher {
     static refreshConsoleLog = () => {
         let consoleTextElem = $("#console-text")
         if (consoleTextElem.length !== 0) {
+            let searchVal = $("#console-search").val();
+            if(searchVal) searchVal = searchVal.toLowerCase();
+
             KubekServers.getServerLog(selectedServer, (serverLog) => {
                 let parsedServerLog = serverLog.split(/\r?\n/);
                 if(previousConsoleUpdateLength === serverLog.length){
@@ -55,6 +58,7 @@ class KubekRefresher {
                 previousConsoleUpdateLength = serverLog.length;
                 $(consoleTextElem).html("");
                 parsedServerLog.forEach(function (line) {
+                    if(searchVal && line.toLowerCase().indexOf(searchVal) === -1) return;
                     let html_text = "";
                     let parsedText = ANSIParse(KubekUtils.linkify(mineParse(line).raw));
                     if (parsedText.length > 1) {

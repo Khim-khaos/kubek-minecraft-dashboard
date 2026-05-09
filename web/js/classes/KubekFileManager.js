@@ -48,4 +48,14 @@ class KubekFileManager {
     static endChunkWrite(id, cb){
         KubekRequests.get("/fileManager/chunkWrite/end?id=" + id, cb);
     }
+
+    // Архивация
+    static archive(path, name, cb) {
+        KubekRequests.get("/fileManager/archive?server=" + selectedServer + "&path=" + path + "&name=" + name, cb);
+    }
+
+    // Разархивация
+    static unarchive(path, cb) {
+        KubekRequests.get("/fileManager/unarchive?server=" + selectedServer + "&path=" + path, cb);
+    }
 }

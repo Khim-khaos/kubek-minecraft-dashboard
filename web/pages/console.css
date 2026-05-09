@@ -3,6 +3,34 @@
     height: 62vh;
 }
 
+.console-container .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-dark-accent);
+    padding: 0 12px;
+    border-radius: 8px;
+    height: 42px;
+}
+
+.console-container .search-box span {
+    color: var(--text-muted);
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+.console-container .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-main);
+    width: 180px;
+    transition: width 0.3s;
+}
+
+.console-container .search-box input:focus {
+    width: 280px;
+}
+
 .console-layout {
     margin-top: 16px;
     width: 100%;

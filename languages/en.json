@@ -92,6 +92,8 @@
       "mon": "months",
       "loading": "Loading",
       "kill": "Force Quit",
+      "zip": "Zip",
+      "unzip": "Unzip",
       "uploadFile": "Upload file",
       "supportedFileTypes": "Supported file types:",
       "installed": "Installed",
@@ -123,7 +125,8 @@
     },
     "gameConsole": {
       "inputCommand": "Enter the command...",
-      "clearConsole": "Clear console"
+      "clearConsole": "Clear console",
+      "searchLog": "Search in log..."
     },
     "systemMonitor": {
       "briefInfo": "Commom information",

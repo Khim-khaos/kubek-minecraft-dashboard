@@ -47,3 +47,13 @@ setInterval(() => {
     const UPDATER = require("./modules/updater");
     UPDATER.checkForUpdates(() => {});
 }, 6 * 60 * 60 * 1000);
+
+// Обработка непредвиденных ошибок
+process.on('uncaughtException', (err) => {
+    LOGGER.error(`[CRITICAL] Uncaught Exception: ${err.message}`);
+    if (err.stack) LOGGER.writeLineToLog(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    LOGGER.error(`[CRITICAL] Unhandled Rejection at: ${promise}, reason: ${reason}`);
+});

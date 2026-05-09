@@ -58,4 +58,9 @@ $(function () {
             e.preventDefault();
         }
     });
+
+    $("#console-search").on("input", () => {
+        previousConsoleUpdateLength = 0; // Force refresh
+        KubekRefresher.refreshConsoleLog();
+    });
 })

@@ -4,10 +4,16 @@
     <!-- Заголовок -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h2 style="margin: 0;">{{sections.console}}</h2>
-        <button class="dark-btn" onclick="$('#console-text').empty()">
-            <span class="material-symbols-rounded">delete_sweep</span>
-            {{gameConsole.clearConsole}}
-        </button>
+        <div style="display: flex; gap: 8px;">
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="console-search" placeholder="{{gameConsole.searchLog}}"/>
+            </div>
+            <button class="dark-btn" onclick="$('#console-text').empty()">
+                <span class="material-symbols-rounded">delete_sweep</span>
+                {{gameConsole.clearConsole}}
+            </button>
+        </div>
     </div>
     <!-- Главный контейнер -->
     <div class="console-layout">

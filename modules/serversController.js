@@ -132,7 +132,10 @@ exports.addInstanceCloseEventHandler = (serverName) => {
                         restartAttempts[serverName] = 1;
                     }
                     this.writeServerLog(serverName, MULTILANG.translateText(currentLanguage, "{{serverConsole.restartAttempt}}", restartAttempts[serverName]));
-                    this.startServer(serverName);
+                    // Добавляем задержку перед перезапуском (5 секунд)
+                    setTimeout(() => {
+                        this.startServer(serverName);
+                    }, 5000);
                 }
             }
         } else if (code === 1 || code === 127) {

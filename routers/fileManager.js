@@ -102,6 +102,27 @@ router.get("/download", WEBSERVER.serversRouterMiddleware, function (req, res) {
     res.sendStatus(400);
 });
 
+// Endpoint для архивации
+router.get("/archive", WEBSERVER.serversRouterMiddleware, function (req, res) {
+    let q = req.query;
+    if (COMMONS.isObjectsValid(q.server, q.path, q.name)) {
+        res.set("Content-Type", "application/json");
+        return res.send(FILE_MANAGER.archiveFile(q.server, q.path, q.name));
+    }
+    res.sendStatus(400);
+});
+
+// Endpoint для разархивации
+router.get("/unarchive", WEBSERVER.serversRouterMiddleware, async function (req, res) {
+    let q = req.query;
+    if (COMMONS.isObjectsValid(q.server, q.path)) {
+        res.set("Content-Type", "application/json");
+        const result = await FILE_MANAGER.unarchiveFile(q.server, q.path);
+        return res.send(result);
+    }
+    res.sendStatus(400);
+});
+
 // Endpoint для загрузки файла на сервер
 router.post("/upload", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.query;

@@ -199,9 +199,27 @@ exports.loadAllDefinedRouters = () => {
     webServer.use((req, res) => {
         if (!res.headersSent) {
             if (!errorPageCache) {
-                errorPageCache = fs.readFileSync(path.join(__dirname, "./../web/404.html")).toString();
+                try {
+                    errorPageCache = fs.readFileSync(path.join(__dirname, "./../web/404.html")).toString();
+                } catch (e) {
+                    errorPageCache = "404 Not Found";
+                }
             }
             return res.status(404).send(errorPageCache);
+        }
+    });
+
+    // Хэндлер для ошибки 500
+    webServer.use((err, req, res, next) => {
+        LOGGER.error(`[Webserver] Internal Server Error: ${err.message}`);
+        if (err.stack) {
+            LOGGER.writeLineToLog(err.stack);
+        }
+        if (!res.headersSent) {
+            res.status(500).send({
+                error: "Internal Server Error",
+                message: err.message
+            });
         }
     });
 };
