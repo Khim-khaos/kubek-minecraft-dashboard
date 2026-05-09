@@ -136,4 +136,27 @@
         display: none;
         width: 100%;
     }
+
+    /* Quick actions for servers in sidebar */
+    .server-item .quick-actions {
+        display: none;
+        margin-left: auto;
+        gap: 4px;
+    }
+
+    .server-item:hover .quick-actions {
+        display: flex;
+    }
+
+    .server-item .quick-actions span {
+        font-size: 16px !important;
+        padding: 4px;
+        border-radius: 4px;
+        background: var(--bg-dark-accent-light);
+        cursor: pointer;
+    }
+
+    .server-item .quick-actions span:hover {
+        background: var(--bg-primary-500);
+    }
 </style>

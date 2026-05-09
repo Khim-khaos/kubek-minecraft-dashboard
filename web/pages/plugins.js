@@ -2,6 +2,30 @@ $(function() {
   KubekUI.setTitle("Kubek | {{sections.plugins}}");
 
   KubekPluginsUI.refreshAllLists();
+
+  $("#plugins-search").on("input", function() {
+    const val = $(this).val().toLowerCase();
+    $("#plugins-list .item").each(function() {
+      const fileName = $(this).find(".filename").text().toLowerCase();
+      if (fileName.includes(val)) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  });
+
+  $("#mods-search").on("input", function() {
+    const val = $(this).val().toLowerCase();
+    $("#mods-list .item").each(function() {
+      const fileName = $(this).find(".filename").text().toLowerCase();
+      if (fileName.includes(val)) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  });
 });
 
 KubekPluginsUI = class {

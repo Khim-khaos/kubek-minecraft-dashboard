@@ -27,6 +27,10 @@
     <div class="panel">
         <div class="header">
             <h2>{{commons.plugins}}</h2>
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="plugins-search" placeholder="{{gameConsole.searchLog}}"/>
+            </div>
             <button class="dark-btn icon-only" onclick="KubekPluginsUI.uploadItem('plugin')">
                 <span class="material-symbols-rounded">upload</span>
             </button>
@@ -38,6 +42,10 @@
     <div class="panel">
         <div class="header">
             <h2>{{commons.mods}}</h2>
+            <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="mods-search" placeholder="{{gameConsole.searchLog}}"/>
+            </div>
             <button class="dark-btn icon-only" onclick="KubekPluginsUI.uploadItem('mod')">
                 <span class="material-symbols-rounded">upload</span>
             </button>

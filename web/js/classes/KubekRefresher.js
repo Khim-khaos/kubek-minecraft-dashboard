@@ -45,63 +45,56 @@ class KubekRefresher {
 
     // Обновить текст в консоли
     static refreshConsoleLog = () => {
-        let consoleTextElem = $("#console-text")
+        let consoleTextElem = $("#console-text");
         if (consoleTextElem.length !== 0) {
             let searchVal = $("#console-search").val();
-            if(searchVal) searchVal = searchVal.toLowerCase();
+            if (searchVal) searchVal = searchVal.toLowerCase();
 
             KubekServers.getServerLog(selectedServer, (serverLog) => {
-                let parsedServerLog = serverLog.split(/\r?\n/);
-                if(previousConsoleUpdateLength === serverLog.length){
+                if (previousConsoleUpdateLength === serverLog.length) {
                     return;
                 }
+                
+                // Check if user is near bottom before update
+                const isAtBottom = (consoleTextElem[0].scrollHeight - consoleTextElem.scrollTop() - consoleTextElem.outerHeight()) < 50;
+                
                 previousConsoleUpdateLength = serverLog.length;
-                $(consoleTextElem).html("");
+                let parsedServerLog = serverLog.split(/\r?\n/);
+                let fullHtml = "";
+                
                 parsedServerLog.forEach(function (line) {
-                    if(searchVal && line.toLowerCase().indexOf(searchVal) === -1) return;
+                    if (searchVal && line.toLowerCase().indexOf(searchVal) === -1) return;
+                    
                     let html_text = "";
                     let parsedText = ANSIParse(KubekUtils.linkify(mineParse(line).raw));
+                    
                     if (parsedText.length > 1) {
                         let joinedLine = "";
-                        // Некоторая магия парсинга
                         parsedText.forEach((item) => {
-                            let resultText = "<span style='";
-                            if (typeof item.bold !== "undefined" && item.bold === true) {
-                                resultText += "font-weight:bold;"
-                            }
-                            if (typeof item.foreground !== "undefined" && item.bold === true) {
-                                resultText += "color:" + item.foreground + ";"
-                            }
-                            resultText += "'>" + item.text + "</span>";
-                            joinedLine += resultText;
+                            let style = "";
+                            if (item.bold) style += "font-weight:bold;";
+                            if (item.foreground) style += "color:" + item.foreground + ";";
+                            joinedLine += "<span style='" + style + "'>" + item.text + "</span>";
                         });
                         html_text += joinedLine + "<br>";
                     } else {
-                        html_text += parsedText[0].text + "<br>";
+                        html_text += (parsedText[0] ? parsedText[0].text : "") + "<br>";
                     }
 
-                    // Парсинг timestampов ([00:00:00])
-
-                    let matches;
-                    while(matches = timeStampRegexp.exec(html_text)){
-                        let startIndex = timeStampRegexp.lastIndex - matches[0].length;
-                        let endIndex = timeStampRegexp.lastIndex;
-
-                        let cutTimestamp = html_text.substring(startIndex, endIndex);
-                        let resTimestamp = "<span style='color: var(--bg-dark-accent-lighter);'>" + cutTimestamp + "</span>";
-                        html_text = resTimestamp + html_text.substring(endIndex);
-                    }
-                    $(consoleTextElem).html($(consoleTextElem).html() + html_text);
+                    // Parse timestamps
+                    html_text = html_text.replace(timeStampRegexp, (match) => {
+                        return "<span style='color: var(--bg-dark-accent-lighter);'>" + match + "</span>";
+                    });
+                    
+                    fullHtml += html_text;
                 });
-                // Если это первое обновление консоли - прокручиваем консоль до конца
-                let scrollHeight = consoleTextElem[0].scrollHeight - Math.round($(".console").height()) - 24; // SOME STUPID MATH
-                if (isItFirstLogRefresh === false) {
+
+                consoleTextElem.html(fullHtml);
+
+                // Scroll to bottom if it's first refresh or user was already at bottom
+                if (isItFirstLogRefresh === false || isAtBottom) {
                     isItFirstLogRefresh = true;
-                    consoleTextElem.scrollTop(scrollHeight);
-                } else {
-                    if ((scrollHeight - consoleTextElem.scrollTop()) < 200) {
-                        consoleTextElem.scrollTop(scrollHeight);
-                    }
+                    consoleTextElem.scrollTop(consoleTextElem[0].scrollHeight);
                 }
             });
         }

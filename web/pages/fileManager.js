@@ -27,6 +27,20 @@ $(function () {
     KubekUI.setTitle("Kubek | {{sections.fileManager}}");
 
     KubekFileManagerUI.refreshDir();
+
+    $("#fm-search").on("input", function() {
+        const val = $(this).val().toLowerCase();
+        $("#fm-table tbody tr").each(function() {
+            const fileName = $(this).data("filename");
+            if (fileName === undefined) return; // Skip .. (upper dir)
+            
+            if (fileName.toLowerCase().includes(val)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
 })
 
 KubekFileManagerUI = class {

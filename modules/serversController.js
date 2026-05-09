@@ -205,27 +205,35 @@ exports.killServer = (serverName) => {
 };
 
 // Получить скрипт запуска сервера
-exports.getStartScript = (serverName) => {
+exports.getStartScript = async (serverName) => {
     let startFileData, startFilePath;
     if (SERVERS_MANAGER.isServerExists(serverName)) {
         startFilePath = this.getStartFilePath(serverName);
-        startFileData = fs.readFileSync(startFilePath);
-        startFileData = startFileData.toString().split("\n");
-        return startFileData[startFileData.length - 1];
+        try {
+            startFileData = await fs.promises.readFile(startFilePath);
+            startFileData = startFileData.toString().split("\n");
+            return startFileData[startFileData.length - 1];
+        } catch (e) {
+            return false;
+        }
     }
     return false;
 };
 
 // Записать скрипт запуска сервера
-exports.setStartScript = (serverName, data) => {
+exports.setStartScript = async (serverName, data) => {
     let startFileData, startFilePath;
     if (SERVERS_MANAGER.isServerExists(serverName)) {
         startFilePath = this.getStartFilePath(serverName);
-        startFileData = fs.readFileSync(startFilePath);
-        startFileData = startFileData.toString().split("\n");
-        startFileData[startFileData.length - 1] = data;
-        fs.writeFileSync(startFilePath, startFileData.join("\n"));
-        return true;
+        try {
+            startFileData = await fs.promises.readFile(startFilePath);
+            startFileData = startFileData.toString().split("\n");
+            startFileData[startFileData.length - 1] = data;
+            await fs.promises.writeFile(startFilePath, startFileData.join("\n"));
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
     return false;
 };
@@ -242,15 +250,21 @@ exports.getStartFilePath = (serverName) => {
 };
 
 // Получить файл server.properties (после парсинга)
-exports.getServerProperties = (serverName) => {
+exports.getServerProperties = async (serverName) => {
     let spFilePath = "./servers/" + serverName + "/server.properties";
-    if (fs.existsSync(spFilePath)) {
-        let spFileData = fs.readFileSync(spFilePath).toString();
-        let parsed = spParser.parse(spFileData);
-        if(parsed['generator-settings']){
-            parsed['generator-settings'] = JSON.stringify(parsed['generator-settings']);
+    try {
+        const stats = await fs.promises.stat(spFilePath);
+        if (stats.isFile()) {
+            let spFileData = await fs.promises.readFile(spFilePath);
+            spFileData = spFileData.toString();
+            let parsed = spParser.parse(spFileData);
+            if (parsed['generator-settings']) {
+                parsed['generator-settings'] = JSON.stringify(parsed['generator-settings']);
+            }
+            return parsed;
         }
-        return parsed;
+    } catch (e) {
+        // File not found or other error
     }
     return false;
 };
@@ -267,9 +281,9 @@ exports.saveServerProperties = async (serverName, data) => {
 };
 
 // Получить информацию о сервере
-exports.queryServer = (serverName, cb) => {
-    let spData = this.getServerProperties(serverName);
-    if (COMMONS.isObjectsValid(spData['server-port']) && COMMONS.isObjectsValid(serversInstances[serverName])) {
+exports.queryServer = async (serverName, cb) => {
+    let spData = await this.getServerProperties(serverName);
+    if (spData && COMMONS.isObjectsValid(spData['server-port']) && COMMONS.isObjectsValid(serversInstances[serverName])) {
         let chkPort = spData['server-port'];
         const chkOptions = {query: false};
         mcs.statusJava("127.0.0.1", chkPort, chkOptions)

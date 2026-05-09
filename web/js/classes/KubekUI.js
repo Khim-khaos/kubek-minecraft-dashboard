@@ -86,11 +86,16 @@ class KubekUI {
             servers.forEach((serverItem) => {
                 let isActive;
                 serverItem === selectedServer ? isActive = " active" : isActive = "";
-                $("#servers-list-sidebar").append('<div class="server-item sidebar-item' + isActive + '" onclick="window.localStorage.selectedServer = `' + serverItem + '`; window.location.reload()">\n' +
+                $("#servers-list-sidebar").append('<div class="server-item sidebar-item' + isActive + '" onclick="if(!$(event.target).closest(\'.quick-actions\').length) { window.localStorage.selectedServer = `' + serverItem + '`; window.location.reload(); }">\n' +
                     '      <div class="icon-circle-bg">\n' +
                     '        <img style="width: 24px; height: 24px;" alt="' + serverItem + '" src="/api/servers/' + serverItem + '/icon">\n' +
                     '      </div>\n' +
                     '      <span>' + serverItem + '</span>\n' +
+                    '      <div class="quick-actions">\n' +
+                    '        <span class="material-symbols-rounded" onclick="KubekServers.startServer(\'' + serverItem + '\'); event.stopPropagation();">play_arrow</span>\n' +
+                    '        <span class="material-symbols-rounded" onclick="KubekServers.restartServer(\'' + serverItem + '\'); event.stopPropagation();">refresh</span>\n' +
+                    '        <span class="material-symbols-rounded" onclick="KubekServers.stopServer(\'' + serverItem + '\'); event.stopPropagation();">stop</span>\n' +
+                    '      </div>\n' +
                     '    </div>');
             })
         })

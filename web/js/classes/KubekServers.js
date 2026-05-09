@@ -43,22 +43,16 @@ class KubekServers {
 
     // Запустить сервер
     static startServer = (server) => {
-        if(currentServerStatus === KubekPredefined.SERVER_STATUSES.STOPPED){
-            KubekRequests.get("/servers/" + server + "/start");
-        }
+        KubekRequests.get("/servers/" + server + "/start");
     };
 
     // Перезапустить сервер
     static restartServer = (server) => {
-        if(currentServerStatus === KubekPredefined.SERVER_STATUSES.RUNNING){
-            KubekRequests.get("/servers/" + server + "/restart");
-        }
+        KubekRequests.get("/servers/" + server + "/restart");
     };
 
     // Остановить сервер
     static stopServer = (server) => {
-        if(currentServerStatus === KubekPredefined.SERVER_STATUSES.RUNNING){
-            KubekRequests.get("/servers/" + server + "/stop");
-        }
+        KubekRequests.get("/servers/" + server + "/stop");
     };
 }

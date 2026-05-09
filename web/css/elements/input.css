@@ -33,3 +33,34 @@ input.error {
 input.success {
   border: 1px solid #0e9f6e;
 }
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-dark-accent);
+    padding: 0 12px;
+    border-radius: 8px;
+    height: 42px;
+}
+
+.search-box span {
+    color: var(--bg-dark-accent-lighter);
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+.search-box input {
+    background: transparent !important;
+    border: none;
+    outline: none;
+    color: white;
+    width: 150px;
+    transition: width 0.3s;
+    padding: 0 !important;
+    height: 100% !important;
+}
+
+.search-box input:focus {
+    width: 240px;
+    background: transparent !important;
+}

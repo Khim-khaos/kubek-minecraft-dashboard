@@ -197,10 +197,10 @@ router.put("/:server/info", WEBSERVER.serversRouterMiddleware, function (req, re
 });
 
 // Router для получения информации о сервере
-router.get("/:server/query", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/:server/query", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server) && SERVERS_MANAGER.getServerStatus(q.server) === PREDEFINED.SERVER_STATUSES.RUNNING) {
-        SERVERS_CONTROLLER.queryServer(q.server, (queryResult) => {
+        await SERVERS_CONTROLLER.queryServer(q.server, (queryResult) => {
             res.send(queryResult);
         });
     } else {
@@ -209,30 +209,30 @@ router.get("/:server/query", WEBSERVER.serversRouterMiddleware, function (req, r
 });
 
 // Router для получения скрипта запуска
-router.get("/:server/startScript", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/:server/startScript", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
-        return res.send(SERVERS_CONTROLLER.getStartScript(q.server));
+        return res.send(await SERVERS_CONTROLLER.getStartScript(q.server));
     }
     res.sendStatus(400);
 });
 
 // Router для записи скрипта запуска
-router.put("/:server/startScript", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.put("/:server/startScript", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let q2 = req.query;
     // DEVELOPED by seeeroy
     if (COMMONS.isObjectsValid(q.server, q2.data) && SERVERS_MANAGER.isServerExists(q.server)) {
-        return res.send(SERVERS_CONTROLLER.setStartScript(q.server, Base64.decode(q2.data)));
+        return res.send(await SERVERS_CONTROLLER.setStartScript(q.server, Base64.decode(q2.data)));
     }
     res.sendStatus(400);
 });
 
 // Router для получения server.properties
-router.get("/:server/server.properties", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.get("/:server/server.properties", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
-        return res.send(SERVERS_CONTROLLER.getServerProperties(q.server));
+        return res.send(await SERVERS_CONTROLLER.getServerProperties(q.server));
     }
     res.sendStatus(400);
 });

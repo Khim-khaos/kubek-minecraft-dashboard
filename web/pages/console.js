@@ -29,19 +29,45 @@ $(function () {
         KubekConsoleUI.refreshUsageItems(usage.cpu, usage.ram.percent, usage.ram);
     });
 
+        // Persistent command history
     let commandHistory = [];
+    try {
+        const storedHistory = window.localStorage.getItem("kubek_cmd_history");
+        if (storedHistory) {
+            commandHistory = JSON.parse(storedHistory);
+        }
+    } catch (e) {
+        console.error("Failed to load command history", e);
+    }
+    
     let historyIndex = -1;
+    let tempInput = "";
 
     $("#cmd-input").on("keydown", (e) => {
         if (e.originalEvent.code === "Enter") {
             const cmd = $("#cmd-input").val();
             if (cmd.trim() !== "") {
+                // Remove existing if it's already there (to move it to top)
+                const existingIndex = commandHistory.indexOf(cmd);
+                if (existingIndex !== -1) {
+                    commandHistory.splice(existingIndex, 1);
+                }
+                
                 commandHistory.unshift(cmd);
                 if (commandHistory.length > 50) commandHistory.pop();
+                
+                // Save to localStorage
+                window.localStorage.setItem("kubek_cmd_history", JSON.stringify(commandHistory));
+                
                 historyIndex = -1;
+                tempInput = "";
             }
             KubekServers.sendCommandFromInput(selectedServer);
         } else if (e.originalEvent.code === "ArrowUp") {
+            if (historyIndex === -1) {
+                tempInput = $("#cmd-input").val();
+            }
+            
             if (historyIndex < commandHistory.length - 1) {
                 historyIndex++;
                 $("#cmd-input").val(commandHistory[historyIndex]);
@@ -53,7 +79,7 @@ $(function () {
                 $("#cmd-input").val(commandHistory[historyIndex]);
             } else if (historyIndex === 0) {
                 historyIndex = -1;
-                $("#cmd-input").val("");
+                $("#cmd-input").val(tempInput);
             }
             e.preventDefault();
         }
