@@ -19,16 +19,23 @@ $(function () {
 });
 
 function loadDashboardStats() {
-    KubekRequests.get("/kubek/health", (data) => {
+    KubekRequests.get("/api/health", (data) => {
         if (data) {
             // Update CPU
-            $("#total-cpu-bar").css("width", data.cpu + "%");
-            $("#total-cpu-val").text(Math.round(data.cpu) + "%");
+            $("#sys-cpu-bar").css("width", data.cpu + "%");
+            $("#sys-cpu-val").text(Math.round(data.cpu) + "%");
             
             // Update RAM
             const ramUsage = (data.ram.used / data.ram.total) * 100;
-            $("#total-ram-bar").css("width", ramUsage + "%");
-            $("#total-ram-val").text(Math.round(ramUsage) + "%");
+            $("#sys-ram-bar").css("width", ramUsage + "%");
+            $("#sys-ram-val").text(Math.round(ramUsage) + "%");
+
+            // Update Uptime
+            if (data.uptime) {
+                const hours = Math.floor(data.uptime / 3600);
+                const minutes = Math.floor((data.uptime % 3600) / 60);
+                $("#sys-uptime-val").text(`${hours}h ${minutes}m`);
+            }
         }
     });
 }

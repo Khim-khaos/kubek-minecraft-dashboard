@@ -17,6 +17,8 @@ const mime = require("mime");
 const path = require('path');
 const os = require('os');
 const {isInSubnet} = require('is-in-subnet');
+const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../swagger-output.json');
 
@@ -28,6 +30,33 @@ webServer.use(helmet({
     contentSecurityPolicy: false, // Отключаем CSP для совместимости со старым фронтендом
     crossOriginEmbedderPolicy: false
 }));
+
+// Общий лимитер для всех запросов
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 минут
+    max: 1000, // Лимит 1000 запросов на IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: "Too many requests",
+        message: "Please try again later"
+    },
+    skip: (req) => {
+        // Пропускаем локальные запросы и статику
+        const ip = getRequestIP(req);
+        return ip === '127.0.0.1' || !req.path.startsWith('/api/');
+    }
+});
+webServer.use(generalLimiter);
+
+// Middleware для Request ID
+webServer.use((req, res, next) => {
+    req.id = crypto.randomUUID();
+    res.setHeader('X-Request-Id', req.id);
+    next();
+});
+
 webServer.use(compression());
 
 // Настройка Swagger
@@ -94,7 +123,7 @@ exports.authLoggingMiddleware = (req, res, next) => {
                 status >= 500 ? colors.red : status >= 400 ? colors.yellow : status >= 300 ? colors.cyan : colors.green;
 
             this.logWebRequest(req, res, username);
-            LOGGER.debug(`[REQUEST] ${req.method} ${req.originalUrl} - ${statusColor(status)} (${duration}ms)`);
+            LOGGER.debug(`[REQUEST] ${req.id} ${req.method} ${req.originalUrl} - ${statusColor(status)} (${duration}ms)`);
         });
     }
 
@@ -120,14 +149,31 @@ exports.authLoggingMiddleware = (req, res, next) => {
 
 // Middleware для обработки ошибок
 exports.errorHandlerMiddleware = (err, req, res, next) => {
-    LOGGER.error(`[EXPRESS ERROR] ${err.message}`);
+    LOGGER.error(`[EXPRESS ERROR] ${req.method} ${req.originalUrl} - ${err.message}`);
     if (err.stack) LOGGER.writeLineToLog(err.stack);
     
-    res.status(500).send({
+    const statusCode = err.status || 500;
+    res.status(statusCode).send({
         success: false,
-        error: "Internal Server Error",
-        message: process.env.DEBUG === 'true' ? err.message : undefined
+        error: statusCode === 500 ? "Internal Server Error" : "Request Error",
+        message: process.env.DEBUG === 'true' || statusCode !== 500 ? err.message : "Something went wrong"
     });
+};
+
+/**
+ * Маршрут для проверки работоспособности (Health Check)
+ */
+exports.healthCheckHandler = (req, res) => {
+    const data = {
+        status: 'up',
+        uptime: process.uptime(),
+        timestamp: Date.now(),
+        version: require('../package.json').version,
+        node: process.version,
+        platform: process.platform,
+        memory: process.memoryUsage()
+    };
+    res.status(200).json(data);
 };
 
 // Middleware для статических страниц
@@ -249,6 +295,24 @@ exports.csrfMiddleware = (req, res, next) => {
     }
 
     return next();
+};
+
+/**
+ * Валидация обязательных полей в теле запроса
+ * @param {string[]} fields 
+ */
+exports.validateBody = (fields) => {
+    return (req, res, next) => {
+        const missing = fields.filter(f => !req.body || req.body[f] === undefined);
+        if (missing.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: "Validation Error",
+                message: `Missing required fields: ${missing.join(', ')}`
+            });
+        }
+        next();
+    };
 };
 
 // Функция для загрузки всех роутеров из списка в predefined

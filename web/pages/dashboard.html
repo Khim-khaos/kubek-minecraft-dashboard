@@ -18,16 +18,29 @@
     </div>
 
     <div class="dashboard-grid">
-        <div class="dashboard-card servers-summary">
-            <h3>{{commons.server}}s</h3>
-            <div class="summary-stats">
-                <div class="summary-item">
-                    <span class="count" id="total-servers-count">0</span>
-                    <span class="label">{{commons.unknown}}</span>
+        <div class="dashboard-card status-card">
+            <div class="card-header">
+                <h3>{{sections.systemMonitor}}</h3>
+                <span class="status-indicator online"></span>
+            </div>
+            <div class="system-stats-grid">
+                <div class="system-stat">
+                    <div class="stat-label">CPU</div>
+                    <div class="stat-progress-container">
+                        <div class="stat-progress-bar" id="sys-cpu-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value" id="sys-cpu-val">0%</div>
                 </div>
-                <div class="summary-item success">
-                    <span class="count" id="running-servers-count">0</span>
-                    <span class="label">{{serverStatus.running}}</span>
+                <div class="system-stat">
+                    <div class="stat-label">RAM</div>
+                    <div class="stat-progress-container">
+                        <div class="stat-progress-bar" id="sys-ram-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="stat-value" id="sys-ram-val">0%</div>
+                </div>
+                <div class="system-stat">
+                    <div class="stat-label">Uptime</div>
+                    <div class="stat-value" id="sys-uptime-val">0h 0m</div>
                 </div>
             </div>
         </div>
@@ -35,15 +48,27 @@
         <div class="dashboard-card quick-actions">
             <h3>{{commons.actions}}</h3>
             <div class="actions-list">
-                <button class="action-btn" onclick="window.location='/?act=newServer'">
-                    <span class="material-symbols-rounded">add</span>
+                <button class="action-btn primary" onclick="window.location='/?act=newServer'">
+                    <span class="material-symbols-rounded">add_circle</span>
                     {{commons.create}}
                 </button>
                 <button class="action-btn" onclick="KubekPageManager.gotoPage('kubekSettings')">
                     <span class="material-symbols-rounded">settings</span>
                     {{sections.kubekSettings}}
                 </button>
+                <button class="action-btn" onclick="KubekPageManager.gotoPage('systemMonitor')">
+                    <span class="material-symbols-rounded">monitoring</span>
+                    {{sections.systemMonitor}}
+                </button>
             </div>
+        </div>
+    </div>
+
+    <div class="servers-grid-header">
+        <h2>{{commons.server}}s</h2>
+        <div class="grid-stats">
+            <span class="badge secondary"><span id="total-servers-count">0</span> {{commons.total}}</span>
+            <span class="badge success"><span id="running-servers-count">0</span> {{serverStatus.running}}</span>
         </div>
     </div>
 
