@@ -94,6 +94,8 @@
         "uploadFile": "ファイルをアップロード",
         "supportedFileTypes": "サポートしているファイルタイプ: ",
         "installed": "インストール済み",
+        "actions": "アクション",
+        "total": "合計",
         "connectionLost": "接続が失われました",
         "connectionRestored": "接続が回復しました",
         "input": "入力フィールド",

@@ -15,7 +15,24 @@ exports.getHealthStatus = async () => {
     
     let disks = [];
     try {
-        disks = nodeDiskInfo.getDiskInfoSync();
+        if (process.platform === "win32") {
+            disks = await HARDWARE_MANAGER.getDisksWindowsFallback();
+            // Маппим формат PowerShell fallback к формату, который ожидает health
+            disks = disks.map(d => ({
+                drive: d._mounted,
+                capacity: d._capacity,
+                used: d._used,
+                available: d._available
+            }));
+        } else {
+            const rawDisks = await nodeDiskInfo.getDiskInfo();
+            disks = rawDisks.map(d => ({
+                drive: d.drive,
+                capacity: d.capacity,
+                used: d.used,
+                available: d.available
+            }));
+        }
     } catch (e) {
         // Игнорируем ошибки получения инфо о дисках
     }

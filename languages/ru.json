@@ -97,6 +97,8 @@
       "uploadFile": "Загрузить файл",
       "supportedFileTypes": "Поддерживаемые типы файлов:",
       "installed": "Установлен",
+      "actions": "Действия",
+      "total": "Всего",
       "connectionLost": "Соединение потеряно",
       "connectionRestored": "Соединение восстановлено",
       "input": "Поле для ввода",

@@ -1,29 +1,58 @@
 const os = require("os");
 const nodeDiskInfo = require("node-disk-info");
-const osutils = require("os-utils");
 const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 
-// Получить информацию об использовании ЦПУ и ОЗУ
-exports.getResourcesUsage = () => {
+// Вспомогательная функция для расчета использования ЦПУ без os-utils
+const getCPUUsage = () => {
     return new Promise((resolve) => {
-        osutils.cpuUsage(function (cpuValue) {
-            resolve({
-                cpu: Math.round(cpuValue * 100),
-                ram: {
-                    total: os.totalmem(),
-                    free: os.freemem(),
-                    used: os.totalmem() - os.freemem(),
-                    percent: 100 - Math.round((os.freemem() / os.totalmem()) * 100)
-                }
-            });
-        });
+        const stats1 = getCPUInfo();
+        setTimeout(() => {
+            const stats2 = getCPUInfo();
+            const idleDiff = stats2.idle - stats1.idle;
+            const totalDiff = stats2.total - stats1.total;
+            
+            if (totalDiff === 0) {
+                return resolve(0);
+            }
+            
+            const usage = 1 - idleDiff / totalDiff;
+            resolve(Math.round(usage * 100));
+        }, 1000);
     });
 };
 
+const getCPUInfo = () => {
+    const cpus = os.cpus();
+    let user = 0, nice = 0, sys = 0, idle = 0, irq = 0, total = 0;
+    for (const cpu of cpus) {
+        user += cpu.times.user;
+        nice += cpu.times.nice;
+        sys += cpu.times.sys;
+        idle += cpu.times.idle;
+        irq += cpu.times.irq;
+    }
+    total = user + nice + sys + idle + irq;
+    return { idle, total };
+};
+
+// Получить информацию об использовании ЦПУ и ОЗУ
+exports.getResourcesUsage = async () => {
+    const cpuValue = await getCPUUsage();
+    return {
+        cpu: cpuValue,
+        ram: {
+            total: os.totalmem(),
+            free: os.freemem(),
+            used: os.totalmem() - os.freemem(),
+            percent: 100 - Math.round((os.freemem() / os.totalmem()) * 100)
+        }
+    };
+};
+
 // Функция для получения инфо о дисках через PowerShell (fallback для Windows)
-const getDisksWindowsFallback = async () => {
+exports.getDisksWindowsFallback = async () => {
     try {
         const { stdout } = await execAsync('powershell "Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free | ConvertTo-Json"', { encoding: 'utf8' });
         const data = JSON.parse(stdout);

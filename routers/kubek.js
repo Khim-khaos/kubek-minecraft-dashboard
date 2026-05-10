@@ -12,8 +12,8 @@ const {Base64} = require("js-base64");
 const packageJSON = require("../package.json");
 
 // Endpoint для получения состояния здоровья панели
-router.get("/health", function (req, res) {
-    res.send(HEALTH.getHealthStatus());
+router.get("/health", async function (req, res) {
+    res.send(await HEALTH.getHealthStatus());
 });
 
 // Упрощенный эндпоинт для проверки работоспособности

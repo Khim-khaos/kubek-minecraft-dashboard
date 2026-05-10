@@ -49,19 +49,36 @@ exports.translateText = (language, text, ...placers) => {
                 const parts = matchClear.split(".");
                 
                 if (parts.length >= 2) {
-                    const category = parts[0];
-                    const key = parts[1];
-                    const modificator = parts[2];
+                    let matchedTranslation = langData.translations;
+                    let found = true;
                     
-                    // Заменяем в тексте найденные в списке переводы
-                    if (langData.translations?.[category]?.[key] !== undefined) {
-                        let matchedTranslation = langData.translations[category][key];
-                        if (modificator === "upperCase") {
+                    // Проходим по всем частям ключа (кроме модификатора)
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        if (matchedTranslation[part] !== undefined) {
+                            matchedTranslation = matchedTranslation[part];
+                            // Если мы нашли строку, то останавливаемся (следующая часть может быть модификатором)
+                            if (typeof matchedTranslation === 'string') {
+                                break;
+                            }
+                        } else {
+                            found = false;
+                            break;
+                        }
+                    }
+                    
+                    if (found && typeof matchedTranslation === 'string') {
+                        const lastPart = parts[parts.length - 1];
+                        if (lastPart === "upperCase") {
                             matchedTranslation = matchedTranslation.toUpperCase();
-                        } else if (modificator === "lowerCase") {
+                        } else if (lastPart === "lowerCase") {
                             matchedTranslation = matchedTranslation.toLowerCase();
                         }
                         text = text.replaceAll(match, matchedTranslation);
+                    } else if (found && typeof matchedTranslation === 'object') {
+                        // Если мы нашли объект вместо строки, проверяем есть ли у него метод toString который не [object Object]
+                        // Но в JSON объектах toString всегда [object Object].
+                        // Поэтому мы просто не заменяем, чтобы не портить текст.
                     }
                 }
             });

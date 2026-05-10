@@ -97,6 +97,8 @@
       "uploadFile": "Upload file",
       "supportedFileTypes": "Supported file types:",
       "installed": "Installed",
+      "actions": "Actions",
+      "total": "Total",
       "connectionLost": "Connection lost",
       "connectionRestored": "Connection restored",
       "input": "Input field",

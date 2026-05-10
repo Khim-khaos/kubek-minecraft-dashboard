@@ -21,14 +21,21 @@ $(function () {
 function loadDashboardStats() {
     KubekRequests.get("/api/health", (data) => {
         if (data) {
-            // Update CPU
-            $("#sys-cpu-bar").css("width", data.cpu + "%");
-            $("#sys-cpu-val").text(Math.round(data.cpu) + "%");
+            const cpu = data.cpu || 0;
+            const ramPercent = data.ram ? data.ram.percent : 0;
+
+            // Update Header Stats
+            $("#total-cpu-bar").css("width", cpu + "%");
+            $("#total-cpu-val").text(Math.round(cpu) + "%");
+            $("#total-ram-bar").css("width", ramPercent + "%");
+            $("#total-ram-val").text(Math.round(ramPercent) + "%");
+
+            // Update Card Stats
+            $("#sys-cpu-bar").css("width", cpu + "%");
+            $("#sys-cpu-val").text(Math.round(cpu) + "%");
             
-            // Update RAM
-            const ramUsage = (data.ram.used / data.ram.total) * 100;
-            $("#sys-ram-bar").css("width", ramUsage + "%");
-            $("#sys-ram-val").text(Math.round(ramUsage) + "%");
+            $("#sys-ram-bar").css("width", ramPercent + "%");
+            $("#sys-ram-val").text(Math.round(ramPercent) + "%");
 
             // Update Uptime
             if (data.uptime) {
