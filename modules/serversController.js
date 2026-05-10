@@ -298,10 +298,20 @@ exports.saveServerProperties = async (serverName, data) => {
     let parsed = JSON.parse(data);
     let result = "";
     for (const [key, value] of Object.entries(parsed)) {
-        result += "\n" + key.toString() + "=" + value.toString();
+        result += key.toString() + "=" + value.toString() + "\n";
     }
     await FILE_MANAGER.writeFile(serverName, "/server.properties", result);
     return true;
+};
+
+// Остановить все запущенные серверы
+exports.stopAllServers = () => {
+    const servers = SERVERS_MANAGER.getServersList();
+    servers.forEach(serverName => {
+        if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING) {
+            this.stopServer(serverName);
+        }
+    });
 };
 
 // Получить информацию о сервере
