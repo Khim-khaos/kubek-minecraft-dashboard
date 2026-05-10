@@ -49,6 +49,23 @@ Start after installation
 npm start
 ```
 
+## Development
+
+Run in development mode with auto-reload:
+```bash
+npm run dev
+```
+
+Run tests:
+```bash
+npm test
+```
+
+Run linter:
+```bash
+npm run lint
+```
+
 ## Use Docker container
 
 If you know all the ports you need to use, you can run Kubek in Docker using a command like this. In this example, port 3000 is used for the panel itself, and 25565 for the server

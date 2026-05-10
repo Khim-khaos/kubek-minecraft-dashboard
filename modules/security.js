@@ -1,5 +1,6 @@
 const SHA256 = require("crypto-js/sha256");
 const crypto = require("crypto");
+const APP_CONFIG = require("./appConfig");
 
 /**
  * Проверить имеет ли пользователь определённое право
@@ -8,6 +9,7 @@ const crypto = require("crypto");
  * @returns {boolean}
  */
 exports.isUserHasPermission = (username, permission) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (mainConfig.authorization === false) {
         // Сразу разрешаем доступ, если авторизация отключена в конфигурации
         return true;
@@ -23,6 +25,7 @@ exports.isUserHasPermission = (username, permission) => {
  * @returns {boolean}
  */
 exports.isUserHasServerAccess = (username, server) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (mainConfig.authorization === false) {
         // Сразу разрешаем доступ, если авторизация отключена в конфигурации
         return true;
@@ -43,6 +46,7 @@ exports.isUserHasServerAccess = (username, server) => {
  * @returns {boolean}
  */
 exports.authorizeUser = (login, password) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (mainConfig.authorization === false) {
         // Сразу разрешаем доступ, если авторизация отключена в конфигурации
         return true;
@@ -58,6 +62,7 @@ exports.authorizeUser = (login, password) => {
  * @returns {boolean}
  */
 exports.authenticateUser = (login, secret) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (mainConfig.authorization === false) {
         // Сразу разрешаем доступ, если авторизация отключена в конфигурации
         return true;
@@ -72,6 +77,7 @@ exports.authenticateUser = (login, secret) => {
  * @returns {object|false}
  */
 exports.getUserDataByUsername = (username) => {
+    const usersConfig = APP_CONFIG.getUsersConfig();
     return usersConfig[username] || false;
 };
 

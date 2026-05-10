@@ -1,20 +1,22 @@
 const PREDEFINED = require("./predefined");
 const CONFIGURATION = require("./configuration");
 const COMMONS = require("./commons");
-const TASKMANAGER = require("./taskManager");
+const TASK_MANAGER = require("./taskManager");
+const APP_CONFIG = require("./appConfig");
 
 const fs = require("fs");
-const TASK_MANAGER = require("./taskManager");
 const path = require("path");
 
 // Проверить сервер на существование
 exports.isServerExists = (serverName) => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     return typeof serversConfig[serverName] !== "undefined";
 };
 
 // Получить информацию о сервере
 exports.getServerInfo = (serverName) => {
     if (this.isServerExists(serverName)) {
+        const serversConfig = APP_CONFIG.getServersConfig();
         return serversConfig[serverName];
     }
     return false;
@@ -23,6 +25,7 @@ exports.getServerInfo = (serverName) => {
 // Задать информацию о сервере
 exports.writeServerInfo = (serverName, data) => {
     if (this.isServerExists(serverName)) {
+        const serversConfig = APP_CONFIG.getServersConfig();
         serversConfig[serverName] = data;
         CONFIGURATION.writeServersConfig(serversConfig);
         return true;
@@ -41,6 +44,7 @@ exports.getServerStatus = (serverName) => {
 
 // Установить статус сервера
 exports.setServerStatus = (serverName, status) => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     if (this.isServerExists(serverName) && Object.values(PREDEFINED.SERVER_STATUSES).includes(status) && serversConfig[serverName].status !== status) {
         serversConfig[serverName].status = status;
         CONFIGURATION.writeServersConfig(serversConfig);
@@ -51,6 +55,7 @@ exports.setServerStatus = (serverName, status) => {
 
 // Установить параметр в конфигурации сервера
 exports.setServerProperty = (serverName, property, value) => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     if (this.isServerExists(serverName) && COMMONS.isObjectsValid(property, value, serversConfig[serverName][property])) {
         serversConfig[serverName][property] = value;
         CONFIGURATION.writeServersConfig(serversConfig);
@@ -62,11 +67,13 @@ exports.setServerProperty = (serverName, property, value) => {
 // Получить список серверов
 // DEVELOPED by seeeroy
 exports.getServersList = () => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     return Object.keys(serversConfig);
 };
 
 // Безвозвратно удалить сервер
 exports.deleteServer = (serverName) => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     if(this.isServerExists(serverName) && this.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.STOPPED){
         // Добавляем новую таску
         let serverDelTaskID = TASK_MANAGER.addNewTask({
@@ -81,6 +88,7 @@ exports.deleteServer = (serverName) => {
                 throw err;
             }
             // Удаляем сервер из конфигурации и меняем статус таски
+            const serversConfig = APP_CONFIG.getServersConfig();
             serversConfig[serverName] = null;
             delete serversConfig[serverName];
             CONFIGURATION.writeServersConfig(serversConfig);

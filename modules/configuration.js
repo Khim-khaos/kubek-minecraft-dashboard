@@ -151,6 +151,7 @@ exports.readServersConfig = () => {
 
 // Автоматически запустить сервера, которые были запущены при закрытии Kubek
 exports.autoStartServers = () => {
+    const serversConfig = APP_CONFIG.getServersConfig();
     for (const [key, value] of Object.entries(serversConfig)) {
         if(serversConfig[key].status !== PREDEFINED.SERVER_STATUSES.STOPPED && !autoStartedServers.includes(key)){
             // Запускаем сервер, который был запущен до остановки Kubek
@@ -174,10 +175,6 @@ exports.reloadAllConfigurations = () => {
 
     // Перекрываем настройки из переменных окружения
     main = this.applyEnvOverrides(main);
-
-    global.mainConfig = main;
-    global.usersConfig = users;
-    global.serversConfig = servers;
 
     APP_CONFIG.setMainConfig(main);
     APP_CONFIG.setUsersConfig(users);

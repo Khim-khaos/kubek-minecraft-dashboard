@@ -37,8 +37,11 @@ exports.isObjectsValid = (...objects) => {
     return summCount === validCount;
 };
 
+const APP_CONFIG = require("./appConfig");
+
 // Получить axios instance с настройками прокси
 function getAxiosInstance() {
+    const mainConfig = APP_CONFIG.getMainConfig();
     const config = {
         baseURL: '',
         timeout: 60000, // Увеличиваем до 60 секунд для медленных API

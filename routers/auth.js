@@ -2,6 +2,7 @@ const SECURITY = require("./../modules/security");
 const SERVERS_MANAGER = require("./../modules/serversManager");
 const MULTI_LANGUAGE = require("./../modules/multiLanguage");
 const COMMONS = require("./../modules/commons");
+const APP_CONFIG = require("./../modules/appConfig");
 
 const express = require("express");
 const rateLimit = require("express-rate-limit");
@@ -22,6 +23,8 @@ const loginRateLimiter = rateLimit({
 // Endpoint для входа в систему
 router.post("/login", loginRateLimiter, function (req, res) {
     let q = req.body;
+    const mainConfig = APP_CONFIG.getMainConfig();
+    const currentLanguage = APP_CONFIG.getCurrentLanguage();
     // Если авторизация отключена в конфигурации
     if (mainConfig.authorization === false) {
         return res.send({
@@ -38,6 +41,7 @@ router.post("/login", loginRateLimiter, function (req, res) {
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production'
             };
+            const usersConfig = APP_CONFIG.getUsersConfig();
             res.cookie("kbk__hash", usersConfig[q.login].secret, options);
             res.cookie("kbk__login", usersConfig[q.login].username, options);
             return res.send({
@@ -100,6 +104,7 @@ router.get("/logout", function (req, res) {
 
 // Endpoint для проверки, включена ли авторизация (для скрытия badge в хидере)
 router.get("/isEnabled", (req, res) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     res.send(mainConfig.authorization);
 });
 

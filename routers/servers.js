@@ -6,6 +6,8 @@ const PREDEFINED = require("./../modules/predefined");
 const COMMONS = require("./../modules/commons");
 const WEBSERVER = require("./../modules/webserver");
 
+const APP_CONFIG = require("./../modules/appConfig");
+
 const express = require("express");
 const router = express.Router();
 const fs = require("fs");
@@ -15,6 +17,7 @@ const path = require("path");
 
 // Router для получения списка серверов
 router.get("/", function (req, res) {
+    const mainConfig = APP_CONFIG.getMainConfig();
     let preparedList = SERVERS_MANAGER.getServersList();
     if (mainConfig.authorization === true) {
         let uData = ACCOUNTS_MANAGER.getUserData(req.cookies["kbk__login"]);
@@ -65,6 +68,7 @@ router.get("/new", function (req, res) {
 router.get("/:server/log", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server)) {
+        const instancesLogs = APP_CONFIG.getInstancesLogs();
         if (COMMONS.isObjectsValid(instancesLogs[q.server])) {
             res.send(SERVERS_CONTROLLER.getServerLog(q.server));
         } else {

@@ -2,6 +2,7 @@ const TASK_MANAGER = require("./taskManager");
 const PREDEFINED = require("./predefined");
 const LOGGER = require("./logger");
 const MULTILANG = require("./multiLanguage");
+const APP_CONFIG = require("./appConfig");
 
 const path = require("path");
 const axios = require("axios");
@@ -10,8 +11,11 @@ const decompress = require("decompress");
 const colors = require("colors");
 const { URL } = require("url");
 
+const tasks = APP_CONFIG.getTasks();
+
 // Получить axios instance с настройками прокси и правильными заголовками
 function getAxiosInstance() {
+    const mainConfig = APP_CONFIG.getMainConfig();
     const config = {
         timeout: 120000, // 2 минуты таймаут для медленных соединений
         maxContentLength: Infinity,

@@ -9,6 +9,14 @@ let serversConfig = {};
 let currentLanguage = "en";
 let availableLanguages = [];
 let ftpDaemon = null;
+let webServer = null;
+
+// Состояние серверов
+let serversInstances = {};
+let instancesLogs = {};
+let restartAttempts = {};
+let serversToManualRestart = [];
+let tasks = {};
 
 module.exports = {
     getMainConfig: () => mainConfig,
@@ -27,5 +35,17 @@ module.exports = {
     setAvailableLanguages: (langs) => { availableLanguages = langs; },
 
     getFtpDaemon: () => ftpDaemon,
-    setFtpDaemon: (daemon) => { ftpDaemon = daemon; }
+    setFtpDaemon: (daemon) => { ftpDaemon = daemon; },
+
+    getWebServer: () => webServer,
+    setWebServer: (server) => { webServer = server; },
+
+    // Геттеры и сеттеры для состояния серверов
+    getServersInstances: () => serversInstances,
+    getInstancesLogs: () => instancesLogs,
+    getRestartAttempts: () => restartAttempts,
+    getServersToManualRestart: () => serversToManualRestart,
+    getTasks: () => tasks,
+    
+    setInstancesLogs: (logs) => { instancesLogs = logs; }
 };

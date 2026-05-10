@@ -25,7 +25,7 @@ STATS_COLLECTION.sendStatsToServer(collStats, true);
 
 // Загружаем доступные языки и ставим переменную с языком из конфига
 MULTI_LANGUAGE.loadAvailableLanguages();
-global.currentLanguage = mainConfig.language;
+const mainConfig = APP_CONFIG.getMainConfig();
 APP_CONFIG.setCurrentLanguage(mainConfig.language);
 
 // Показываем приветствие
@@ -35,7 +35,6 @@ WEBSERVER.loadAllDefinedRouters();
 WEBSERVER.startWebServer();
 
 // Запускаем FTP-сервер (асинхронно)
-global.ftpDaemon = null;
 FTP_DAEMON.startFTP();
 
 // Автоматически запустить сервера, которые были запущены при закрытии Kubek

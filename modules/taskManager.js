@@ -1,5 +1,5 @@
-// Переменная для сохранения всех задач
-global.tasks = {};
+const APP_CONFIG = require("./appConfig");
+const tasks = APP_CONFIG.getTasks();
 
 const LOGGER = require("./logger");
 const MULTILANG = require("./multiLanguage");
@@ -15,6 +15,7 @@ exports.getNewTaskID = () => {
 
 // Добавить новую задачу
 exports.addNewTask = (data) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     let newTaskID = this.getNewTaskID();
     tasks[newTaskID] = data;
     LOGGER.log(MULTILANG.translateText(mainConfig.language, "{{console.taskAdded}}", colors.cyan(newTaskID), colors.cyan(data.type)));
@@ -23,6 +24,7 @@ exports.addNewTask = (data) => {
 
 // Удалить задачу по ID
 exports.removeTask = (taskID) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (typeof tasks[taskID] !== 'undefined') {
         tasks[taskID] = null;
         delete tasks[taskID];

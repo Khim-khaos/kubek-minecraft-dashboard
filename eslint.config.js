@@ -20,14 +20,7 @@ module.exports = [
                 setInterval: "readonly",
                 setTimeout: "readonly",
                 console: "readonly",
-                Buffer: "readonly",
-                // App globals
-                mainConfig: "writable",
-                usersConfig: "writable",
-                serversConfig: "writable",
-                currentLanguage: "writable",
-                webServer: "writable",
-                ftpDaemon: "writable"
+                Buffer: "readonly"
             }
         },
         rules: {

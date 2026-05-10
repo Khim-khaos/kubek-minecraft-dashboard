@@ -22,8 +22,9 @@ const crypto = require('crypto');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('../swagger-output.json');
 
-global.webServer = express();
-global.webPagesPermissions = {};
+const webServer = express();
+APP_CONFIG.setWebServer(webServer);
+const webPagesPermissions = {};
 
 // Применяем базовую защиту и сжатие
 webServer.use(helmet({
@@ -80,12 +81,18 @@ webServer.use(
 let webPort = APP_CONFIG.getMainConfig().webserverPort;
 
 /**
- * Получить IP-адрес из запроса
+ * Получить IP-адрес из запроса (с учетом прокси)
  * @param {express.Request} req 
  * @returns {string}
  */
 const getRequestIP = (req) => {
-    let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const mainConfig = APP_CONFIG.getMainConfig();
+    let ip;
+    if (mainConfig.proxy && mainConfig.proxy.enabled) {
+        ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    } else {
+        ip = req.socket.remoteAddress;
+    }
     return ip.replace("::ffff:", "").replace("::1", "127.0.0.1").split(',')[0].trim();
 };
 

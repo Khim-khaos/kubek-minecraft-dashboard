@@ -2,10 +2,12 @@ const CONFIGURATION = require("./configuration");
 const PREDEFINED = require("./predefined");
 const SECURITY = require("./security");
 const SHA256 = require("crypto-js/sha256");
+const APP_CONFIG = require("./appConfig");
 
 // Функция для добавления нового аккаунта с проверками
 exports.createNewAccount = (login, password, permissions = [], email = "", servers = []) => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (login !== "kubek" && !SECURITY.isUserExists(login)) {
         if (login.match(PREDEFINED.LOGIN_REGEX) != null && password.match(PREDEFINED.PASSWORD_REGEX) != null) {
             if (email === "" || email.match(PREDEFINED.EMAIL_REGEX) != null) {
@@ -38,6 +40,7 @@ exports.createNewAccount = (login, password, permissions = [], email = "", serve
 // Функция для обновления данных аккаунта
 exports.updateAccount = (login, password = "", permissions = [], email = "", servers = []) => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (login.match(PREDEFINED.LOGIN_REGEX) != null && SECURITY.isUserExists(login)) {
         if (email === "" || email.match(PREDEFINED.EMAIL_REGEX) != null) {
             if (password === "" || password.match(PREDEFINED.PASSWORD_REGEX) != null) {
@@ -68,6 +71,7 @@ exports.updateAccount = (login, password = "", permissions = [], email = "", ser
 // Пересоздать хеш пользователя
 exports.regenUserHash = (login) => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (SECURITY.isUserExists(login)) {
         usersConfig[login].secret = SECURITY.generateSecureID();
         CONFIGURATION.writeUsersConfig(usersConfig);
@@ -79,6 +83,7 @@ exports.regenUserHash = (login) => {
 // Сменить пароль пользователя
 exports.changePassword = (login, password) => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (SECURITY.isUserExists(login)) {
         usersConfig[login].password = SHA256(password).toString();
         this.regenUserHash(login);
@@ -91,6 +96,7 @@ exports.changePassword = (login, password) => {
 // Удалить пользователя
 exports.deleteUser = (login) => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (login !== "kubek" && SECURITY.isUserExists(login)) {
         usersConfig[login] = null;
         delete usersConfig[login];
@@ -100,8 +106,9 @@ exports.deleteUser = (login) => {
     return false;
 };
 
-// Получить информацию о пользователе
+// Получить данные пользователя
 exports.getUserData = (login) => {
+    const usersConfig = APP_CONFIG.getUsersConfig();
     if (SECURITY.isUserExists(login)) {
         return usersConfig[login];
     }
@@ -111,6 +118,7 @@ exports.getUserData = (login) => {
 // Получить список пользователей
 exports.getUsersList = () => {
     CONFIGURATION.reloadAllConfigurations();
+    const usersConfig = APP_CONFIG.getUsersConfig();
     return Object.keys(usersConfig);
 };
 

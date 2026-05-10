@@ -54,7 +54,6 @@ router.put("/settings", function (req, res) {
         CONFIGURATION.reloadAllConfigurations();
 
         const mainConfig = APP_CONFIG.getMainConfig();
-        global.currentLanguage = mainConfig.language;
         APP_CONFIG.setCurrentLanguage(mainConfig.language);
 
         if (typeof global.clearTranslatedFilesCache === "function") {

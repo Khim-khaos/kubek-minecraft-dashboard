@@ -13,10 +13,10 @@ const spParser = require("minecraft-server-properties");
 const {spawn} = require("node:child_process");
 const mcs = require("node-mcstatus");
 
-global.serversInstances = {};
-global.instancesLogs = {};
-global.restartAttempts = {};
-global.serversToManualRestart = [];
+const serversInstances = APP_CONFIG.getServersInstances();
+const instancesLogs = APP_CONFIG.getInstancesLogs();
+const restartAttempts = APP_CONFIG.getRestartAttempts();
+const serversToManualRestart = APP_CONFIG.getServersToManualRestart();
 
 // Проверить готовность сервера к запуску
 exports.isServerReadyToStart = (serverName) => {

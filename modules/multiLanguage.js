@@ -5,7 +5,7 @@ const path = require('path');
 const APP_CONFIG = require("./appConfig");
 
 // Список кодов для доступных языков
-global.avaliableLanguages = {};
+let availableLanguages = {};
 // Кеш переводов
 const translationsCache = {};
 
@@ -17,13 +17,13 @@ exports.loadAvailableLanguages = () => {
                 const langPath = path.join(__dirname, "./../languages", file);
                 const langFile = JSON.parse(fs.readFileSync(langPath).toString());
                 if (langFile.info?.code && langFile.info?.id && langFile.info?.displayNameEnglish) {
-                    avaliableLanguages[langFile.info.code] = langFile.info;
+                    availableLanguages[langFile.info.code] = langFile.info;
                     // Кешируем переводы сразу
                     translationsCache[langFile.info.code] = langFile;
                 }
             }
         })
-        APP_CONFIG.setAvailableLanguages(avaliableLanguages);
+        APP_CONFIG.setAvailableLanguages(availableLanguages);
         return true;
     }
     return false;
@@ -31,7 +31,7 @@ exports.loadAvailableLanguages = () => {
 
 // Получить информацию о языке по названию
 exports.getLanguageInfo = (language) => {
-    return avaliableLanguages[language] || false;
+    return availableLanguages[language] || false;
 };
 
 // Перевести все вхождения меток переводов в текст

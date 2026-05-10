@@ -7,12 +7,17 @@ const PREDEFINED = require("./predefined");
 const CONFIGURATION = require("./configuration");
 const LOGGER = require("./logger");
 const MULTILANG = require("./multiLanguage");
+const APP_CONFIG = require("./appConfig");
 
 const fs = require("fs");
 const path = require("path");
 const colors = require("colors");
 
+const tasks = APP_CONFIG.getTasks();
+const serversConfig = APP_CONFIG.getServersConfig();
+
 async function prepareJavaForServer(javaVersion, cb) {
+    const mainConfig = APP_CONFIG.getMainConfig();
     let javaExecutablePath = "";
     let javaDownloadURL = "";
     let isJavaNaN = isNaN(parseInt(javaVersion));

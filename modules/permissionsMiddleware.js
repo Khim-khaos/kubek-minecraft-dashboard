@@ -1,6 +1,9 @@
 const PREDEFINED = require("./predefined");
 const SECURITY = require("./security");
 const COMMONS = require("./commons");
+const APP_CONFIG = require("./appConfig");
+
+const webServer = APP_CONFIG.getWebServer();
 
 // Проверка permissions для управления аккаунтами
 webServer.use("/api/accounts", (req, res, next) => {
@@ -176,6 +179,7 @@ webServer.use("/api/servers", (req, res, next) => {
 
 // Общая функция для проверки прав в middleware
 exports.chkUserPermission = (req, permission) => {
+    const mainConfig = APP_CONFIG.getMainConfig();
     if (mainConfig.authorization === false) {
         return true;
     }

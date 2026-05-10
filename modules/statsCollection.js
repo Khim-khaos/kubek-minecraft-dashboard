@@ -2,6 +2,7 @@ const packageJSON = require("./../package.json");
 const LOGGER = require("./logger");
 const COMMONS = require("./commons");
 const PREDEFINED = require("./predefined");
+const APP_CONFIG = require("./appConfig");
 
 const {machineIdSync} = require('node-machine-id');
 const fs = require("fs");
@@ -12,6 +13,10 @@ exports.getUniqueID = machineIdSync;
 
 // Собрать статистику о ПК
 exports.collectStats = () => {
+    const mainConfig = APP_CONFIG.getMainConfig();
+    const usersConfig = APP_CONFIG.getUsersConfig();
+    const serversConfig = APP_CONFIG.getServersConfig();
+
     let uniqueID = this.getUniqueID();
     let cpuCommon = os.cpus();
     let usersCount = Object.keys(usersConfig).length;
@@ -39,8 +44,8 @@ exports.collectStats = () => {
         serversCount: serversCount,
         authEnabled: mainConfig.authorization,
         usersCount: usersCount,
-        tgbotEnabled: mainConfig.telegramBot.enabled,
-        ftpdEnabled: mainConfig.ftpd.enabled,
+        tgbotEnabled: mainConfig.telegramBot?.enabled,
+        ftpdEnabled: mainConfig.ftpd?.enabled,
         uptime: Math.round(process.uptime())
     };
 }
