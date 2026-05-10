@@ -71,6 +71,7 @@ $(function () {
         $("#os-build").text(data.platform.release);
         $("#total-ram").text(data.totalmem + " Mb");
         $("#kubek-uptime").text(KubekUtils.humanizeSeconds(data.uptime));
+        $("#system-uptime").text(KubekUtils.humanizeSeconds(data.systemUptime));
         $("#cpu-model").text(data.cpu.model + " (" + data.cpu.cores + " cores)");
         $("#cpu-speed").text(data.cpu.speed + " MHz");
     });

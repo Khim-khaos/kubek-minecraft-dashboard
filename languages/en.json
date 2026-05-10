@@ -141,6 +141,7 @@
       "cpuInfo": "CPU and RAM",
       "environment": "Environment Variables",
       "kubekUptime": "Kubek uptime",
+      "systemUptime": "System uptime",
       "os": "Operating system",
       "osBuild": "OS build version",
       "totalRam": "Total RAM",

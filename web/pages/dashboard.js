@@ -45,8 +45,8 @@ function loadDashboardStats() {
             }
 
             // Update Uptime
-            if (data.panel && data.panel.uptime && $("#sys-uptime-val").length > 0) {
-                $("#sys-uptime-val").text(KubekUtils.humanizeSeconds(data.panel.uptime));
+            if (data.system && data.system.uptime && $("#sys-uptime-val").length > 0) {
+                $("#sys-uptime-val").text(KubekUtils.humanizeSeconds(data.system.uptime));
             }
         }
     });

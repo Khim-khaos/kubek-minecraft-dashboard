@@ -126,6 +126,7 @@ exports.getHardwareInfo = async () => {
         const cpuItem = os.cpus()[0];
         return {
             uptime: Math.round(process.uptime()),
+            systemUptime: Math.round(os.uptime()),
             platform: {
                 name: os.type(),
                 release: os.release(),
