@@ -19,29 +19,34 @@ $(function () {
 });
 
 function loadDashboardStats() {
-    KubekRequests.get("/api/health", (data) => {
+    KubekRequests.get("/health", (data) => {
         if (data) {
             const cpu = data.cpu || 0;
             const ramPercent = data.ram ? data.ram.percent : 0;
 
             // Update Header Stats
-            $("#total-cpu-bar").css("width", cpu + "%");
-            $("#total-cpu-val").text(Math.round(cpu) + "%");
-            $("#total-ram-bar").css("width", ramPercent + "%");
-            $("#total-ram-val").text(Math.round(ramPercent) + "%");
+            if ($("#total-cpu-val").length > 0) {
+                $("#total-cpu-bar").css("width", cpu + "%");
+                $("#total-cpu-val").text(Math.round(cpu) + "%");
+            }
+            if ($("#total-ram-val").length > 0) {
+                $("#total-ram-bar").css("width", ramPercent + "%");
+                $("#total-ram-val").text(Math.round(ramPercent) + "%");
+            }
 
             // Update Card Stats
-            $("#sys-cpu-bar").css("width", cpu + "%");
-            $("#sys-cpu-val").text(Math.round(cpu) + "%");
-            
-            $("#sys-ram-bar").css("width", ramPercent + "%");
-            $("#sys-ram-val").text(Math.round(ramPercent) + "%");
+            if ($("#sys-cpu-val").length > 0) {
+                $("#sys-cpu-bar").css("width", cpu + "%");
+                $("#sys-cpu-val").text(Math.round(cpu) + "%");
+            }
+            if ($("#sys-ram-val").length > 0) {
+                $("#sys-ram-bar").css("width", ramPercent + "%");
+                $("#sys-ram-val").text(Math.round(ramPercent) + "%");
+            }
 
             // Update Uptime
-            if (data.uptime) {
-                const hours = Math.floor(data.uptime / 3600);
-                const minutes = Math.floor((data.uptime % 3600) / 60);
-                $("#sys-uptime-val").text(`${hours}h ${minutes}m`);
+            if (data.panel && data.panel.uptime && $("#sys-uptime-val").length > 0) {
+                $("#sys-uptime-val").text(KubekUtils.humanizeSeconds(data.panel.uptime));
             }
         }
     });

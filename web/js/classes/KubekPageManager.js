@@ -1,8 +1,11 @@
 let loadedScript;
 
 class KubekPageManager {
+    static currentPage = "";
+
     // Загрузить страницу
     static gotoPage = (page) => {
+        this.currentPage = page;
         this.loadPageContent(page);
     }
 
@@ -19,17 +22,17 @@ class KubekPageManager {
                 KubekUI.setActiveItemByPage(page);
 
                 setTimeout(() => {
-                    // Динамически загружаем скрипт страницы
+                    // Сначала загружаем саму страницу
+                    $("#content-place").append(result);
+                    $("#content-preloader").remove();
+
+                    // Затем динамически загружаем скрипт страницы
                     if(typeof loadedScript !== "undefined"){
                         document.head.removeChild(loadedScript);
                     }
                     loadedScript = document.createElement("script");
-                    loadedScript.setAttribute("src", "/pages/" + page + ".js");
+                    loadedScript.setAttribute("src", "/pages/" + page + ".js?v=" + Date.now());
                     document.head.appendChild(loadedScript);
-
-                    // Загружаем саму страницу
-                    $("#content-place").append(result);
-                    $("#content-preloader").remove();
                 }, 100);
             },
             error: function (error) {

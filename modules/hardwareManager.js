@@ -4,27 +4,65 @@ const { exec } = require("child_process");
 const { promisify } = require("util");
 const execAsync = promisify(exec);
 
+let cpuCalculationPromise = null;
+let lastCPUUsage = 0;
+let lastCPUTime = 0;
+
 // Вспомогательная функция для расчета использования ЦПУ без os-utils
 const getCPUUsage = () => {
-    return new Promise((resolve) => {
-        const stats1 = getCPUInfo();
-        setTimeout(() => {
-            const stats2 = getCPUInfo();
-            const idleDiff = stats2.idle - stats1.idle;
-            const totalDiff = stats2.total - stats1.total;
-            
-            if (totalDiff === 0) {
+    // Если расчет уже идет, возвращаем текущий промис
+    if (cpuCalculationPromise) return cpuCalculationPromise;
+    
+    // Если данные свежие (меньше 2 сек), возвращаем кешированное значение
+    if (Date.now() - lastCPUTime < 2000) return Promise.resolve(lastCPUUsage);
+
+    cpuCalculationPromise = new Promise((resolve) => {
+        try {
+            const stats1 = getCPUInfo();
+            if (!stats1) {
+                cpuCalculationPromise = null;
                 return resolve(0);
             }
-            
-            const usage = 1 - idleDiff / totalDiff;
-            resolve(Math.round(usage * 100));
-        }, 1000);
+
+            setTimeout(() => {
+                const stats2 = getCPUInfo();
+                if (!stats2) {
+                    cpuCalculationPromise = null;
+                    return resolve(lastCPUUsage);
+                }
+
+                const idleDiff = stats2.idle - stats1.idle;
+                const totalDiff = stats2.total - stats1.total;
+                
+                if (totalDiff === 0) {
+                    lastCPUUsage = 0;
+                } else {
+                    const usage = 1 - idleDiff / totalDiff;
+                    lastCPUUsage = Math.round(usage * 100);
+                }
+                
+                // LOGGER is not defined here, but we can use console.log if DEBUG is on
+                if (process.env.DEBUG === 'true') {
+                    console.log(`[Hardware] CPU Usage calculated: ${lastCPUUsage}% (totalDiff: ${totalDiff})`);
+                }
+
+                lastCPUTime = Date.now();
+                cpuCalculationPromise = null;
+                resolve(lastCPUUsage);
+            }, 1000);
+        } catch (e) {
+            cpuCalculationPromise = null;
+            resolve(0);
+        }
     });
+    
+    return cpuCalculationPromise;
 };
 
 const getCPUInfo = () => {
     const cpus = os.cpus();
+    if (!cpus || cpus.length === 0) return null;
+
     let user = 0, nice = 0, sys = 0, idle = 0, irq = 0, total = 0;
     for (const cpu of cpus) {
         user += cpu.times.user;

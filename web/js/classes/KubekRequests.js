@@ -2,7 +2,7 @@ class KubekRequests {
     // Сделать AJAX-запрос с нужными настройками
     static makeAjaxRequest = (url, type, data = "", apiEndpoint = true, cb = () => {
     }) => {
-        if (apiEndpoint) {
+        if (apiEndpoint && !url.startsWith(KubekPredefined.API_ENDPOINT)) {
             url = KubekPredefined.API_ENDPOINT + url;
         }
         if(data !== ""){

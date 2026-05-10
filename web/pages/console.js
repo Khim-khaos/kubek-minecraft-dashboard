@@ -8,11 +8,16 @@ $("#cpu-usage-bar").hide();
 KubekConsoleUI = class {
     // Обновить progress бары использования рес-ов
     static refreshUsageItems(cpu, ram, ramElem) {
-        consoleCpuUsageBar.setValue(cpu);
-        consoleRamUsageBar.setValue(ram);
-        consoleCpuUsageBar.setActiveColor(KubekUtils.getProgressGradientColor(cpu));
-        consoleRamUsageBar.setActiveColor(KubekUtils.getProgressGradientColor(ram));
-        $("#ram-usage-text").text(KubekUtils.humanizeFileSize(ramElem.used) + " / " + KubekUtils.humanizeFileSize(ramElem.total));
+        if (typeof consoleCpuUsageBar !== "undefined") consoleCpuUsageBar.setValue(cpu);
+        if (typeof consoleRamUsageBar !== "undefined") consoleRamUsageBar.setValue(ram);
+        
+        if (typeof consoleCpuUsageBar !== "undefined") consoleCpuUsageBar.setActiveColor(KubekUtils.getProgressGradientColor(cpu));
+        if (typeof consoleRamUsageBar !== "undefined") consoleRamUsageBar.setActiveColor(KubekUtils.getProgressGradientColor(ram));
+        
+        if (ramElem) {
+            $("#ram-usage-text").text(KubekUtils.humanizeFileSize(ramElem.used) + " / " + KubekUtils.humanizeFileSize(ramElem.total));
+        }
+
         if ($("#cpu-usage-bar").css("display") === "none") {
             $("#cpu-usage-spinner").hide();
             $("#ram-usage-spinner").hide();

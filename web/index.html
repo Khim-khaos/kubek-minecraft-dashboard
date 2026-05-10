@@ -132,7 +132,7 @@
                             }
                         });
                         // Ищем act и загружаем страницу
-                        if (act !== null) {
+                        if (act) {
                             console.log("[UI]", "act is not null, trying to load", act);
                             KubekPageManager.gotoPage(act);
                         } else {

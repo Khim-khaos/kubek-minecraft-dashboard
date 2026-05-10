@@ -34,7 +34,7 @@ webServer.use(helmet({
 // Общий лимитер для всех запросов
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 минут
-    max: 1000, // Лимит 1000 запросов на IP
+    max: 10000, // Увеличиваем лимит до 10000 запросов на IP
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -43,9 +43,13 @@ const generalLimiter = rateLimit({
         message: "Please try again later"
     },
     skip: (req) => {
-        // Пропускаем локальные запросы и статику
+        // Пропускаем локальные запросы, статику и частые эндпоинты мониторинга
         const ip = getRequestIP(req);
-        return ip === '127.0.0.1' || !req.path.startsWith('/api/');
+        const isLocal = ip === '127.0.0.1' || ip === 'localhost' || ip === '::1';
+        const isStatic = !req.path.startsWith('/api/');
+        const isMonitoring = req.path.includes('/health') || req.path.includes('/usage') || req.path.includes('/tasks');
+        
+        return isLocal || isStatic || isMonitoring;
     }
 });
 webServer.use(generalLimiter);
