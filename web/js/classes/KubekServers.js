@@ -9,6 +9,11 @@ class KubekServers {
         KubekRequests.get("/servers/" + encodeURIComponent(server) + "/info", cb);
     };
 
+    // Получить статусы всех серверов
+    static getServersStatuses = (cb) => {
+        KubekRequests.get("/servers/statuses", cb);
+    };
+
     // Проверить сервер на существование
     static isServerExists = (server, cb) => {
         this.getServersList((sList) => {

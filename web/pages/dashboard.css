@@ -230,20 +230,40 @@
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    backdrop-filter: var(--glass-blur);
+}
+
+.server-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .server-card:hover {
+    transform: translateY(-6px);
     border-color: var(--bg-primary-500);
-    background: rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-xl);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.server-card:hover::after {
+    opacity: 1;
+}
+
+.server-card.running {
+    border-color: rgba(74, 222, 128, 0.3);
 }
 
 .server-card.running::before {
@@ -251,9 +271,9 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
-    height: 100%;
-    background: #4ade80;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
 }
 
 .server-icon {

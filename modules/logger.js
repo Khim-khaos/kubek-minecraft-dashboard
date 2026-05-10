@@ -50,7 +50,7 @@ exports.log = (...args) => {
         return String(arg);
     }).join(" ");
     
-    let preparedText = this.getTimeFormatted() + " " + text;
+    let preparedText = this.getTimeFormatted() + " [INFO] " + text;
     console.log(preparedText);
     this.writeLineToLog(preparedText);
 };
@@ -63,9 +63,9 @@ exports.warning = (...args) => {
         return String(arg);
     }).join(" ");
 
-    let preparedText = this.getTimeFormatted() + " " + text;
+    let preparedText = this.getTimeFormatted() + " [WARN] " + text;
     console.log(colors.yellow(preparedText));
-    this.writeLineToLog("[WARN] " + preparedText);
+    this.writeLineToLog(preparedText);
 };
 
 // Вывести текст типа ERROR в консоль и записать в файл
@@ -76,9 +76,9 @@ exports.error = (...args) => {
         return String(arg);
     }).join(" ");
 
-    let preparedText = this.getTimeFormatted() + " " + text;
+    let preparedText = this.getTimeFormatted() + " [ERR] " + text;
     console.log(colors.red(preparedText));
-    this.writeLineToLog("[ERR] " + preparedText);
+    this.writeLineToLog(preparedText);
 };
 
 // Вывести текст типа SUCCESS в консоль и записать в файл
@@ -88,9 +88,9 @@ exports.success = (...args) => {
         return String(arg);
     }).join(" ");
 
-    let preparedText = this.getTimeFormatted() + " " + text;
+    let preparedText = this.getTimeFormatted() + " [SUCCESS] " + text;
     console.log(colors.green(preparedText));
-    this.writeLineToLog("[SUCCESS] " + preparedText);
+    this.writeLineToLog(preparedText);
 };
 
 // Вывести текст типа DEBUG в консоль и записать в файл
@@ -103,9 +103,9 @@ exports.debug = (...args) => {
         return String(arg);
     }).join(" ");
 
-    let preparedText = this.getTimeFormatted() + " " + text;
+    let preparedText = this.getTimeFormatted() + " [DEBUG] " + text;
     console.log(colors.gray(preparedText));
-    this.writeLineToLog("[DEBUG] " + preparedText);
+    this.writeLineToLog(preparedText);
 };
 
 // Очистка старых лог-файлов (оставляем логи за последние 7 дней)

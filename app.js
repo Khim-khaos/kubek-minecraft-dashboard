@@ -67,3 +67,20 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     LOGGER.error(`[CRITICAL] Unhandled Rejection at: ${promise}, reason: ${reason}`);
 });
+
+// Graceful shutdown
+const gracefulShutdown = () => {
+    LOGGER.log("Received kill signal, shutting down gracefully...");
+    const SERVERS_CONTROLLER = require("./modules/serversController");
+    SERVERS_CONTROLLER.stopAllServers();
+    
+    setTimeout(() => {
+        LOGGER.log("Could not close connections in time, forcefully shutting down");
+        process.exit(1);
+    }, 10000);
+    
+    process.exit(0);
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);

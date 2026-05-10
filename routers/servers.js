@@ -34,6 +34,24 @@ router.get("/", function (req, res) {
     res.send(preparedList);
 });
 
+// Router для получения статуса всех серверов разом (Bulk Status)
+router.get("/statuses", function (req, res) {
+    const servers = SERVERS_MANAGER.getServersList();
+    const statuses = {};
+    
+    servers.forEach(server => {
+        const info = SERVERS_MANAGER.getServerInfo(server);
+        statuses[server] = {
+            status: info.status,
+            core: info.core,
+            coreVersion: info.coreVersion,
+            usage: info.usage || null
+        };
+    });
+    
+    res.json(statuses);
+});
+
 // Router для создания нового сервера
 router.get("/new", function (req, res) {
     let q = req.query;
@@ -166,13 +184,17 @@ router.post("/:server/icon", WEBSERVER.serversRouterMiddleware, async function (
 
     const result = await COMMONS.moveUploadedFile(q.server, sourceFile, "/server-icon-PREPARED" + sourceExt);
     if (result === true) {
-        Jimp.read("./servers/" + q.server + "/server-icon-PREPARED" + sourceExt, (err, file) => {
-            if (err) throw err;
-            file
-                .resize(64, 64) // resize
+        try {
+            const image = await Jimp.read("./servers/" + q.server + "/server-icon-PREPARED" + sourceExt);
+            await image
+                .resize({w: 64, h: 64}) // resize in v1
                 .write("./servers/" + q.server + "/server-icon.png");
             return res.send(true);
-        });
+        } catch (err) {
+            const LOGGER = require("./../modules/logger");
+            LOGGER.error("[Router] Error processing server icon:", err);
+            return res.sendStatus(500);
+        }
     } else {
         res.sendStatus(400);
     }

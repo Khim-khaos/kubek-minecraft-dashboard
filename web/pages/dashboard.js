@@ -98,29 +98,29 @@ function loadServersGrid() {
 }
 
 function updateServersStatus() {
-    KubekServers.getServersList((servers) => {
+    KubekServers.getServersStatuses((statuses) => {
+        if (!statuses) return;
+        
         let runningCount = 0;
-        servers.forEach(server => {
-            KubekServers.getServerInfo(server, (info) => {
-                if (info) {
-                    const card = $(`#dash-server-${server}`);
-                    if (info.status === "running") {
-                        card.addClass("running");
-                        runningCount++;
-                        
-                        // Update usage if available
-                        if (info.usage) {
-                            card.find(".cpu-usage").text("CPU: " + Math.round(info.usage.cpu) + "%");
-                            card.find(".ram-usage").text("RAM: " + Math.round(info.usage.ram / 1024 / 1024) + "MB");
-                        }
-                    } else {
-                        card.removeClass("running");
-                        card.find(".cpu-usage").text("CPU: 0%");
-                        card.find(".ram-usage").text("RAM: 0MB");
-                    }
+        Object.keys(statuses).forEach(server => {
+            const info = statuses[server];
+            const card = $(`#dash-server-${server}`);
+            
+            if (info.status === "running") {
+                card.addClass("running");
+                runningCount++;
+                
+                // Update usage if available
+                if (info.usage) {
+                    card.find(".cpu-usage").text("CPU: " + Math.round(info.usage.cpu) + "%");
+                    card.find(".ram-usage").text("RAM: " + Math.round(info.usage.ram / 1024 / 1024) + "MB");
                 }
-                $("#running-servers-count").text(runningCount);
-            });
+            } else {
+                card.removeClass("running");
+                card.find(".cpu-usage").text("CPU: 0%");
+                card.find(".ram-usage").text("RAM: 0MB");
+            }
         });
+        $("#running-servers-count").text(runningCount);
     });
 }
